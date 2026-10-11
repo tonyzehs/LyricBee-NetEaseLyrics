@@ -1,3 +1,12 @@
+# 1.9.3 — LyricBee standalone project
+
+- Continue development on master in `tonyzehs/LyricBee-NetEaseLyrics`, with the full upstream/fork history and historical release tags preserved.
+- Use **LyricBee — NetEase Lyrics for MusicBee** as the project title and **LyricBee — NetEase Lyrics** in MusicBee. Credit Tony Y as maintainer and Charlie Jiang as the original author; retain the existing copyright and licenses.
+- Update download/documentation links and include LICENSE, LICENSE-Zony and NOTICE in the installation package.
+- Keep the existing `mb_NeteaseLyrics.dll` filename, provider identity and saved configuration keys so upgrading replaces the previous plugin and preserves preferences.
+- Matching, lyric formatting, language defaults and network behavior are unchanged from 1.9.2. Historical release packages retain their original filenames and hashes.
+- Assembly/file version: `1.9.3.0`; product version: `1.9.3`.
+
 # 1.9.2 — explicit translation defaults
 
 - Make the existing default preferences explicit: Japanese and Korean use Lyrics + Translation; Cantonese pronunciation is off. The four choices for each language remain available. Existing saved preferences are retained; this update does not reset selected pronunciation modes.

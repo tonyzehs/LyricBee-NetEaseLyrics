@@ -88,10 +88,10 @@ namespace MusicBeePlugin
             _mbApiInterface = new MusicBeeApiInterface();
             _mbApiInterface.Initialise(apiInterfacePtr);
             _about.PluginInfoVersion = PluginInfoVersion;
-            _about.Name = "Netease Lyrics";
+            _about.Name = "LyricBee — NetEase Lyrics";
             _about.Description = "NetEase lyrics. Build " + Assembly.GetExecutingAssembly()
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-            _about.Author = "Charlie Jiang";
+            _about.Author = "Tony Y; original plugin by Charlie Jiang";
             _about.TargetApplication = "";   // current only applies to artwork, lyrics or instant messenger name that appears in the provider drop down selector or target Instant Messenger
             _about.Type = PluginType.LyricsRetrieval;
             _about.VersionMajor = short.Parse(versions[0]);  // your plugin version

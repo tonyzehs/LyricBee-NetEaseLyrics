@@ -1,0 +1,17 @@
+LyricBee — NetEase Lyrics for MusicBee
+
+Independently maintained by Tony Y (https://github.com/tonyzehs).
+This project continues MusicBee-NeteaseLyrics, originally written by
+Charlie Jiang (chariri / cqjjjzr):
+https://github.com/cqjjjzr/MusicBee-NeteaseLyrics
+
+Original plugin copyright: Copyright © chariri 2024.
+The plugin is distributed under the Apache License, Version 2.0 (LICENSE).
+Original source history, copyright notices and contributor credit are preserved.
+
+The NetEase API code incorporates work from ZonyLrcToolsX.
+Copyright (c) 2019 Zony. The corresponding MIT notice is in LICENSE-Zony.
+
+LyricBee changes include lookup reliability, recording matching, lyric alignment,
+translation/pronunciation preferences, settings compatibility, and build/test
+maintenance. See CHANGELOG.md for the development history.

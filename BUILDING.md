@@ -8,7 +8,7 @@ From the repository root, run:
 .\build.ps1
 ```
 
-The script restores locked dependencies, builds Release configurations, and runs the regression executable in both 64-bit (AnyCPU on 64-bit Windows) and 32-bit processes. Both runs load the same AnyCPU plugin DLL that goes into the package. Each run uses an isolated folder containing only the test executable/config and the plugin DLL, checking that embedded dependencies load without loose dependency DLLs. It then produces a MusicBee ZIP containing only `mb_NeteaseLyrics.dll`, a SHA-256 checksum and test reports in `artifacts/dist`. A failed build or regression test stops packaging.
+The script restores locked dependencies, builds Release configurations, and runs the regression executable in both 64-bit (AnyCPU on 64-bit Windows) and 32-bit processes. Both runs load the same AnyCPU plugin DLL that goes into the package. Each run uses an isolated folder containing only the test executable/config and the plugin DLL, checking that embedded dependencies load without loose dependency DLLs. It then produces a MusicBee ZIP containing `mb_NeteaseLyrics.dll`, `LICENSE`, `LICENSE-Zony` and `NOTICE`, a SHA-256 checksum and test reports in `artifacts/dist`. A failed build or regression test stops packaging.
 
 If the SDK executable is not on PATH:
 
@@ -26,7 +26,7 @@ An optional live smoke test makes a public search and known-ID lyric requests, i
 
 An additional optional `--live-recording` check sends the public metadata in the embedded "By Your Side" fixture to NetEase. It compares automatic selection and lyrics with the known recording after an earlier broad search, then checks both matching modes through the MusicBee callback with Custom10 absent. It prints IDs/status only; downloaded lyrics are not saved.
 
-Before a release, install the ZIP in MusicBee, check all four lyric formats and spelling customization, change/reopen settings, perform a background lookup for a different track while another song plays, and retry lyrics with desktop and phone-share Custom10 song URLs. Confirm the plugin description says `NetEase lyrics. Build 1.9.2`; MusicBee's numeric version may still display 1.9.1. Native TLS must be tested inside MusicBee, since a test executable can inherit different runtime/network defaults. Record the MusicBee version, expected NetEase ID, observed lyric identity, translation behavior and outcome for each case below.
+Before a release, install the ZIP in MusicBee, check all four lyric formats and spelling customization, change/reopen settings, perform a background lookup for a different track while another song plays, and retry lyrics with desktop and phone-share Custom10 song URLs. Confirm the plugin description says `NetEase lyrics. Build 1.9.3`; The plugin name should be `LyricBee — NetEase Lyrics`. Native TLS must be tested inside MusicBee, since a test executable can inherit different runtime/network defaults. Record the MusicBee version, expected NetEase ID, observed lyric identity, translation behavior and outcome for each case below.
 
 MusicBee verification checklist (the automated suite does not cover these checks):
 
@@ -40,7 +40,7 @@ MusicBee verification checklist (the automated suite does not cover these checks
 - [ ] Missing tags, network outage, slow/blocked HTTPS, and HTTP opt-out. Confirm bounded waits, fallback and no HTTP when disabled. Do not change system-wide networking for automated tests.
 - [ ] Settings persistence, requested-file Custom10 ownership and one rollback to the previously installed plugin.
 
-Clear incorrect stored lyrics and re-fetch when evaluating fixes; replaying a cached lyric does not test the new search. Back up the previous DLL and `netease_config` from MusicBee's persistent storage before upgrading. Pre.9 saves two-line output as Format=1 plus TwoLineTranslation=true, so earlier binaries see same-line output without a settings crash. Loading old Format=3 files migrates them with a .pre9.bak backup. If the trace reports migration failure, resolve the file write/backup issue before rollback, or restore/reset compatible settings manually. Earlier versions saving settings may discard the new flag; choose two-line output again when returning to 1.9.2.
+Clear incorrect stored lyrics and re-fetch when evaluating fixes; replaying a cached lyric does not test the new search. Back up the previous DLL and `netease_config` from MusicBee's persistent storage before upgrading. Pre.9 saves two-line output as Format=1 plus TwoLineTranslation=true, so earlier binaries see same-line output without a settings crash. Loading old Format=3 files migrates them with a .pre9.bak backup. If the trace reports migration failure, resolve the file write/backup issue before rollback, or restore/reset compatible settings manually. Earlier versions saving settings may discard the new flag; choose two-line output again when returning to 1.9.3.
 
 Plain-HTTP fallback is enabled by default, including configurations from earlier builds. It sends search metadata without encryption only following a legacy HTTPS transport failure, including a timeout. A secure HTTP/API refusal blocks insecure fallback for that lookup. Malformed, incomplete or empty secure responses alone do not authorize HTTP; the other secure interface may still be tried. Turn off **Allow HTTP fallback (unencrypted metadata)** to require HTTPS. No account cookies are used, automatic server-cookie storage is disabled, and redirects are not followed automatically. The fixed `appver` marker identifies an application version and is sent only to legacy interfaces.
 
@@ -82,4 +82,4 @@ Settings checks in MusicBee:
 
 Standalone WinForms previews verify layout and visibility only; they do not reproduce MusicBee's skin engine. MusicBee settings and scrolling checks are separate from these previews.
 
-For 1.9.2, verify a fresh settings folder and an older config without language fields both show Japanese/Korean Lyrics + Translation and Cantonese pronunciation unchecked. A previously saved pronunciation choice remains selected. Preview screenshots do not establish how a particular MusicBee skin renders the settings.
+For 1.9.3, verify a fresh settings folder and an older config without language fields both show Japanese/Korean Lyrics + Translation and Cantonese pronunciation unchecked. A previously saved pronunciation choice remains selected. Preview screenshots do not establish how a particular MusicBee skin renders the settings.

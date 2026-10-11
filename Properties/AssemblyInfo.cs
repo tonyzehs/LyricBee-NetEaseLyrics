@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("NeteaseLyrics")]
-[assembly: AssemblyDescription("A plugin to retrieve lyrics from Netease Cloud Music.")]
+[assembly: AssemblyTitle("LyricBee — NetEase Lyrics")]
+[assembly: AssemblyDescription("NetEase lyrics, translations and pronunciation for MusicBee.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("NeteaseLyrics")]
+[assembly: AssemblyProduct("LyricBee — NetEase Lyrics for MusicBee")]
 [assembly: AssemblyCopyright("Copyright © chariri 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -32,6 +32,6 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.9.2.0")]
-[assembly: AssemblyFileVersion("1.9.2.0")]
-[assembly: AssemblyInformationalVersion("1.9.2")]
+[assembly: AssemblyVersion("1.9.3.0")]
+[assembly: AssemblyFileVersion("1.9.3.0")]
+[assembly: AssemblyInformationalVersion("1.9.3")]

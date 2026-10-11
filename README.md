@@ -1,17 +1,17 @@
-# NetEase Lyrics for MusicBee
+# LyricBee — NetEase Lyrics for MusicBee
 
 A lyrics retrieval plugin for [MusicBee](https://getmusicbee.com/) that downloads synchronized lyrics from NetEase Cloud Music (网易云音乐), with optional translation and pronunciation.
 
-This fork builds on [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics), originally written by Charlie Jiang. Version **1.9.2** includes the reliability, matching and display improvements developed through **1.9.1-pre.1–pre.12**. The original licenses and upstream history are retained.
+LyricBee is an independently maintained continuation of [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics), originally written by Charlie Jiang. Version **1.9.3** includes the reliability, matching and display improvements developed through **1.9.1-pre.1–pre.12**. The original licenses and upstream Git history are retained. Ongoing development and issue tracking take place in this repository on **master**. The [previous fork](https://github.com/tonyzehs/MusicBee-NeteaseLyrics) preserves historical download links.
 
 ## Download and install
 
-Download [NeteaseLyrics_1.9.2.zip](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/download/v1.9.2/NeteaseLyrics_1.9.2.zip) from the [latest release](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/latest). The install ZIP contains only `mb_NeteaseLyrics.dll`; runtime dependencies are embedded. Source packages and checksums are available with each release. Older development releases are retained for reference; use 1.9.2 for normal installation.
+Download [LyricBee-NetEaseLyrics_1.9.3.zip](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/download/v1.9.3/LyricBee-NetEaseLyrics_1.9.3.zip) from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll` and the license/attribution files; runtime dependencies are embedded. Source packages and checksums are available with each release. Older development releases are retained for reference; use 1.9.3 for normal installation.
 
 The plugin targets Windows and .NET Framework 4.8.
 
 1. Close MusicBee and back up the previous plugin DLL and settings if upgrading.
-2. Open MusicBee's **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable NetEase Lyrics. Alternatively, replace the existing DLL while MusicBee is closed.
+2. Open MusicBee's **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**. Alternatively, replace the existing DLL while MusicBee is closed.
 3. In **Tags (2)**, set the lyrics provider priority to use **Netease Cloud Music**.
 4. Open the plugin settings to choose the display format and language preferences.
 5. Re-fetch lyrics for tracks whose display or matching you want to change.
@@ -109,23 +109,24 @@ See [BUILDING.md](BUILDING.md) for the Windows/.NET build instructions and valid
 
 The latest build passes **246 regression checks in both 64-bit and 32-bit test processes**, using the packaged DLL with embedded dependencies. Fixtures cover the MusicBee callback, matching, timing, configuration and controlled network failures; they do not replace native MusicBee testing or guarantee NetEase availability in every region.
 
-The [release history](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases) groups development into seven milestones. Each release uses its original build packages; smaller updates are included in the next milestone. Padded prerelease tags keep the listing in numeric order. Tags identify archived source snapshots, and release dates reflect their publication. Source packages include the documentation from each build; this README describes 1.9.2.
+The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases) includes the seven historical milestones and the first LyricBee release. Each release uses its original build packages; smaller updates are included in the next milestone. Padded prerelease tags keep the listing in numeric order. Tags identify archived source snapshots, and release dates reflect their publication. Source packages include the documentation from each build; this README describes 1.9.3.
 
 | Milestone | Included development steps | Main changes |
 |---|---|---|
-| [1.9.1-pre.1](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/tag/v1.9.1-pre01) | pre.1 | Reliability and build foundation |
-| [1.9.1-pre.4](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/tag/v1.9.1-pre04) | pre.2, pre.3, pre.4 | Safer matching and network recovery |
-| [1.9.1-pre.7](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/tag/v1.9.1-pre07) | pre.5, pre.6, pre.7 | Separate-line bilingual lyrics |
-| [1.9.1-pre.9](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/tag/v1.9.1-pre09) | pre.8, pre.9 | Recording identity, alignment and compatibility |
-| [1.9.1-pre.10](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/tag/v1.9.1-pre10) | pre.10 | Pronunciation and three-line lyrics |
-| [1.9.1-pre.11](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/tag/v1.9.1-pre11) | pre.11 | Soundtrack attribution matching |
-| [1.9.2](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/tag/v1.9.2) | pre.12, 1.9.2 | Language choices and translation defaults |
+| [1.9.1-pre.1](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre01) | pre.1 | Reliability and build foundation |
+| [1.9.1-pre.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre04) | pre.2, pre.3, pre.4 | Safer matching and network recovery |
+| [1.9.1-pre.7](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre07) | pre.5, pre.6, pre.7 | Separate-line bilingual lyrics |
+| [1.9.1-pre.9](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre09) | pre.8, pre.9 | Recording identity, alignment and compatibility |
+| [1.9.1-pre.10](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre10) | pre.10 | Pronunciation and three-line lyrics |
+| [1.9.1-pre.11](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre11) | pre.11 | Soundtrack attribution matching |
+| [1.9.2](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.2) | pre.12, 1.9.2 | Language choices and translation defaults |
+| [1.9.3](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.3) | 1.9.3 | Standalone LyricBee project and display name |
 
 ## 网易云音乐歌词
 
-这是用于 MusicBee 的网易云音乐同步歌词插件，基于 [Charlie Jiang 的原版](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics)继续改进，可显示原文、翻译以及网易云提供的发音。
+LyricBee 是独立维护的 MusicBee 网易云音乐同步歌词插件，基于 [Charlie Jiang 的原版](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics)继续改进，可显示原文、翻译以及网易云提供的发音。
 
-从本仓库的[最新发布](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases/latest)下载 ZIP，在 MusicBee 的**首选项 → 插件**中通过“添加插件”安装并启用，在**标签 (2)** 中调整歌词提供者优先级。更新前请备份旧 DLL 和设置。
+从本仓库的[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 ZIP，在 MusicBee 的**首选项 → 插件**中通过“添加插件”安装并启用，在**标签 (2)** 中调整歌词提供者优先级。更新前请备份旧 DLL 和设置。
 
 默认以两行显示带时间戳的原文与翻译；日语和韩语各自可选择“原文”“原文 + 翻译”“原文 + 发音”“原文 + 发音 + 翻译”，粤语发音默认关闭。发音由网易云提供，插件不自行生成。缺少可用附加文本时保留其他可用文本，最后回退到原文。近期版本保留已保存的个人选项。
 
@@ -153,4 +154,4 @@ The [release history](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/release
 - Add permanent recorded-metadata and synthetic lyric fixtures, both process architectures, real loopback transport probes, settings compatibility checks and reproducible packaging checksums. Byte-identical rebuilds in different folders are not claimed.
 - Shorten clipped settings descriptions, retain explicit saved preferences, improve the disabled spelling option's readability, and offer the four independent Japanese/Korean content choices.
 
-The project remains under [Apache 2.0](LICENSE), with the retained [Zony MIT notice](LICENSE-Zony) for adopted API code. Credit for the original plugin and its upstream history belongs to Charlie Jiang and the upstream contributors.
+The project remains under [Apache 2.0](LICENSE), with the retained [Zony MIT notice](LICENSE-Zony) for adopted API code. Credit for the original plugin and its upstream history belongs to Charlie Jiang and the upstream contributors. LyricBee is maintained by [Tony Y](https://github.com/tonyzehs). See [NOTICE](NOTICE) for attribution.
