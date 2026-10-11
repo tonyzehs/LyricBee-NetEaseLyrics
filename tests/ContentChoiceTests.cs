@@ -12,7 +12,7 @@ internal static partial class Program
 
     private static void ContentChoiceTests()
     {
-        Test("Both languages expose the four requested choices with the old default retained", () =>
+        Test("Both languages expose follow-default and four original-inclusive choices", () =>
         {
             var plugin = PronunciationPlugin(new Fixture((_, __) => Json(Lyrics)), "\"JapaneseText\":0,\"KoreanText\":0");
             using (var panel = new Panel())
@@ -21,9 +21,9 @@ internal static partial class Program
                 foreach (var language in new[] { "Japanese", "Korean" })
                 {
                     var control = LanguageControl(panel, language);
-                    Equal("Lyrics|Lyrics + Translation|Lyrics + Pronunciation|Lyrics + Pronunciation + Translation",
+                    Equal("Follow default|Lyrics|Lyrics + Translation|Lyrics + Pronunciation|Lyrics + Pronunciation + Translation",
                         string.Join("|", control.Items.Cast<string>()));
-                    Equal(1, control.SelectedIndex);
+                    Equal(2, control.SelectedIndex);
                 }
             }
         });
@@ -36,8 +36,8 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    LanguageControl(panel, "Japanese").SelectedIndex = i;
-                    LanguageControl(panel, "Korean").SelectedIndex = 3 - i;
+                    LanguageControl(panel, "Japanese").SelectedIndex = i + 1;
+                    LanguageControl(panel, "Korean").SelectedIndex = 4 - i;
                     plugin.SaveSettings();
                 }
                 var saved = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
@@ -48,8 +48,8 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(i, LanguageControl(panel, "Japanese").SelectedIndex);
-                    Equal(3 - i, LanguageControl(panel, "Korean").SelectedIndex);
+                    Equal(i + 1, LanguageControl(panel, "Japanese").SelectedIndex);
+                    Equal(4 - i, LanguageControl(panel, "Korean").SelectedIndex);
                 }
             }
         });
@@ -77,7 +77,7 @@ internal static partial class Program
                 var handler = PronunciationFixture(PronunciationJson("[00:01]" + text), Wiki(language == "Japanese" ? "日语" : "韩语"));
                 var plugin = PronunciationPlugin(handler, "\"" + language + "Text\":" + choice);
                 SetConfig(plugin, "{\"Format\":1,\"TwoLineTranslation\":" + (separate ? "true" : "false") + ",\"" + language + "Text\":" + choice + "}");
-                var join = separate ? "\n" : choice == 0 ? "/" : " / ";
+                var join = separate ? "\n" : " / ";
                 var expected = choice == 3 ? "[00:01]" + text : "[00:01.000]" + text + join +
                     (choice == 0 ? "译文" : choice == 1 ? "roman" : "roman" + join + "译文");
                 Equal(expected, Lookup(plugin));
@@ -117,14 +117,14 @@ internal static partial class Program
             SetConfig(plugin, "{\"Format\":1,\"JapaneseText\":3}");
             Equal("[00:01]にほんごの歌詞", Lookup(plugin));
         });
-        Test("Global lyrics-only and translation-only override language lyrics-only", () =>
+        Test("Legacy global-only modes migrate without reviving disabled language overrides", () =>
         {
             foreach (var format in new[] { 0, 2 })
             {
                 var handler = PronunciationFixture(PronunciationJson(), Wiki("日语"));
                 var plugin = PronunciationPlugin(handler, "\"JapaneseText\":3");
                 SetConfig(plugin, "{\"Format\":" + format + ",\"JapaneseText\":3,\"KoreanText\":3}");
-                Equal(format == 0 ? "[00:01]にほんごの歌詞" : "[00:01]译文", Lookup(plugin));
+                Equal(format == 0 ? "[00:01]にほんごの歌詞" : "[00:01.000]にほんごの歌詞\n译文", Lookup(plugin));
                 Equal(1, handler.Calls.Count);
             }
         });

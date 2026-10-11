@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace MusicBeePlugin
 {
-    internal enum SongLanguage { Unknown, Cantonese, Japanese, Korean, Other }
+    internal enum SongLanguage { Unknown, Cantonese, Japanese, Korean, Other, English }
 
     internal sealed class LanguagePreferences
     {
@@ -72,6 +72,7 @@ namespace MusicBeePlugin
                         {
                             case "粤语": case "粵語": case "cantonese": case "yue": labels.Add(SongLanguage.Cantonese); break;
                             case "日语": case "日語": case "japanese": case "ja": labels.Add(SongLanguage.Japanese); break;
+                            case "英语": case "英語": case "english": case "en": labels.Add(SongLanguage.English); break;
                             case "韩语": case "韓語": case "korean": case "ko": labels.Add(SongLanguage.Korean); break;
                             default: labels.Add(SongLanguage.Other); break;
                         }
@@ -83,14 +84,16 @@ namespace MusicBeePlugin
 
         internal static NeteaseConfig.AccompanyingText Choice(NeteaseConfig config, SongLanguage language)
         {
+            var choice = config.DefaultContent;
             switch (language)
             {
-                case SongLanguage.Cantonese: return config.EnableCantonesePronunciation ?
-                    NeteaseConfig.AccompanyingText.Pronunciation : NeteaseConfig.AccompanyingText.Translation;
-                case SongLanguage.Japanese: return config.JapaneseText;
-                case SongLanguage.Korean: return config.KoreanText;
-                default: return NeteaseConfig.AccompanyingText.Translation;
+                case SongLanguage.Cantonese: return config.CantoneseOverride ?? choice;
+                case SongLanguage.Japanese: return config.JapaneseOverride ?? choice;
+                case SongLanguage.Korean: return config.KoreanOverride ?? choice;
+                case SongLanguage.English: choice = config.EnglishOverride ?? choice; break;
             }
+            // Pronunciation is offered only for the three supported languages, never guessed from Latin/Han text.
+            return NeteaseConfig.FromExtras(NeteaseConfig.HasTranslation(choice), false);
         }
     }
 }

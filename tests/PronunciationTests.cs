@@ -73,7 +73,7 @@ internal static partial class Program
         {
             var handler = PronunciationFixture(PronunciationJson(roma: null), Wiki("日语"));
             Equal("[00:01.000]にほんごの歌詞\n译文", Lookup(PronunciationPlugin(handler, "\"JapaneseText\":2")));
-            Equal(1, handler.Calls.Count);
+            Equal(2, handler.Calls.Count);
         });
         Test("Three-line selection falls back to original plus pronunciation when translation is absent", () =>
             Equal("[00:01.000]にほんごの歌詞\nroman", Lookup(PronunciationPlugin(
@@ -84,14 +84,14 @@ internal static partial class Program
         Test("Pronunciation-only choice does not silently substitute translation", () =>
             Equal("[00:01]にほんごの歌詞", Lookup(PronunciationPlugin(
                 PronunciationFixture(PronunciationJson(roma: null), Wiki("日语")), "\"JapaneseText\":1"))));
-        Test("Original-only and translation-only formats override language choices without metadata calls", () =>
+        Test("Legacy global-only formats migrate to original-inclusive output without metadata calls", () =>
         {
             foreach (var format in new[] { 0, 2 })
             {
                 var handler = PronunciationFixture(PronunciationJson(), Wiki("日语"));
                 var plugin = PronunciationPlugin(handler, "\"JapaneseText\":2");
                 SetConfig(plugin, "{\"Format\":" + format + ",\"JapaneseText\":2}");
-                Equal(format == 0 ? "[00:01]にほんごの歌詞" : "[00:01]译文", Lookup(plugin));
+                Equal(format == 0 ? "[00:01]にほんごの歌詞" : "[00:01.000]にほんごの歌詞\n译文", Lookup(plugin));
                 Equal(1, handler.Calls.Count);
             }
         });
@@ -159,7 +159,7 @@ internal static partial class Program
         Test("Language metadata parser ignores unrelated UI text and rejects mixed labels", () =>
         {
             Equal(SongLanguage.Cantonese, LanguagePreferences.ParseServiceLanguage((JObject)JObject.Parse(Wiki("粤语"))["data"]));
-            Equal(SongLanguage.Other, LanguagePreferences.ParseServiceLanguage((JObject)JObject.Parse(Wiki("英语"))["data"]));
+            Equal(SongLanguage.English, LanguagePreferences.ParseServiceLanguage((JObject)JObject.Parse(Wiki("英语"))["data"]));
             Equal(SongLanguage.Other, LanguagePreferences.ParseServiceLanguage((JObject)JObject.Parse(Wiki("日语", "韩语"))["data"]));
             Equal(SongLanguage.Unknown, LanguagePreferences.ParseServiceLanguage(JObject.Parse("{\"blocks\":[{\"code\":\"OTHER\",\"creatives\":[{\"creativeType\":\"language\",\"uiElement\":{\"textLinks\":[{\"text\":\"粤语\"}]}}]}]}")));
         });
@@ -279,11 +279,11 @@ internal static partial class Program
             {
                 plugin.Configure(panel.Handle);
                 var choices = panel.Controls.OfType<ComboBox>().Where(c => c.Name == "JapaneseContent" || c.Name == "KoreanContent").OrderBy(c => c.Top).ToArray();
-                Equal(3, choices[0].SelectedIndex); Equal(2, choices[1].SelectedIndex);
-                Equal("Lyrics + Pronunciation + Translation", choices[0].Items[3].ToString());
+                Equal(4, choices[0].SelectedIndex); Equal(3, choices[1].SelectedIndex);
+                Equal("Lyrics + Pronunciation + Translation", choices[0].Items[4].ToString());
                 plugin.SaveSettings();
-                panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex = 0;
-                True(choices.All(c => !c.Enabled));
+                panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex = 0;
+                True(choices.All(c => c.Enabled)); // Layout does not disable content overrides.
             }
             var saved = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
             Equal(1, (int)saved["Format"]); Equal(true, (bool)saved["TwoLineTranslation"]);
@@ -295,7 +295,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                True(panel.Controls.OfType<ComboBox>().Where(c => c.Name == "JapaneseContent" || c.Name == "KoreanContent").All(c => c.SelectedIndex == 1));
+                True(panel.Controls.OfType<ComboBox>().Where(c => c.Name == "JapaneseContent" || c.Name == "KoreanContent").All(c => c.SelectedIndex == 0));
                 Equal(false, panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
             }
         });
@@ -308,10 +308,10 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
-                    True(panel.Controls.OfType<ComboBox>().Where(c => c.Name == "JapaneseContent" || c.Name == "KoreanContent").All(c => c.SelectedIndex == 1));
+                    Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
+                    True(panel.Controls.OfType<ComboBox>().Where(c => c.Name == "JapaneseContent" || c.Name == "KoreanContent").All(c => c.SelectedIndex == 0));
                     Equal(false, panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
-                    Equal(false, panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Cantonese")).Checked);
+                    Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "CantoneseContent").SelectedIndex);
                 }
             }
         });

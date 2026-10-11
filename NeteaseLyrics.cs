@@ -17,7 +17,7 @@ using Newtonsoft.Json.Linq;
 
 namespace MusicBeePlugin
 {
-    public class NeteaseConfig
+    public partial class NeteaseConfig
     {
         // Retain existing stored values; the UI orders Original first without renumbering them.
         public enum AccompanyingText { Translation = 0, Pronunciation = 1, PronunciationAndTranslation = 2, Original = 3 }
@@ -55,8 +55,8 @@ namespace MusicBeePlugin
         private CheckBox _useLegacyCheckBox;
         private Label _spellingDefaultLabel;
         private CheckBox _allowHttpCheckBox;
-        private CheckBox _cantoneseCheckBox;
-        private ComboBox _japaneseComboBox, _koreanComboBox;
+        private CheckBox _translationCheckBox, _pronunciationCheckBox;
+        private ComboBox _interfaceLanguageComboBox, _cantoneseComboBox, _japaneseComboBox, _koreanComboBox, _englishComboBox;
         private readonly LanguagePreferences _languagePreferences = new LanguagePreferences();
 
         private MusicBeeApiInterface _mbApiInterface;
@@ -100,7 +100,7 @@ namespace MusicBeePlugin
             _about.MinInterfaceVersion = MinInterfaceVersion;
             _about.MinApiRevision = MinApiRevision;
             _about.ReceiveNotifications = ReceiveNotificationFlags.DownloadEvents;
-            _about.ConfigurationPanelHeight = 275;
+            _about.ConfigurationPanelHeight = 455;
 
             ReadConfig();
             MigrateLegacySetting();
@@ -114,82 +114,87 @@ namespace MusicBeePlugin
             var configPanel = (Panel)Control.FromHandle(panelHandle);
             if (configPanel == null) return false;
             // Components are automatically disposed when this is called.
+            foreach (Control control in configPanel.Controls.Cast<Control>().ToArray()) control.Dispose();
             configPanel.Controls.Clear();
 
-            // MB_AddPanel doesn't skin the component correctly either
-            //_formatComboBox = (ComboBox)_mbApiInterface.MB_AddPanel(null, PluginPanelDock.ComboBox);
-            _formatComboBox = new ComboBox
+            string T(SettingsLabel label) => SettingsText.Get(label, _config.InterfaceLanguage);
+            void Label(string name, SettingsLabel caption, int y, bool heading = false)
             {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Name = "OutputFormat",
-                AutoSize = true,
-                Location = new Point(0, 0),
-                Width = 390
-            };
-            _formatComboBox.Items.Add("Lyrics only");
-            _formatComboBox.Items.Add("Lyrics + extras (same line: JP / CN)");
-            _formatComboBox.Items.Add("Translation only");
-            _formatComboBox.Items.Add("Lyrics + extras (separate lines)");
-            _formatComboBox.SelectedIndex = (int)_config.Format;
+                var label = new Label { Name = name, Text = T(caption), Location = new Point(0, y),
+                    AutoSize = true, ForeColor = configPanel.ForeColor };
+                if (heading)
+                {
+                    var font = new Font(configPanel.Font, FontStyle.Bold);
+                    label.Font = font;
+                    label.Disposed += (sender, e) => font.Dispose();
+                }
+                configPanel.Controls.Add(label);
+            }
+            Label("InterfaceLanguageLabel", SettingsLabel.InterfaceLanguage, 3);
+            _interfaceLanguageComboBox = new ComboBox { Name = "InterfaceLanguage", DropDownStyle = ComboBoxStyle.DropDownList,
+                Location = new Point(130, 0), Width = 260 };
+            _interfaceLanguageComboBox.Items.AddRange(new object[] { "Automatic / 自动", "English", "简体中文" });
+            _interfaceLanguageComboBox.SelectedIndex = (int)_config.InterfaceLanguage;
+            configPanel.Controls.Add(_interfaceLanguageComboBox);
+
+            Label("DefaultDisplayHeading", SettingsLabel.Defaults, 36, true);
+            Label("OriginalAlways", SettingsLabel.OriginalAlways, 58);
+            _translationCheckBox = new CheckBox { Name = "ShowTranslation", Text = T(SettingsLabel.Translation),
+                Location = new Point(0, 80), AutoSize = true, Checked = NeteaseConfig.HasTranslation(_config.DefaultContent), ForeColor = configPanel.ForeColor };
+            _pronunciationCheckBox = new CheckBox { Name = "ShowPronunciation", Text = T(SettingsLabel.Pronunciation),
+                Location = new Point(160, 80), AutoSize = true, Checked = NeteaseConfig.HasPronunciation(_config.DefaultContent), ForeColor = configPanel.ForeColor };
+            configPanel.Controls.Add(_translationCheckBox); configPanel.Controls.Add(_pronunciationCheckBox);
+            Label("LayoutLabel", SettingsLabel.Layout, 111);
+            _formatComboBox = new ComboBox { Name = "OutputLayout", DropDownStyle = ComboBoxStyle.DropDownList,
+                Location = new Point(130, 108), Width = 260 };
+            _formatComboBox.Items.AddRange(new object[] { T(SettingsLabel.SeparateLines), T(SettingsLabel.SameLine) });
+            _formatComboBox.SelectedIndex = _config.UseSeparateLines ? 0 : 1;
             configPanel.Controls.Add(_formatComboBox);
 
-            _cantoneseCheckBox = new CheckBox { Text = "Cantonese: enable pronunciation", Location = new Point(0, 35),
-                Checked = _config.EnableCantonesePronunciation, AutoSize = true };
-            configPanel.Controls.Add(_cantoneseCheckBox);
-            _japaneseComboBox = AddLanguageChoice(configPanel, "Japanese:", "JapaneseContent", 65, _config.JapaneseText);
-            _koreanComboBox = AddLanguageChoice(configPanel, "Korean:", "KoreanContent", 95, _config.KoreanText);
-            configPanel.Controls.Add(new Label { Text = "Combined formats only. Re-fetch lyrics after changing.",
-                Location = new Point(0, 130), AutoSize = true });
-            EventHandler updateLanguageOptions = (sender, e) =>
-            {
-                var combined = _formatComboBox.SelectedIndex == 1 || _formatComboBox.SelectedIndex == 3;
-                _cantoneseCheckBox.Enabled = _japaneseComboBox.Enabled = _koreanComboBox.Enabled = combined;
-            };
-            _formatComboBox.SelectedIndexChanged += updateLanguageOptions;
-            updateLanguageOptions(null, EventArgs.Empty);
-
-            _useLegacyCheckBox = new CheckBox
-            {
-                Text = "Customize spelling matching",
-                Location = new Point(0, 165),
-                Checked = _config.UseLegacyMatch,
-                AutoSize = true
-            };
-
-            _fuzzyCheckBox = new CheckBox
-            {
-                Text = "Allow small spelling differences",
-                Location = new Point(18, 195),
-                Checked = _config.Fuzzy,
-                Enabled = _config.UseLegacyMatch,
-                AutoSize = true
-            };
-            _spellingDefaultLabel = new Label { Text = "Default: allow small spelling differences.",
-                Location = new Point(18, 195), AutoSize = true, Name = "SpellingDefault" };
-
+            Label("LanguageOverridesHeading", SettingsLabel.Overrides, 146, true);
+            _cantoneseComboBox = AddLanguageChoice(configPanel, SettingsLabel.Cantonese, "CantoneseContent", 170, _config.CantoneseOverride);
+            _japaneseComboBox = AddLanguageChoice(configPanel, SettingsLabel.Japanese, "JapaneseContent", 200, _config.JapaneseOverride);
+            _koreanComboBox = AddLanguageChoice(configPanel, SettingsLabel.Korean, "KoreanContent", 230, _config.KoreanOverride);
+            _englishComboBox = AddLanguageChoice(configPanel, SettingsLabel.English, "EnglishContent", 260, _config.EnglishOverride, true);
+            var note = new Label { Name = "RefetchHint", Text = T(SettingsLabel.Refetch), Location = new Point(0, 296),
+                Size = new Size(430, 38), ForeColor = configPanel.ForeColor, AutoSize = false };
+            configPanel.Controls.Add(note);
+            Label("MatchingNetworkHeading", SettingsLabel.MatchingNetwork, 342, true);
+            _useLegacyCheckBox = new CheckBox { Name = "CustomizeSpelling", Text = T(SettingsLabel.CustomizeSpelling),
+                Location = new Point(0, 366), Checked = _config.UseLegacyMatch, AutoSize = true, ForeColor = configPanel.ForeColor };
+            _fuzzyCheckBox = new CheckBox { Name = "SmallSpellingDifferences", Text = T(SettingsLabel.SmallDifferences),
+                Location = new Point(18, 390), Checked = _config.Fuzzy, AutoSize = true, ForeColor = configPanel.ForeColor };
+            _spellingDefaultLabel = new Label { Name = "SpellingDefault", Text = T(SettingsLabel.DefaultSpelling),
+                Location = new Point(18, 390), AutoSize = true, ForeColor = configPanel.ForeColor };
             EventHandler updateSpellingOption = (sender, e) =>
             {
-                // Without customization, the default permits small spelling differences.
-                _fuzzyCheckBox.Enabled = _useLegacyCheckBox.Checked;
-                // Disabled native checkbox text can be unreadable on MusicBee's dark skin.
-                _fuzzyCheckBox.Visible = _useLegacyCheckBox.Checked;
+                _fuzzyCheckBox.Enabled = _fuzzyCheckBox.Visible = _useLegacyCheckBox.Checked;
                 _spellingDefaultLabel.Visible = !_useLegacyCheckBox.Checked;
             };
             _useLegacyCheckBox.CheckedChanged += updateSpellingOption;
             updateSpellingOption(null, EventArgs.Empty);
-
-            configPanel.Controls.Add(_useLegacyCheckBox);
-            configPanel.Controls.Add(_fuzzyCheckBox);
-            configPanel.Controls.Add(_spellingDefaultLabel);
-            _allowHttpCheckBox = new CheckBox
-            {
-                Text = "Allow HTTP fallback (unencrypted metadata)",
-                Location = new Point(0, 225),
-                Checked = _config.AllowInsecureHttp,
-                AutoSize = true
-            };
+            configPanel.Controls.Add(_useLegacyCheckBox); configPanel.Controls.Add(_fuzzyCheckBox); configPanel.Controls.Add(_spellingDefaultLabel);
+            _allowHttpCheckBox = new CheckBox { Name = "AllowHttpFallback", Text = T(SettingsLabel.HttpFallback),
+                Location = new Point(0, 420), Checked = _config.AllowInsecureHttp, AutoSize = true, ForeColor = configPanel.ForeColor };
             configPanel.Controls.Add(_allowHttpCheckBox);
 
+            Action resize = () =>
+            {
+                foreach (var combo in configPanel.Controls.OfType<ComboBox>())
+                    combo.Width = Math.Max(140, Math.Min(360, configPanel.ClientSize.Width - combo.Left - 8));
+                note.Width = Math.Max(200, configPanel.ClientSize.Width - 8);
+            };
+            // The handler owns only this set of controls; remove it when rebuilding the language UI.
+            EventHandler resized = (sender, e) => resize();
+            configPanel.SizeChanged += resized;
+            note.Disposed += (sender, e) => configPanel.SizeChanged -= resized;
+            resize();
+            _interfaceLanguageComboBox.SelectedIndexChanged += (sender, e) =>
+            {
+                CaptureSettings();
+                foreach (Control control in configPanel.Controls.Cast<Control>().ToArray()) control.Dispose();
+                Configure(panelHandle);
+            };
             return false;
         }
 
@@ -197,47 +202,55 @@ namespace MusicBeePlugin
             NeteaseConfig.AccompanyingText.Original, NeteaseConfig.AccompanyingText.Translation,
             NeteaseConfig.AccompanyingText.Pronunciation, NeteaseConfig.AccompanyingText.PronunciationAndTranslation };
 
-        private static ComboBox AddLanguageChoice(Panel panel, string label, string name, int y, NeteaseConfig.AccompanyingText value)
+        private ComboBox AddLanguageChoice(Panel panel, SettingsLabel caption, string name, int y,
+            NeteaseConfig.AccompanyingText? value, bool english = false)
         {
-            panel.Controls.Add(new Label { Text = label, Location = new Point(0, y + 3), AutoSize = true });
-            var choice = new ComboBox { Name = name, DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(90, y), Width = 300 };
-            choice.Items.AddRange(new object[] { "Lyrics", "Lyrics + Translation", "Lyrics + Pronunciation", "Lyrics + Pronunciation + Translation" });
-            var selected = Array.IndexOf(ContentChoices, value);
-            choice.SelectedIndex = selected >= 0 ? selected : 1;
-            // Keep every menu item visible even on larger host fonts.
+            panel.Controls.Add(new Label { Text = SettingsText.Get(caption, _config.InterfaceLanguage),
+                Location = new Point(0, y + 3), AutoSize = true, ForeColor = panel.ForeColor });
+            var choice = new ComboBox { Name = name, DropDownStyle = ComboBoxStyle.DropDownList,
+                Location = new Point(130, y), Width = 300 };
+            var labels = new[] { SettingsLabel.FollowDefault, SettingsLabel.Original, SettingsLabel.OriginalTranslation,
+                SettingsLabel.OriginalPronunciation, SettingsLabel.AllThree };
+            choice.Items.AddRange(labels.Take(english ? 3 : 5).Select(l => (object)SettingsText.Get(l, _config.InterfaceLanguage)).ToArray());
+            choice.SelectedIndex = value.HasValue ? Array.IndexOf(ContentChoices, value.Value) + 1 : 0;
             choice.DropDownWidth = Math.Max(choice.Width, choice.Items.Cast<string>()
-                .Max(text => TextRenderer.MeasureText(text, panel.Font).Width) + SystemInformation.VerticalScrollBarWidth + 12);
+                .Max(s => TextRenderer.MeasureText(s, panel.Font).Width) + SystemInformation.VerticalScrollBarWidth + 12);
             panel.Controls.Add(choice);
             return choice;
         }
 
-        // called by MusicBee when the user clicks Apply or Save in the MusicBee Preferences screen.
-        // It's up to you to figure out whether anything has changed and needs updating
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public void SaveSettings()
         {
-            if (_formatComboBox == null || _formatComboBox.IsDisposed ||
-                _fuzzyCheckBox == null || _fuzzyCheckBox.IsDisposed ||
-                _useLegacyCheckBox == null || _useLegacyCheckBox.IsDisposed) return;
-            if (_formatComboBox.SelectedIndex < 0 || _formatComboBox.SelectedIndex >= _formatComboBox.Items.Count)
-                _config.Format = NeteaseConfig.OutputFormat.BothTwoLines;
-            else
-                _config.Format = (NeteaseConfig.OutputFormat)_formatComboBox.SelectedIndex;
-            _config.Fuzzy = _fuzzyCheckBox.Checked;
-            _config.UseLegacyMatch = _useLegacyCheckBox.Checked;
-            if (_allowHttpCheckBox != null && !_allowHttpCheckBox.IsDisposed)
-                _config.AllowInsecureHttp = _allowHttpCheckBox.Checked;
-            if (_cantoneseCheckBox != null && !_cantoneseCheckBox.IsDisposed) _config.EnableCantonesePronunciation = _cantoneseCheckBox.Checked;
-            if (_japaneseComboBox != null && !_japaneseComboBox.IsDisposed)
-                _config.JapaneseText = SelectedContent(_japaneseComboBox);
-            if (_koreanComboBox != null && !_koreanComboBox.IsDisposed)
-                _config.KoreanText = SelectedContent(_koreanComboBox);
+            if (!CaptureSettings()) return;
             SaveSettingsInternal();
         }
 
-        private static NeteaseConfig.AccompanyingText SelectedContent(ComboBox control) =>
-            control.SelectedIndex >= 0 && control.SelectedIndex < ContentChoices.Length ?
-                ContentChoices[control.SelectedIndex] : NeteaseConfig.AccompanyingText.Translation;
+        private bool CaptureSettings()
+        {
+            if (_formatComboBox == null || _formatComboBox.IsDisposed ||
+                _translationCheckBox == null || _translationCheckBox.IsDisposed ||
+                _pronunciationCheckBox == null || _pronunciationCheckBox.IsDisposed ||
+                _useLegacyCheckBox == null || _useLegacyCheckBox.IsDisposed) return false;
+            _config.ShowTranslation = _translationCheckBox.Checked;
+            _config.ShowPronunciation = _pronunciationCheckBox.Checked;
+            _config.SeparateLines = _formatComboBox.SelectedIndex != 1;
+            _config.DisplaySettingsVersion = 1;
+            _config.InterfaceLanguage = _interfaceLanguageComboBox.SelectedIndex >= 0 ?
+                (NeteaseConfig.UiLanguage)_interfaceLanguageComboBox.SelectedIndex : NeteaseConfig.UiLanguage.Automatic;
+            _config.CantoneseOverride = SelectedContent(_cantoneseComboBox);
+            _config.JapaneseOverride = SelectedContent(_japaneseComboBox);
+            _config.KoreanOverride = SelectedContent(_koreanComboBox);
+            _config.EnglishOverride = SelectedContent(_englishComboBox);
+            _config.Fuzzy = _fuzzyCheckBox.Checked;
+            _config.UseLegacyMatch = _useLegacyCheckBox.Checked;
+            _config.AllowInsecureHttp = _allowHttpCheckBox.Checked;
+            return true;
+        }
+
+        private static NeteaseConfig.AccompanyingText? SelectedContent(ComboBox control) =>
+            control.SelectedIndex > 0 && control.SelectedIndex < control.Items.Count ?
+                (NeteaseConfig.AccompanyingText?)ContentChoices[control.SelectedIndex - 1] : null;
 
         private static NeteaseConfig.AccompanyingText ReadChoice(JToken value) =>
             value != null && (value.Type == JTokenType.Integer || value.Type == JTokenType.String) &&
@@ -251,11 +264,17 @@ namespace MusicBeePlugin
             {
                 var configPath = Path.Combine(_mbApiInterface.Setting_GetPersistentStoragePath(), ConfigFilename);
                 temporaryPath = configPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
-                var stored = JObject.FromObject(_config);
-                stored["TwoLineTranslation"] = _config.Format == NeteaseConfig.OutputFormat.BothTwoLines;
-                if (_config.Format == NeteaseConfig.OutputFormat.BothTwoLines) stored["Format"] = 1;
+                var stored = _config.StoredDisplaySettings();
                 File.WriteAllText(temporaryPath, stored.ToString(Formatting.None), Encoding.UTF8);
-                if (File.Exists(configPath)) File.Replace(temporaryPath, configPath, null);
+                if (File.Exists(configPath))
+                {
+                    var backup = configPath + ".pre-display.bak";
+                    var legacy = true;
+                    try { legacy = JObject.Parse(File.ReadAllText(configPath, Encoding.UTF8))["DisplaySettingsVersion"]?.ToString() != "1"; }
+                    catch (JsonException) { /* Preserve malformed settings as well before replacing them. */ }
+                    if (legacy && !File.Exists(backup)) File.Copy(configPath, backup);
+                    File.Replace(temporaryPath, configPath, null);
+                }
                 else File.Move(temporaryPath, configPath);
                 return true;
             }
@@ -329,16 +348,17 @@ namespace MusicBeePlugin
                         // An explicit instrumental is authoritative; do not replace it with another listing's words.
                         if (NeteaseApi.IsInstrumental(attempt)) return result;
                         if (!LyricProcessor.HasLyricText(attempt?.lrc?.lyric)) continue;
-                        var choice = NeteaseConfig.AccompanyingText.Translation;
-                        var combined = _config.Format == NeteaseConfig.OutputFormat.Both || _config.Format == NeteaseConfig.OutputFormat.BothTwoLines;
-                        if (combined && (_config.EnableCantonesePronunciation || _config.JapaneseText != choice || _config.KoreanText != choice))
+                        var choice = _config.DefaultContent;
+                        if (_config.NeedsLanguageChoice)
                             choice = LanguagePreferences.Choice(_config, _languagePreferences.Resolve(candidate, attempt, session,
-                                _config.JapaneseText == NeteaseConfig.AccompanyingText.Original || _config.KoreanText == NeteaseConfig.AccompanyingText.Original));
+                                // Changed content overrides also apply to songs without a pronunciation track.
+                                new[] { _config.CantoneseOverride, _config.JapaneseOverride, _config.KoreanOverride, _config.EnglishOverride }
+                                    .AnyDifferent(_config.DefaultContent)));
                         var formatted = FormatLyrics(attempt, choice, session.Report, out var usableExtras);
                         if (usableExtras > bestExtras) { result = formatted; bestExtras = usableExtras; }
                         var wanted = choice == NeteaseConfig.AccompanyingText.Original ? 0 :
                             choice == NeteaseConfig.AccompanyingText.PronunciationAndTranslation ? 2 : 1;
-                        if (_config.Format == NeteaseConfig.OutputFormat.Original || usableExtras >= wanted) break;
+                        if (usableExtras >= wanted) break;
                     }
                     return result;
                 }
@@ -355,25 +375,11 @@ namespace MusicBeePlugin
             usableExtras = 0;
             var original = result?.lrc?.lyric;
             if (string.IsNullOrWhiteSpace(original)) return null;
-            var translation = result.tlyric?.lyric;
-            if (_config.Format == NeteaseConfig.OutputFormat.Original ||
-                (_config.Format != NeteaseConfig.OutputFormat.Translation && choice == NeteaseConfig.AccompanyingText.Original))
-                return original;
-            if (_config.Format == NeteaseConfig.OutputFormat.Translation)
-            {
-                usableExtras = LyricProcessor.HasLyricText(translation) ? 1 : 0;
-                return usableExtras == 1 ? translation : original;
-            }
-            if (choice != NeteaseConfig.AccompanyingText.Translation)
-                return LyricProcessor.MergePronunciation(original, result.romalrc?.lyric,
-                    choice == NeteaseConfig.AccompanyingText.PronunciationAndTranslation ? translation : null,
-                    _config.Format == NeteaseConfig.OutputFormat.BothTwoLines, trace, out usableExtras);
-            usableExtras = LyricProcessor.HasLyricText(translation) ? 1 : 0;
-            if (usableExtras == 0) return original;
-            var merged = LyricProcessor.MergeTranslation(original, translation,
-                _config.Format == NeteaseConfig.OutputFormat.BothTwoLines, trace);
-            // Untimed lyrics cannot be aligned; preserve them rather than returning an empty string.
-            return string.IsNullOrWhiteSpace(merged) ? original : merged;
+            if (choice == NeteaseConfig.AccompanyingText.Original) return original;
+            return LyricProcessor.MergePronunciation(original,
+                NeteaseConfig.HasPronunciation(choice) ? result.romalrc?.lyric : null,
+                NeteaseConfig.HasTranslation(choice) ? result.tlyric?.lyric : null,
+                _config.UseSeparateLines, trace, out usableExtras);
         }
 
         private string ReadTag(string source, MetaDataType tag)
@@ -396,6 +402,9 @@ namespace MusicBeePlugin
                 var configText = File.ReadAllText(configPath, Encoding.UTF8);
                 // Bad new preferences must not discard older valid settings, especially HTTP opt-out.
                 var storedConfig = JObject.Parse(configText);
+                var displayConfig = (JObject)storedConfig.DeepClone();
+                foreach (var key in new[] { "DisplaySettingsVersion", "ShowTranslation", "ShowPronunciation", "SeparateLines", "InterfaceLanguage",
+                    "CantoneseOverride", "JapaneseOverride", "KoreanOverride", "EnglishOverride" }) storedConfig.Remove(key);
                 var japanese = storedConfig["JapaneseText"];
                 var korean = storedConfig["KoreanText"];
                 var cantonese = storedConfig["EnableCantonesePronunciation"];
@@ -409,6 +418,7 @@ namespace MusicBeePlugin
                 _config.EnableCantonesePronunciation = cantonese != null &&
                     (cantonese.Type == JTokenType.Boolean || cantonese.Type == JTokenType.String) &&
                     bool.TryParse(cantonese.ToString(), out var enabled) && enabled;
+                _config.LoadDisplaySettings(displayConfig);
                 if (storedConfig["Format"]?.ToString() == "3")
                 {
                     try
@@ -435,6 +445,8 @@ namespace MusicBeePlugin
                 var noTranslatePath = Path.Combine(_mbApiInterface.Setting_GetPersistentStoragePath(), NoTranslateFilename);
                 if (!File.Exists(noTranslatePath)) return;
                 _config.Format = NeteaseConfig.OutputFormat.Original;
+                _config.ShowTranslation = _config.ShowPronunciation = false;
+                _config.CantoneseOverride = _config.JapaneseOverride = _config.KoreanOverride = _config.EnglishOverride = null;
                 if (SaveSettingsInternal()) File.Delete(noTranslatePath);
             }
             catch (Exception ex) { Trace("Failed to migrate legacy config: " + ex.GetType().Name); }

@@ -22,6 +22,13 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Contains("--settings-tests"))
+        {
+            DisplaySettingsTests(); ContentChoiceTests();
+            Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
+            return _failed == 0 ? 0 : 1;
+        }
+        if (args.Contains("--settings-preview")) return SettingsPreview(args.Last());
         if (args.Contains("--live")) return LiveSmoke();
         if (args.Contains("--live-recording")) return LiveRecording();
         if (args.Contains("--live-pronunciation")) return LivePronunciation();
@@ -166,14 +173,14 @@ internal static partial class Program
             var handler = new Fixture((_, __) => Json("{\"code\":200,\"lrc\":{\"lyric\":\"[00:01.00]Hello\"},\"tlyric\":{\"lyric\":\" \"}}"));
             Equal("[00:01.00]Hello", Lookup(CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null)));
         });
-        Test("Original / translated / combined settings still produce expected output", () =>
+        Test("Legacy translation-only now includes original lyrics while other formats retain their output", () =>
         {
             foreach (var format in new[] { 0, 1, 2 })
             {
                 var handler = new Fixture((_, __) => Json("{\"code\":200,\"lrc\":{\"lyric\":\"[00:01.00]Hello\"},\"tlyric\":{\"lyric\":\"[00:01.00]Translation\"}}"));
                 var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
                 SetConfig(plugin, "{\"Format\":" + format + "}");
-                Equal(new[] { "[00:01.00]Hello", "[00:01.000]Hello/Translation", "[00:01.00]Translation" }[format], Lookup(plugin));
+                Equal(new[] { "[00:01.00]Hello", "[00:01.000]Hello / Translation", "[00:01.000]Hello\nTranslation" }[format], Lookup(plugin));
             }
         });
         Test("Unrelated provider skips network and host access", () =>
@@ -210,7 +217,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
+                    Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
                     plugin.SaveSettings();
                 }
                 plugin.SaveSettings(); // MusicBee may invoke this after the panel is disposed.
@@ -555,6 +562,7 @@ internal static partial class Program
     {
         FormattingCompatibilityTests();
         PronunciationTests();
+        DisplaySettingsTests();
         Test("Default host output uses two lines with one timestamp and no added slash", () =>
         {
             var handler = new Fixture((_, __) => Json(JsonConvert.SerializeObject(new
@@ -569,8 +577,8 @@ internal static partial class Program
         {
             var scenarios = new Dictionary<string, int>
             {
-                ["{}"] = 3, ["{\"AllowInsecureHttp\":false}"] = 3,
-                ["{\"Format\":0}"] = 0, ["{\"Format\":1}"] = 1, ["{\"Format\":2}"] = 2
+                ["{}"] = 0, ["{\"AllowInsecureHttp\":false}"] = 0,
+                ["{\"Format\":0}"] = 0, ["{\"Format\":1}"] = 1, ["{\"Format\":2}"] = 0
             };
             foreach (var scenario in scenarios)
             {
@@ -580,10 +588,9 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
+                    Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
                 }
-                Equal(scenario.Value == 3 || scenario.Value == 1 ? "Hello / Translation" :
-                    scenario.Value == 2 ? "Translation" : "Hello", Lookup(plugin));
+                Equal(scenario.Key == "{\"Format\":0}" ? "Hello" : "Hello / Translation", Lookup(plugin));
             }
         });
         Test("Two-line format persists across closing and reopening the settings", () =>
@@ -593,7 +600,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
+                Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
                 plugin.SaveSettings();
             }
             var saved = JsonConvert.DeserializeObject<NeteaseConfig>(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
@@ -602,7 +609,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
+                Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
             }
         });
         Test("Two-line mode leaves blank or missing translations alone", () =>

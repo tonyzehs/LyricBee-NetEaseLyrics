@@ -1,0 +1,43 @@
+# Settings redesign — 1.9.4-test.1
+
+This is a local test build. The current public release remains 1.9.3.
+
+## Display settings
+
+- Original lyrics are always included. There is no original checkbox or translation-only mode.
+- **Default display:** translation on, pronunciation off. The two checkboxes select extras independently.
+- **Layout:** separate lines by default, or the same line separated by ` / `. Layout applies across languages. Untimed texts retain their existing alignment and verse safeguards.
+- **Language overrides:** Cantonese, Japanese and Korean each offer Follow default, Lyrics, Lyrics + Translation, Lyrics + Pronunciation, and Lyrics + Pronunciation + Translation. English offers Follow default, Lyrics, and Lyrics + Translation. An override replaces the default content selection for that language; it remains active even when default extras are off.
+- Pronunciation is supplied by NetEase for supported songs. Missing or unalignable extras are omitted independently; original lyrics remain available.
+- English identification uses NetEase's language metadata. French and other languages are not classified as English merely because they use Latin letters. Unresolved or mixed-language labels retain the default translation preference. Existing conservative Japanese/Korean script fallback remains.
+- **Interface language:** Automatic / English / 简体中文. Automatic follows the process's Windows UI culture; all Chinese UI cultures select Simplified Chinese text. Changing it preserves unsaved choices and does not change the lyrics' language.
+
+## Existing settings and rollback
+
+Existing saved Japanese/Korean and Cantonese pronunciation choices are migrated. A previous global Lyrics-only setting keeps extras off. Translation-only becomes original + translation. Existing HTTP opt-out and spelling choices are retained.
+
+The first save of an older settings file preserves `netease_config.pre-display.bak` beside `netease_config` in MusicBee's persistent plugin storage. Backups are not overwritten. Older builds receive valid legacy format values, but cannot represent every new default/override combination. Close MusicBee and restore the backup as `netease_config` if you need the exact previous preferences after rolling back.
+
+## Download and install
+
+1. Use the supplied local `LyricBee-NetEaseLyrics_1.9.4-test.1.zip` package. It is not on the GitHub releases page.
+2. Close MusicBee and keep a copy of your existing `mb_NeteaseLyrics.dll` for rollback.
+3. Replace that DLL in MusicBee's Plugins directory with the DLL from the ZIP. Keep only one installed copy.
+4. Restart MusicBee, open LyricBee's settings and try both interface languages.
+5. Apply settings, then re-fetch lyrics. MusicBee keeps previously stored lyrics until you search again.
+
+Try Japanese triple-line output, Cantonese pronunciation, Korean output, English with and without translation, and French with the English override off. Also test switching layout, changing the default while an override is active, and reopening MusicBee to check saved settings.
+
+## 下载与安装
+
+1. 使用随附的本地测试包 `LyricBee-NetEaseLyrics_1.9.4-test.1.zip`；此版本尚未发布到 GitHub Releases。
+2. 关闭 MusicBee，并备份现有的 `mb_NeteaseLyrics.dll`，以便回退。
+3. 用 ZIP 中的 DLL 替换 MusicBee 的 Plugins 目录中的同名文件。只保留一份插件。
+4. 重启 MusicBee，打开 LyricBee 设置，测试 English 和简体中文界面。
+5. 应用设置后，重新搜索歌词。MusicBee 已保存的歌词不会自动替换。
+
+原文歌词始终显示。默认开启翻译、关闭发音，并采用分行显示。“语言覆盖设置”可为粤语、日语、韩语和英语指定独立选择；“使用默认设置”跟随上方的默认选项。英语不提供发音选项。翻译和发音取决于网易云是否提供，无法安全配对的附加内容会被省略。
+
+请测试日语三行显示、粤语发音、韩语、英语翻译开关，以及关闭英语翻译后法语歌曲是否仍能显示翻译。另请测试排列方式切换、默认选项与语言覆盖设置的关系，以及重启后的设置保存。
+
+首次保存旧版设置时，插件会在 MusicBee 的插件持久化存储目录中保留 `netease_config.pre-display.bak`，且不会覆盖已有备份。需要恢复旧版的完整设置时，请关闭 MusicBee，再将该备份恢复为 `netease_config`。旧版仅翻译模式会迁移为原文加翻译；旧版仅原文模式仍保持附加内容关闭。
