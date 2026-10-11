@@ -3,7 +3,7 @@
 - Make the existing default preferences explicit: Japanese and Korean use Lyrics + Translation; Cantonese pronunciation is off. The four choices for each language remain available. Existing saved preferences are retained; this update does not reset selected pronunciation modes.
 - The earlier demonstration preview deliberately enabled pronunciation; those were not fresh-install defaults. Updated default preview uses the unmodified settings, showing translation only and Cantonese pronunciation off.
 - Retain pre.12's matching, formatting, language controls and readability changes. Default translation uses separate lines. Re-fetch lyrics after changing preferences.
-- Assembly/file version: `1.9.2.0`; product version: `1.9.2`. Local build only; no GitHub release published.
+- Assembly/file version: `1.9.2.0`; product version: `1.9.2`. Published in this fork as the latest of seven reconstructed milestones; smaller development steps are folded into subsequent milestones. The saved source packages retain their original development notes; release tags identify those exact snapshots.
 
 # 1.9.1-pre.12 — four language choices and readable settings
 
