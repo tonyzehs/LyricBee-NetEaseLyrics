@@ -1,6 +1,6 @@
 # LyricBee — NetEase Lyrics for MusicBee
 
-**EN** | [ZH（简体中文）](README.zh-CN.md)
+**EN** | [ZH（简体中文）](README.zh-CN.md) | **[Download & install ↓](#download-and-install)**
 
 A lyrics retrieval plugin for [MusicBee](https://getmusicbee.com/) that downloads synchronized lyrics from NetEase Cloud Music (网易云音乐), with optional translation and pronunciation.
 
