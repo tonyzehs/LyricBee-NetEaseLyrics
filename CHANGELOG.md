@@ -1,3 +1,20 @@
+# 1.9.2 — explicit translation defaults
+
+- Make the existing default preferences explicit: Japanese and Korean use Lyrics + Translation; Cantonese pronunciation is off. The four choices for each language remain available. Existing saved preferences are retained; this update does not reset selected pronunciation modes.
+- The earlier demonstration preview deliberately enabled pronunciation; those were not fresh-install defaults. Updated default preview uses the unmodified settings, showing translation only and Cantonese pronunciation off.
+- Retain pre.12's matching, formatting, language controls and readability changes. Default translation uses separate lines. Re-fetch lyrics after changing preferences.
+- Assembly/file version: `1.9.2.0`; product version: `1.9.2`. Local build only; no GitHub release published.
+
+# 1.9.1-pre.12 — four language choices and readable settings
+
+- Add four Japanese and Korean choices in the requested order: Lyrics; Lyrics + Translation; Lyrics + Pronunciation; Lyrics + Pronunciation + Translation. Each language is independent. Lyrics returns the unchanged original and stops retries once a usable original exists. The global Lyrics only and Translation only choices retain precedence.
+- Preserve the numeric meaning of existing language settings; add Lyrics as value 3 and map UI order explicitly. Pre.10/pre.11 safely fall back to translation for this new value, and saving settings there can discard it. Back up settings before rollback. Defaults remain Lyrics + Translation.
+- Classify original-only language choices even without a pronunciation track, using the existing bounded HTTPS language request and cache. Failed metadata uses conservative kana/Hangul inference; unresolved, unsupported or multilingual labels retain general translation behavior. The two-second metadata limit, one metadata request per lookup, request caps and deadlines remain unchanged.
+- Replace the inactive spelling checkbox with a normal readable hint while customization is off. Show the enabled checkbox when customization is on and preserve its saved choice when toggling. MusicBee's native disabled checkbox rendering caused the dark text seen on a dark skin.
+- Shorten the host description to NetEase lyrics plus the build number; shorten global format labels, keep JP / CN spacing, and widen dropdown lists as needed for their measured contents.
+- Add 14 regression checks covering both languages/all four choices/both combined layouts, stable save/reopen values, global precedence, original metadata preservation, missing pronunciation, bounded metadata failure, caching, retry counts and spelling-hint visibility. Re-fetch stored lyrics after changing preferences. This is a local testing build; native MusicBee appearance still needs confirmation.
+- Assembly/file version: `1.9.1.11`; product version: `1.9.1-pre.12`.
+
 # 1.9.1-pre.11 — guarded soundtrack attribution matching
 
 - Fix the supplied Stromae/Pomme **Ma Meilleure Ennemie** lookup: NetEase's matching recording appends `(from the series Arcane League of Legends)` while the local title omits it. Recognize terminal English film/series/game/anime/musical attributions in parentheses, brackets or a spaced dash suffix. Bare `from X` also requires soundtrack/OST/original-score album context.

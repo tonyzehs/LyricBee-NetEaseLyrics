@@ -278,11 +278,11 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                var choices = panel.Controls.OfType<ComboBox>().Where(c => c.Items.Count == 3).OrderBy(c => c.Top).ToArray();
-                Equal(2, choices[0].SelectedIndex); Equal(1, choices[1].SelectedIndex);
-                Equal("Pronunciation & Translation", choices[0].Items[2].ToString());
+                var choices = panel.Controls.OfType<ComboBox>().Where(c => c.Name == "JapaneseContent" || c.Name == "KoreanContent").OrderBy(c => c.Top).ToArray();
+                Equal(3, choices[0].SelectedIndex); Equal(2, choices[1].SelectedIndex);
+                Equal("Lyrics + Pronunciation + Translation", choices[0].Items[3].ToString());
                 plugin.SaveSettings();
-                panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex = 0;
+                panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex = 0;
                 True(choices.All(c => !c.Enabled));
             }
             var saved = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
@@ -295,7 +295,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                True(panel.Controls.OfType<ComboBox>().Where(c => c.Items.Count == 3).All(c => c.SelectedIndex == 0));
+                True(panel.Controls.OfType<ComboBox>().Where(c => c.Name == "JapaneseContent" || c.Name == "KoreanContent").All(c => c.SelectedIndex == 1));
                 Equal(false, panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
             }
         });
@@ -308,13 +308,14 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
-                    True(panel.Controls.OfType<ComboBox>().Where(c => c.Items.Count == 3).All(c => c.SelectedIndex == 0));
+                    Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
+                    True(panel.Controls.OfType<ComboBox>().Where(c => c.Name == "JapaneseContent" || c.Name == "KoreanContent").All(c => c.SelectedIndex == 1));
                     Equal(false, panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
                     Equal(false, panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Cantonese")).Checked);
                 }
             }
         });
+        ContentChoiceTests();
         PronunciationRecordingTests();
     }
 

@@ -15,7 +15,7 @@ namespace MusicBeePlugin
         private readonly object _gate = new object();
         internal const int MaximumCachedLanguages = 512;
 
-        internal SongLanguage Resolve(long id, LyricResult lyrics, LookupSession session)
+        internal SongLanguage Resolve(long id, LyricResult lyrics, LookupSession session, bool requireServiceLabel = false)
         {
             lock (_gate)
                 if (_cache.TryGetValue(id, out var cached) && cached.Expires > DateTime.UtcNow)
@@ -23,8 +23,8 @@ namespace MusicBeePlugin
                     session.Report("Language: cached service label " + cached.Language);
                     return cached.Language;
                 }
-            // No optional network request without a usable pronunciation track.
-            var language = LyricProcessor.HasLyricText(lyrics?.romalrc?.lyric) ? NeteaseApi.RequestLanguage(id, session) : null;
+            // Original-only language choices also need classification when pronunciation is absent.
+            var language = requireServiceLabel || LyricProcessor.HasLyricText(lyrics?.romalrc?.lyric) ? NeteaseApi.RequestLanguage(id, session) : null;
             if (language.HasValue && language.Value != SongLanguage.Unknown)
             {
                 lock (_gate)

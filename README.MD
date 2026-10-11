@@ -1,6 +1,6 @@
 # Netease Lyric
 
-This fork is developing **1.9.1-pre.11**, adding guarded soundtrack attribution matching to pre.10's pronunciation and three-line lyric support. See [CHANGELOG.md](CHANGELOG.md) for changes and [BUILDING.md](BUILDING.md) for building and testing. Local test builds are not a stable release. HTTP fallback is enabled by default for transport failures, including timeouts; it sends metadata without encryption. A secure API refusal blocks HTTP fallback for that lookup. Turn off **Allow HTTP fallback (unencrypted metadata)** to require HTTPS.
+This fork is developing **1.9.2**, retaining the four independent Japanese/Korean content choices and guarded matching fixes. Japanese and Korean default to **Lyrics + Translation**, and Cantonese pronunciation defaults to **off**. Saved personal selections still load; to reset an existing installation, choose those two dropdown entries and uncheck Cantonese pronunciation, then save. See [CHANGELOG.md](CHANGELOG.md) for changes and [BUILDING.md](BUILDING.md) for building and testing. Local test builds are not a stable release. HTTP fallback is enabled by default for transport failures, including timeouts; it sends metadata without encryption. A secure API refusal blocks HTTP fallback for that lookup. Turn off **Allow HTTP fallback (unencrypted metadata)** to require HTTPS.
 
 Automatic matching keeps title numbers distinct and recognizes explicit `Pt. II` / `Part 2` forms. Recognized remaster annotations do not change title identity. Mono, stereo and album-version annotations can be ignored only when local and service durations are known and within two seconds; live, remix, radio-edit and original-mix labels remain significant.
 
@@ -10,7 +10,7 @@ Conflicting source names remain distinct, even when close enough to look like sp
 
 Different catalogue IDs may be grouped when their normalized titles, complete artist credits and version labels agree and every pair of service durations is within two seconds. Album similarity, then local duration difference, then a stable ID order chooses among those listings. This is a compatibility heuristic, not proof of identical recordings. Missing lyrics or requested translations can trigger another listing's lyric download, with at most three listings attempted. A usable original is retained if translation retries fail. Custom10 remains an explicit single-song override.
 
-The previous **Use legacy matching strategy** checkbox is now **Customize spelling matching**. Saved choices are retained, but all callback lookups use available album and duration tags. With customization off, small spelling differences are allowed; with it on, the spelling checkbox controls this allowance. Number and recording checks always apply. MusicBee trace messages describe grouping, annotation handling and alternate lyric attempts without logging raw song tags or local paths. Lookups allow at most nine search requests and nine lyric requests, within the existing 30-second deadline.
+The previous **Use legacy matching strategy** checkbox is now **Customize spelling matching**. Saved choices are retained, but all callback lookups use available album and duration tags. With customization off, small spelling differences are allowed and a readable default hint replaces the inactive child checkbox; with it on, the spelling checkbox controls this allowance. Toggling customization retains the saved checkbox choice. Number and recording checks always apply. MusicBee trace messages describe grouping, annotation handling and alternate lyric attempts without logging raw song tags or local paths. Lookups allow at most nine search requests and nine lyric requests, within the existing 30-second deadline.
 
 This is another lyrics retrieval plugin for music player MusicBee. It can get **synchronized** lyrics from Netease Cloud Music(网易云音乐, a cloud music service in China).
 
@@ -18,7 +18,7 @@ It combines original lyrics with available translations or pronunciation supplie
 
 Choose the output and language preferences in the plugin settings.
 
-The default format is **Original and extra text (separate lines)**, with translation selected for Japanese and Korean and Cantonese pronunciation off. An explicit saved format is retained when upgrading; choose this option in the plugin's settings to change an older selection. Each pair uses a single timed cue:
+The default format is **Lyrics + extras (separate lines)**, with translation selected for Japanese and Korean and Cantonese pronunciation off. An explicit saved format is retained when upgrading; choose this option in the plugin's settings to change an older selection. Each pair uses a single timed cue:
 
 ```text
 [00:12.300]Original text
@@ -36,8 +36,8 @@ When the original lyrics have no timestamps, both bilingual formats use `Origina
 Pronunciation choices apply only to the two combined output formats:
 
 - **Cantonese — Enable pronunciation:** original plus pronunciation when checked; translation behavior when unchecked. Default: unchecked.
-- **Japanese** and **Korean:** independent dropdowns for **Translation**, **Pronunciation**, and **Pronunciation & Translation**. Default: Translation.
-- **Original only** and **Translation only** take priority over these choices. Translation-only retains the original when no usable translation exists.
+- **Japanese** and **Korean:** independent dropdowns for **Lyrics**, **Lyrics + Translation**, **Lyrics + Pronunciation**, and **Lyrics + Pronunciation + Translation**. Default: Lyrics + Translation. Lyrics returns the original unchanged, including its metadata and timestamps. Existing saved translation, pronunciation and triple-line choices retain their meaning after upgrading.
+- **Lyrics only** and **Translation only** take priority over these choices. Translation-only retains the original when no usable translation exists.
 
 For timed separate-line output, the combined pronunciation choice produces:
 
@@ -51,13 +51,13 @@ One timestamp owns the whole group. If either extra is absent, duplicated or can
 
 These are NetEase-provided pronunciation tracks (`romalrc`), not readings generated by this plugin. Each extra aligns independently against the original using the existing exact/50 ms, offset and ambiguity rules. The newer word-timed `yromalrc` track is not mixed with ordinary LRC timing.
 
-Language selection uses NetEase's song-language label. An optional anonymous HTTPS metadata request is made only when pronunciation is supplied and a non-default language choice is active. It has a two-second maximum, at most one request per lookup, and counts inside the existing nine-request lyric allowance and 30-second deadline. Known labels are cached by song ID for six hours, with at most 512 entries; lyric text is not cached by this feature. Failures are not cached. The default translation choices make no extra language request.
+Language selection uses NetEase's song-language label. An optional anonymous HTTPS metadata request is made when a non-default language choice is active and pronunciation is supplied. Selecting Lyrics for Japanese or Korean also permits this request when pronunciation is absent, so the language preference can apply even to a song without distinctive script. If the language remains unresolved, the general translation behavior is retained. It has a two-second maximum, at most one request per lookup, and counts inside the existing nine-request lyric allowance and 30-second deadline. Known labels are cached by song ID for six hours, with at most 512 entries; lyric text is not cached by this feature. Failures are not cached. The default translation choices make no extra language request.
 
 If language metadata is unavailable or lacks a language, distinctive Japanese kana or Korean Hangul can identify those languages conservatively. Han-only lyrics cannot distinguish Cantonese from Mandarin, so Cantonese needs a service label. Explicit unsupported or multilingual labels retain translation behavior rather than being guessed from script. The plugin offers no pronunciation control for other languages. Availability varies by recording: Japanese, Korean and Cantonese tracks were verified, but this is not a promise that every song in those languages has pronunciation.
 
 Changing these preferences affects future downloads. Re-fetch the lyrics in MusicBee to see the change. The settings panel is implemented; a shortcut in MusicBee's lyrics right-click menu is not included. Three-line highlighting still needs confirmation in MusicBee's actual Now Playing display; the user's earlier two-line confirmation does not establish three-line support.
 
-Two-line preferences are saved as an older-compatible `Format=1` plus `TwoLineTranslation=true`. Existing `Format=3` files migrate when loaded, keeping a `.pre9.bak` copy before replacement. If migration cannot save safely, the loaded preferences remain active and the trace reports the failure; resolve that before rolling back. Older versions ignore the new flag and show same-line lyrics. Saving settings in an older version can remove the flag, so choose two-line output again after returning to this build if necessary.
+Two-line preferences are saved as an older-compatible `Format=1` plus `TwoLineTranslation=true`. Existing `Format=3` files migrate when loaded, keeping a `.pre9.bak` copy before replacement. If migration cannot save safely, the loaded preferences remain active and the trace reports the failure; resolve that before rolling back. Older versions ignore the new flag and show same-line lyrics. The existing Japanese/Korean stored values (0 translation, 1 pronunciation, 2 pronunciation plus translation) are unchanged; Lyrics adds value 3. Pre.10/pre.11 safely fall back to translation for value 3. Saving in those builds can replace it with 0, so back up settings before rollback. Saving settings in an older version can remove the flag, so choose two-line output again after returning to this build if necessary.
 
 MusicBee may retain previously retrieved lyrics. After upgrading or changing the format, clear incorrect stored lyrics and re-search or replace the displayed lyrics for the track; simply restarting playback may keep the old cached text. These fixes affect future retrieval, not lyrics already stored in audio tags. Back up stored lyrics before replacing them if you want to keep them.
 

@@ -19,10 +19,11 @@ namespace MusicBeePlugin
 {
     public class NeteaseConfig
     {
-        public enum AccompanyingText { Translation = 0, Pronunciation = 1, PronunciationAndTranslation = 2 }
-        public bool EnableCantonesePronunciation { get; set; }
-        public AccompanyingText JapaneseText { get; set; }
-        public AccompanyingText KoreanText { get; set; }
+        // Retain existing stored values; the UI orders Original first without renumbering them.
+        public enum AccompanyingText { Translation = 0, Pronunciation = 1, PronunciationAndTranslation = 2, Original = 3 }
+        public bool EnableCantonesePronunciation { get; set; } = false;
+        public AccompanyingText JapaneseText { get; set; } = AccompanyingText.Translation;
+        public AccompanyingText KoreanText { get; set; } = AccompanyingText.Translation;
         public enum OutputFormat
         {
             Original = 0,
@@ -52,6 +53,7 @@ namespace MusicBeePlugin
         private ComboBox _formatComboBox;
         private CheckBox _fuzzyCheckBox;
         private CheckBox _useLegacyCheckBox;
+        private Label _spellingDefaultLabel;
         private CheckBox _allowHttpCheckBox;
         private CheckBox _cantoneseCheckBox;
         private ComboBox _japaneseComboBox, _koreanComboBox;
@@ -87,8 +89,7 @@ namespace MusicBeePlugin
             _mbApiInterface.Initialise(apiInterfacePtr);
             _about.PluginInfoVersion = PluginInfoVersion;
             _about.Name = "Netease Lyrics";
-            _about.Description = "A plugin to retrieve lyrics from Netease Cloud Music.(从网易云音乐获取歌词的插件。)";
-            _about.Description += " Build " + Assembly.GetExecutingAssembly()
+            _about.Description = "NetEase lyrics. Build " + Assembly.GetExecutingAssembly()
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
             _about.Author = "Charlie Jiang";
             _about.TargetApplication = "";   // current only applies to artwork, lyrics or instant messenger name that appears in the provider drop down selector or target Instant Messenger
@@ -120,22 +121,23 @@ namespace MusicBeePlugin
             _formatComboBox = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
+                Name = "OutputFormat",
                 AutoSize = true,
                 Location = new Point(0, 0),
                 Width = 390
             };
-            _formatComboBox.Items.Add("Only original text");
-            _formatComboBox.Items.Add("Original and extra text (same line: JP / CN)");
-            _formatComboBox.Items.Add("Only translation");
-            _formatComboBox.Items.Add("Original and extra text (separate lines)");
+            _formatComboBox.Items.Add("Lyrics only");
+            _formatComboBox.Items.Add("Lyrics + extras (same line: JP / CN)");
+            _formatComboBox.Items.Add("Translation only");
+            _formatComboBox.Items.Add("Lyrics + extras (separate lines)");
             _formatComboBox.SelectedIndex = (int)_config.Format;
             configPanel.Controls.Add(_formatComboBox);
 
             _cantoneseCheckBox = new CheckBox { Text = "Cantonese: enable pronunciation", Location = new Point(0, 35),
                 Checked = _config.EnableCantonesePronunciation, AutoSize = true };
             configPanel.Controls.Add(_cantoneseCheckBox);
-            _japaneseComboBox = AddLanguageChoice(configPanel, "Japanese:", 65, _config.JapaneseText);
-            _koreanComboBox = AddLanguageChoice(configPanel, "Korean:", 95, _config.KoreanText);
+            _japaneseComboBox = AddLanguageChoice(configPanel, "Japanese:", "JapaneseContent", 65, _config.JapaneseText);
+            _koreanComboBox = AddLanguageChoice(configPanel, "Korean:", "KoreanContent", 95, _config.KoreanText);
             configPanel.Controls.Add(new Label { Text = "Combined formats only. Re-fetch lyrics after changing.",
                 Location = new Point(0, 130), AutoSize = true });
             EventHandler updateLanguageOptions = (sender, e) =>
@@ -157,20 +159,28 @@ namespace MusicBeePlugin
             _fuzzyCheckBox = new CheckBox
             {
                 Text = "Allow small spelling differences",
-                Location = new Point(0, 195),
+                Location = new Point(18, 195),
                 Checked = _config.Fuzzy,
                 Enabled = _config.UseLegacyMatch,
                 AutoSize = true
             };
+            _spellingDefaultLabel = new Label { Text = "Default: allow small spelling differences.",
+                Location = new Point(18, 195), AutoSize = true, Name = "SpellingDefault" };
 
-            _useLegacyCheckBox.CheckedChanged += (sender, e) =>
+            EventHandler updateSpellingOption = (sender, e) =>
             {
                 // Without customization, the default permits small spelling differences.
                 _fuzzyCheckBox.Enabled = _useLegacyCheckBox.Checked;
+                // Disabled native checkbox text can be unreadable on MusicBee's dark skin.
+                _fuzzyCheckBox.Visible = _useLegacyCheckBox.Checked;
+                _spellingDefaultLabel.Visible = !_useLegacyCheckBox.Checked;
             };
+            _useLegacyCheckBox.CheckedChanged += updateSpellingOption;
+            updateSpellingOption(null, EventArgs.Empty);
 
             configPanel.Controls.Add(_useLegacyCheckBox);
             configPanel.Controls.Add(_fuzzyCheckBox);
+            configPanel.Controls.Add(_spellingDefaultLabel);
             _allowHttpCheckBox = new CheckBox
             {
                 Text = "Allow HTTP fallback (unencrypted metadata)",
@@ -183,12 +193,20 @@ namespace MusicBeePlugin
             return false;
         }
 
-        private static ComboBox AddLanguageChoice(Panel panel, string label, int y, NeteaseConfig.AccompanyingText value)
+        private static readonly NeteaseConfig.AccompanyingText[] ContentChoices = {
+            NeteaseConfig.AccompanyingText.Original, NeteaseConfig.AccompanyingText.Translation,
+            NeteaseConfig.AccompanyingText.Pronunciation, NeteaseConfig.AccompanyingText.PronunciationAndTranslation };
+
+        private static ComboBox AddLanguageChoice(Panel panel, string label, string name, int y, NeteaseConfig.AccompanyingText value)
         {
             panel.Controls.Add(new Label { Text = label, Location = new Point(0, y + 3), AutoSize = true });
-            var choice = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(90, y), Width = 300 };
-            choice.Items.AddRange(new object[] { "Translation", "Pronunciation", "Pronunciation & Translation" });
-            choice.SelectedIndex = Enum.IsDefined(typeof(NeteaseConfig.AccompanyingText), value) ? (int)value : 0;
+            var choice = new ComboBox { Name = name, DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(90, y), Width = 300 };
+            choice.Items.AddRange(new object[] { "Lyrics", "Lyrics + Translation", "Lyrics + Pronunciation", "Lyrics + Pronunciation + Translation" });
+            var selected = Array.IndexOf(ContentChoices, value);
+            choice.SelectedIndex = selected >= 0 ? selected : 1;
+            // Keep every menu item visible even on larger host fonts.
+            choice.DropDownWidth = Math.Max(choice.Width, choice.Items.Cast<string>()
+                .Max(text => TextRenderer.MeasureText(text, panel.Font).Width) + SystemInformation.VerticalScrollBarWidth + 12);
             panel.Controls.Add(choice);
             return choice;
         }
@@ -211,14 +229,15 @@ namespace MusicBeePlugin
                 _config.AllowInsecureHttp = _allowHttpCheckBox.Checked;
             if (_cantoneseCheckBox != null && !_cantoneseCheckBox.IsDisposed) _config.EnableCantonesePronunciation = _cantoneseCheckBox.Checked;
             if (_japaneseComboBox != null && !_japaneseComboBox.IsDisposed)
-                _config.JapaneseText = ValidChoice(_japaneseComboBox.SelectedIndex);
+                _config.JapaneseText = SelectedContent(_japaneseComboBox);
             if (_koreanComboBox != null && !_koreanComboBox.IsDisposed)
-                _config.KoreanText = ValidChoice(_koreanComboBox.SelectedIndex);
+                _config.KoreanText = SelectedContent(_koreanComboBox);
             SaveSettingsInternal();
         }
 
-        private static NeteaseConfig.AccompanyingText ValidChoice(int value) =>
-            Enum.IsDefined(typeof(NeteaseConfig.AccompanyingText), value) ? (NeteaseConfig.AccompanyingText)value : NeteaseConfig.AccompanyingText.Translation;
+        private static NeteaseConfig.AccompanyingText SelectedContent(ComboBox control) =>
+            control.SelectedIndex >= 0 && control.SelectedIndex < ContentChoices.Length ?
+                ContentChoices[control.SelectedIndex] : NeteaseConfig.AccompanyingText.Translation;
 
         private static NeteaseConfig.AccompanyingText ReadChoice(JToken value) =>
             value != null && (value.Type == JTokenType.Integer || value.Type == JTokenType.String) &&
@@ -313,10 +332,12 @@ namespace MusicBeePlugin
                         var choice = NeteaseConfig.AccompanyingText.Translation;
                         var combined = _config.Format == NeteaseConfig.OutputFormat.Both || _config.Format == NeteaseConfig.OutputFormat.BothTwoLines;
                         if (combined && (_config.EnableCantonesePronunciation || _config.JapaneseText != choice || _config.KoreanText != choice))
-                            choice = LanguagePreferences.Choice(_config, _languagePreferences.Resolve(candidate, attempt, session));
+                            choice = LanguagePreferences.Choice(_config, _languagePreferences.Resolve(candidate, attempt, session,
+                                _config.JapaneseText == NeteaseConfig.AccompanyingText.Original || _config.KoreanText == NeteaseConfig.AccompanyingText.Original));
                         var formatted = FormatLyrics(attempt, choice, session.Report, out var usableExtras);
                         if (usableExtras > bestExtras) { result = formatted; bestExtras = usableExtras; }
-                        var wanted = choice == NeteaseConfig.AccompanyingText.PronunciationAndTranslation ? 2 : 1;
+                        var wanted = choice == NeteaseConfig.AccompanyingText.Original ? 0 :
+                            choice == NeteaseConfig.AccompanyingText.PronunciationAndTranslation ? 2 : 1;
                         if (_config.Format == NeteaseConfig.OutputFormat.Original || usableExtras >= wanted) break;
                     }
                     return result;
@@ -335,7 +356,8 @@ namespace MusicBeePlugin
             var original = result?.lrc?.lyric;
             if (string.IsNullOrWhiteSpace(original)) return null;
             var translation = result.tlyric?.lyric;
-            if (_config.Format == NeteaseConfig.OutputFormat.Original)
+            if (_config.Format == NeteaseConfig.OutputFormat.Original ||
+                (_config.Format != NeteaseConfig.OutputFormat.Translation && choice == NeteaseConfig.AccompanyingText.Original))
                 return original;
             if (_config.Format == NeteaseConfig.OutputFormat.Translation)
             {

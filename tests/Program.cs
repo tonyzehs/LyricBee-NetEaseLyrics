@@ -210,7 +210,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
+                    Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
                     plugin.SaveSettings();
                 }
                 plugin.SaveSettings(); // MusicBee may invoke this after the panel is disposed.
@@ -580,7 +580,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
+                    Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
                 }
                 Equal(scenario.Value == 3 || scenario.Value == 1 ? "Hello / Translation" :
                     scenario.Value == 2 ? "Translation" : "Hello", Lookup(plugin));
@@ -593,7 +593,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
+                Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
                 plugin.SaveSettings();
             }
             var saved = JsonConvert.DeserializeObject<NeteaseConfig>(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
@@ -602,7 +602,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
+                Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputFormat").SelectedIndex);
             }
         });
         Test("Two-line mode leaves blank or missing translations alone", () =>
