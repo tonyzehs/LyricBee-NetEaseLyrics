@@ -27,6 +27,7 @@ namespace MusicBeePlugin
         public OutputFormat Format { get; set; } = OutputFormat.Both;
         public bool Fuzzy { get; set; }
         public bool UseLegacyMatch { get; set; }
+        public bool AllowInsecureHttp { get; set; } = true;
     }
 
     public partial class Plugin
@@ -38,6 +39,7 @@ namespace MusicBeePlugin
         private ComboBox _formatComboBox;
         private CheckBox _fuzzyCheckBox;
         private CheckBox _useLegacyCheckBox;
+        private CheckBox _allowHttpCheckBox;
 
         private MusicBeeApiInterface _mbApiInterface;
         private readonly PluginInfo _about = new PluginInfo();
@@ -70,6 +72,8 @@ namespace MusicBeePlugin
             _about.PluginInfoVersion = PluginInfoVersion;
             _about.Name = "Netease Lyrics";
             _about.Description = "A plugin to retrieve lyrics from Netease Cloud Music.(从网易云音乐获取歌词的插件。)";
+            _about.Description += " Build " + Assembly.GetExecutingAssembly()
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
             _about.Author = "Charlie Jiang";
             _about.TargetApplication = "";   // current only applies to artwork, lyrics or instant messenger name that appears in the provider drop down selector or target Instant Messenger
             _about.Type = PluginType.LyricsRetrieval;
@@ -79,7 +83,7 @@ namespace MusicBeePlugin
             _about.MinInterfaceVersion = MinInterfaceVersion;
             _about.MinApiRevision = MinApiRevision;
             _about.ReceiveNotifications = ReceiveNotificationFlags.DownloadEvents;
-            _about.ConfigurationPanelHeight = 120;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
+            _about.ConfigurationPanelHeight = 150;
 
             ReadConfig();
             MigrateLegacySetting();
@@ -120,7 +124,7 @@ namespace MusicBeePlugin
 
             _fuzzyCheckBox = new CheckBox
             {
-                Text = "Fuzzy matching (Don't double check match and use first result directly)",
+                Text = "Allow small spelling differences (legacy matching only)",
                 Location = new Point(0, 80),
                 Checked = _config.Fuzzy,
                 Enabled = _config.UseLegacyMatch,
@@ -135,6 +139,14 @@ namespace MusicBeePlugin
 
             configPanel.Controls.Add(_useLegacyCheckBox);
             configPanel.Controls.Add(_fuzzyCheckBox);
+            _allowHttpCheckBox = new CheckBox
+            {
+                Text = "Allow HTTP fallback (unencrypted metadata)",
+                Location = new Point(0, 110),
+                Checked = _config.AllowInsecureHttp,
+                AutoSize = true
+            };
+            configPanel.Controls.Add(_allowHttpCheckBox);
 
             return false;
         }
@@ -153,6 +165,8 @@ namespace MusicBeePlugin
                 _config.Format = (NeteaseConfig.OutputFormat)_formatComboBox.SelectedIndex;
             _config.Fuzzy = _fuzzyCheckBox.Checked;
             _config.UseLegacyMatch = _useLegacyCheckBox.Checked;
+            if (_allowHttpCheckBox != null && !_allowHttpCheckBox.IsDisposed)
+                _config.AllowInsecureHttp = _allowHttpCheckBox.Checked;
             SaveSettingsInternal();
         }
 
@@ -217,6 +231,7 @@ namespace MusicBeePlugin
                 }
                 using (var session = _sessionFactory())
                 {
+                    session.AllowInsecureHttp = _config.AllowInsecureHttp;
                     if (id == 0)
                     {
                         var realArtist = FirstNonBlank(ReadTag(sourceFileUrl, MetaDataType.Artist), artist);
@@ -230,6 +245,7 @@ namespace MusicBeePlugin
                     }
                     if (id == 0) return null;
                     var result = NeteaseApi.RequestLyric(id, session);
+                    if (NeteaseApi.IsInstrumental(result)) return null;
                     var original = result?.lrc?.lyric;
                     if (string.IsNullOrWhiteSpace(original)) return null;
                     var translation = result.tlyric?.lyric;
@@ -299,7 +315,8 @@ namespace MusicBeePlugin
             }
             if (!Uri.TryCreate(input, UriKind.Absolute, out var uri) ||
                 (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp) ||
-                !string.Equals(uri.Host, "music.163.com", StringComparison.OrdinalIgnoreCase)) return 0;
+                (!string.Equals(uri.Host, "music.163.com", StringComparison.OrdinalIgnoreCase) &&
+                 !string.Equals(uri.Host, "y.music.163.com", StringComparison.OrdinalIgnoreCase))) return 0;
             var route = string.IsNullOrEmpty(uri.Fragment) ? uri.PathAndQuery : uri.Fragment.Substring(1);
             var match = Regex.Match(route, @"^/(?:m/)?song\?(?:[^&#]*&)*id=([0-9]+)(?:&[^#]*)?$", RegexOptions.IgnoreCase);
             return match.Success ? PositiveId(match.Groups[1].Value) : 0;

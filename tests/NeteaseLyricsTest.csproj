@@ -10,6 +10,7 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Fixtures\*.json" />
     <Reference Include="System.Net.Http" />
     <ProjectReference Include="..\NeteaseLyrics.csproj" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />

@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -12,7 +13,7 @@ namespace MusicBeePlugin
     {
         public static IEnumerable<SearchResultSong> Search(string query, LookupSession session)
         {
-            if (string.IsNullOrWhiteSpace(query)) return Enumerable.Empty<SearchResultSong>();
+            if (string.IsNullOrWhiteSpace(query) || !session.CanSearch) return Enumerable.Empty<SearchResultSong>();
             return session.SearchCached(query, () =>
             {
                 var data = new Dictionary<string, object>
@@ -22,12 +23,30 @@ namespace MusicBeePlugin
                 var result = RequestNewApi<SearchResult>(session, "search/new",
                     "https://music.163.com/weapi/search/get", data, ValidSearch);
                 if (result == null)
-                    result = session.Request<SearchResult>("search/legacy", HttpMethod.Get,
-                        "https://music.163.com/api/search/get/?csrf_token=hlpretag=&hlposttag=&s=" +
-                        Uri.EscapeDataString(query) + "&type=1&offset=0&total=true&limit=6", null, ValidSearch);
-                return (result?.result?.songs ?? Enumerable.Empty<SearchResultSong>())
-                    .Where(song => song != null && song.id > 0 && !string.IsNullOrWhiteSpace(song.name)).ToArray();
+                    return SearchLegacy(query, session).ToArray();
+                return UsableSongs(result);
             });
+        }
+
+        internal static IEnumerable<SearchResultSong> SearchLegacy(string query, LookupSession session)
+        {
+            if (string.IsNullOrWhiteSpace(query) || !session.CanSearch) return Enumerable.Empty<SearchResultSong>();
+            return session.SearchCached("\0legacy:" + query, () =>
+            {
+                var route = "/api/search/get?s=" + Uri.EscapeDataString(query) + "&type=1&offset=0&total=true&limit=6";
+                var result = session.Request<SearchResult>("search/legacy", HttpMethod.Get,
+                    "https://music.163.com" + route, null, ValidSearch, RequestInterface.LegacyHttps, true);
+                if (result == null && session.AllowInsecureHttp)
+                    result = session.Request<SearchResult>("search/http", HttpMethod.Get,
+                        "http://music.163.com" + route, null, ValidSearch, RequestInterface.LegacyHttp, true);
+                return UsableSongs(result);
+            });
+        }
+
+        private static SearchResultSong[] UsableSongs(SearchResult result)
+        {
+            return (result?.result?.songs ?? Enumerable.Empty<SearchResultSong>())
+                .Where(song => song != null && song.id > 0 && !string.IsNullOrWhiteSpace(song.name)).ToArray();
         }
 
         private static bool ValidSearch(SearchResult result)
@@ -47,22 +66,32 @@ namespace MusicBeePlugin
             var result = RequestNewApi<LyricResult>(session, "lyrics/new",
                 "https://music.163.com/weapi/song/lyric?csrf_token=", data, ValidLyrics);
             if (result != null) return result;
-            return session.Request<LyricResult>("lyrics/legacy", HttpMethod.Get,
-                "https://music.163.com/api/song/lyric?os=pc&id=" + id + "&lv=-1&kv=-1&tv=-1", null, ValidLyrics);
+            var route = "/api/song/lyric?os=pc&id=" + id + "&lv=-1&kv=-1&tv=-1";
+            result = session.Request<LyricResult>("lyrics/legacy", HttpMethod.Get,
+                "https://music.163.com" + route, null, ValidLyrics, RequestInterface.LegacyHttps);
+            if (result == null && session.AllowInsecureHttp)
+                result = session.Request<LyricResult>("lyrics/http", HttpMethod.Get,
+                    "http://music.163.com" + route, null, ValidLyrics, RequestInterface.LegacyHttp);
+            return result;
         }
 
         private static bool ValidLyrics(LyricResult result)
         {
             // An explicit instrumental response is a valid absence. A bare code=200 is not.
             return result != null && result.code == 200 &&
-                (result.nolyric || !string.IsNullOrWhiteSpace(result.lrc?.lyric));
+                (IsInstrumental(result) || !string.IsNullOrWhiteSpace(result.lrc?.lyric));
         }
+
+        internal static bool IsInstrumental(LyricResult result) => result?.nolyric == true ||
+            LyricProcessor.IsInstrumentalPlaceholder(result?.lrc?.lyric);
 
         private static T RequestNewApi<T>(LookupSession session, string label, string url,
             Dictionary<string, object> data, Func<T, bool> validate) where T : class
         {
+            if (!session.CanRequest(RequestInterface.NewApi)) return null;
             using (var content = new FormUrlEncodedContent(EncryptRequest(data)))
-                return session.Request(label, HttpMethod.Post, url, content, validate);
+                return session.Request(label, HttpMethod.Post, url, content, validate,
+                    RequestInterface.NewApi, label.StartsWith("search/", StringComparison.Ordinal));
         }
 
         private static Dictionary<string, string> EncryptRequest(object data)
@@ -78,29 +107,54 @@ namespace MusicBeePlugin
         }
     }
 
+    internal enum RequestInterface { Other, NewApi, LegacyHttps, LegacyHttp }
+
     // A synchronous MusicBee callback gets one client and one deadline, including all fallbacks.
     // The handler seam lets regression tests exercise the real request and parsing code offline.
     internal sealed class LookupSession : IDisposable
     {
         private readonly HttpClient _client;
         private readonly CancellationTokenSource _deadline;
+        private readonly CancellationTokenSource _searchDeadline;
         private readonly TimeSpan _requestTimeout;
+        private readonly TimeSpan _lookupTimeout, _searchTimeout;
+        private readonly Stopwatch _elapsed = Stopwatch.StartNew();
+        private readonly HashSet<RequestInterface> _unavailable = new HashSet<RequestInterface>();
         private readonly Action<string> _trace;
         private readonly Dictionary<string, SearchResultSong[]> _searches = new Dictionary<string, SearchResultSong[]>();
 
         internal LookupSession(Action<string> trace = null, HttpMessageHandler handler = null,
-            TimeSpan? requestTimeout = null, TimeSpan? lookupTimeout = null)
+            TimeSpan? requestTimeout = null, TimeSpan? lookupTimeout = null, TimeSpan? lyricReserve = null)
         {
             _trace = trace;
             _requestTimeout = requestTimeout ?? TimeSpan.FromSeconds(8);
-            _deadline = new CancellationTokenSource(lookupTimeout ?? TimeSpan.FromSeconds(30));
-            _client = handler == null ? new HttpClient() : new HttpClient(handler);
+            _lookupTimeout = lookupTimeout ?? TimeSpan.FromSeconds(30);
+            var reserve = lyricReserve ?? TimeSpan.FromTicks(_lookupTimeout.Ticks * 2 / 5);
+            if (reserve <= TimeSpan.Zero || reserve >= _lookupTimeout) throw new ArgumentOutOfRangeException(nameof(lyricReserve));
+            _searchTimeout = _lookupTimeout - reserve;
+            _deadline = new CancellationTokenSource(_lookupTimeout);
+            _searchDeadline = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token);
+            _searchDeadline.CancelAfter(_searchTimeout);
+            // These are anonymous lookups. Server-set cookies can turn subsequent searches
+            // into unrelated code=200 answers; keep each request's public context unchanged.
+            _client = new HttpClient(handler ?? new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false });
             _client.Timeout = Timeout.InfiniteTimeSpan;
             _client.MaxResponseContentBufferSize = 4 * 1024 * 1024;
             _client.DefaultRequestHeaders.Referrer = new Uri("https://music.163.com/");
             _client.DefaultRequestHeaders.UserAgent.ParseAdd(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
-            _client.DefaultRequestHeaders.TryAddWithoutValidation("Cookie", "appver=1.5.0.75771;");
+        }
+
+        internal bool AllowInsecureHttp { get; set; } = true;
+        internal bool CanSearch => !_searchDeadline.IsCancellationRequested && _elapsed.Elapsed < _searchTimeout;
+        internal bool CanRequest(RequestInterface api) => !_unavailable.Contains(api) &&
+            (api != RequestInterface.LegacyHttp || AllowInsecureHttp);
+
+        private int AttemptsRemaining(RequestInterface api)
+        {
+            var ordered = new[] { RequestInterface.NewApi, RequestInterface.LegacyHttps, RequestInterface.LegacyHttp };
+            var index = Array.IndexOf(ordered, api);
+            return index < 0 ? 1 : Math.Max(1, ordered.Skip(index).Count(CanRequest));
         }
 
         internal IEnumerable<SearchResultSong> SearchCached(string query, Func<SearchResultSong[]> search)
@@ -111,15 +165,25 @@ namespace MusicBeePlugin
         }
 
         internal T Request<T>(string label, HttpMethod method, string url, HttpContent content,
-            Func<T, bool> validate) where T : class
+            Func<T, bool> validate, RequestInterface api = RequestInterface.Other, bool search = false) where T : class
         {
-            if (_deadline.IsCancellationRequested) return null;
+            if (_deadline.IsCancellationRequested || !CanRequest(api)) return null;
+            var remaining = (search ? _searchTimeout : _lookupTimeout) - _elapsed.Elapsed;
+            if (remaining <= TimeSpan.Zero || (search && !CanSearch))
+            {
+                Trace(label + (search ? ": search budget exhausted" : ": lookup deadline reached"));
+                return null;
+            }
+            // Each pending fallback gets a share of the remaining phase, capped per request.
+            var requestBudget = TimeSpan.FromTicks(Math.Min(_requestTimeout.Ticks, remaining.Ticks / AttemptsRemaining(api)));
             try
             {
-                using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token))
+                using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(search ? _searchDeadline.Token : _deadline.Token))
                 using (var request = new HttpRequestMessage(method, url) { Content = content })
                 {
-                    timeout.CancelAfter(_requestTimeout);
+                    if (api == RequestInterface.LegacyHttps || api == RequestInterface.LegacyHttp)
+                        request.Headers.TryAddWithoutValidation("Cookie", "appver=1.5.0.75771;");
+                    timeout.CancelAfter(requestBudget);
                     using (var response = _client.SendAsync(request, timeout.Token).GetAwaiter().GetResult())
                     {
                         if (!response.IsSuccessStatusCode)
@@ -138,7 +202,19 @@ namespace MusicBeePlugin
             }
             catch (OperationCanceledException)
             {
-                Trace(label + (_deadline.IsCancellationRequested ? ": lookup deadline reached" : ": request timed out"));
+                var phaseExpired = search && !CanSearch;
+                if (!_deadline.IsCancellationRequested && !phaseExpired && api == RequestInterface.NewApi)
+                {
+                    _unavailable.Add(api);
+                    Trace("New interface disabled for this lookup after timeout");
+                }
+                Trace(label + (_deadline.IsCancellationRequested ? ": lookup deadline reached" :
+                    phaseExpired ? ": search budget exhausted" : ": request timed out"));
+            }
+            catch (HttpRequestException ex)
+            {
+                if (api != RequestInterface.Other) _unavailable.Add(api);
+                Trace(label + ": " + ex.GetType().Name);
             }
             catch (Exception ex)
             {
@@ -148,6 +224,8 @@ namespace MusicBeePlugin
             return null;
         }
 
+        internal void Report(string message) => Trace(message);
+
         private void Trace(string message)
         {
             try { _trace?.Invoke(message); } catch { /* Diagnostics must not break a lookup. */ }
@@ -156,6 +234,7 @@ namespace MusicBeePlugin
         public void Dispose()
         {
             _deadline.Dispose();
+            _searchDeadline.Dispose();
             _client.Dispose();
         }
     }

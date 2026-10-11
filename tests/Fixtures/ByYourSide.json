@@ -1,0 +1,1392 @@
+{
+  "title": "By Your Side",
+  "artist": "澤田かおり/服部隆之",
+  "album": "『機動戦士ガンダム THE ORIGIN』オリジナルサウンドトラック portrait 02",
+  "duration_ms": 286300,
+  "correct": {
+    "id": 400875204,
+    "name": "By Your Side",
+    "duration": 286300,
+    "artists": [
+      {
+        "name": "澤田かおり"
+      }
+    ],
+    "album": {
+      "name": "MOBILE SUIT GUNDAM THE ORIGIN Original Motion Picture Soundtrack ｢portrait 02｣"
+    }
+  },
+  "observed": [
+    {
+      "id": 437909145,
+      "name": "By Your Side",
+      "duration": 201053,
+      "artists": [
+        {
+          "name": "Jonas Blue"
+        },
+        {
+          "name": "RAYE"
+        }
+      ],
+      "album": {
+        "name": "By Your Side"
+      }
+    },
+    {
+      "id": 1920241012,
+      "name": "By Your Side",
+      "duration": 201254,
+      "artists": [
+        {
+          "name": "Jonas Blue"
+        },
+        {
+          "name": "RAYE"
+        }
+      ],
+      "album": {
+        "name": "Frühlingsgefühle"
+      }
+    },
+    {
+      "id": 1955426508,
+      "name": "By Your Side（0.8x）",
+      "duration": 251951,
+      "artists": [
+        {
+          "name": "swagger"
+        }
+      ],
+      "album": {
+        "name": "静能生慧"
+      }
+    },
+    {
+      "id": 3353516422,
+      "name": "By Your Side",
+      "duration": 237187,
+      "artists": [
+        {
+          "name": "燕双鹰"
+        }
+      ],
+      "album": {
+        "name": "已经离不开你"
+      }
+    },
+    {
+      "id": 522354209,
+      "name": "By Your Side",
+      "duration": 211998,
+      "artists": [
+        {
+          "name": "Gill Chang"
+        },
+        {
+          "name": "Rahn Harper"
+        }
+      ],
+      "album": {
+        "name": "By Your Side"
+      }
+    },
+    {
+      "id": 1870350809,
+      "name": "By Your Side.",
+      "duration": 96949,
+      "artists": [
+        {
+          "name": "OMOCAT, LLC."
+        }
+      ],
+      "album": {
+        "name": "Omori (Original Game Soundtrack), Pt.1"
+      }
+    },
+    {
+      "id": 1897916463,
+      "name": "By Your Side",
+      "duration": 226092,
+      "artists": [
+        {
+          "name": "JulezJZ"
+        }
+      ],
+      "album": {
+        "name": "OGs"
+      }
+    },
+    {
+      "id": 3347687510,
+      "name": "By Your Side（DJ小轩Remix）",
+      "duration": 145606,
+      "artists": [
+        {
+          "name": "DJ小轩"
+        },
+        {
+          "name": "两袖清风怎和你拥抱"
+        }
+      ],
+      "album": {
+        "name": "By Your Side"
+      }
+    },
+    {
+      "id": 2126686616,
+      "name": "By Your Side",
+      "duration": 230880,
+      "artists": [
+        {
+          "name": "Kanye East"
+        }
+      ],
+      "album": {
+        "name": "Donda:With Child"
+      }
+    },
+    {
+      "id": 3349455824,
+      "name": "By Your Side(Remix)",
+      "duration": 181916,
+      "artists": [
+        {
+          "name": "花火"
+        }
+      ],
+      "album": {
+        "name": "By Your Side（Remix）"
+      }
+    },
+    {
+      "id": 1941028298,
+      "name": "By Your Side （REBORN Remix）",
+      "duration": 228599,
+      "artists": [
+        {
+          "name": "REBORN"
+        }
+      ],
+      "album": {
+        "name": "Hopeless Situation"
+      }
+    },
+    {
+      "id": 1347580147,
+      "name": "By Your Side(陳小刀 Bootleg)",
+      "duration": 242053,
+      "artists": [
+        {
+          "name": "陳小刀"
+        },
+        {
+          "name": "Jonas Blue"
+        },
+        {
+          "name": "RAYE"
+        }
+      ],
+      "album": {
+        "name": "By Your Side(陳小刀 Bootleg)"
+      }
+    },
+    {
+      "id": 3406268735,
+      "name": "by your side",
+      "duration": 157727,
+      "artists": [
+        {
+          "name": "泪痕"
+        },
+        {
+          "name": "霓虹灯"
+        }
+      ],
+      "album": {
+        "name": "by your side"
+      }
+    },
+    {
+      "id": 1327554224,
+      "name": "By Your Side",
+      "duration": 165041,
+      "artists": [
+        {
+          "name": "Mallz & Deron Alek"
+        }
+      ],
+      "album": {
+        "name": "By Your Side"
+      }
+    },
+    {
+      "id": 2047065258,
+      "name": "By Your Side",
+      "duration": 205227,
+      "artists": [
+        {
+          "name": "瘦子E.SO"
+        }
+      ],
+      "album": {
+        "name": "By Your Side"
+      }
+    },
+    {
+      "id": 2116147760,
+      "name": "by your side",
+      "duration": 252720,
+      "artists": [
+        {
+          "name": "初音ミク"
+        },
+        {
+          "name": "小川大輝"
+        }
+      ],
+      "album": {
+        "name": ""
+      }
+    },
+    {
+      "id": 456370693,
+      "name": "By Your Side",
+      "duration": 201053,
+      "artists": [
+        {
+          "name": "RAYE"
+        },
+        {
+          "name": "Jonas Blue"
+        }
+      ],
+      "album": {
+        "name": "Crowd Pleasers"
+      }
+    },
+    {
+      "id": 3443558499,
+      "name": "By Your Side",
+      "duration": 204982,
+      "artists": [
+        {
+          "name": "YONATH"
+        }
+      ],
+      "album": {
+        "name": "By Your Side"
+      }
+    },
+    {
+      "id": 1832263378,
+      "name": "BY YOUR SIDE",
+      "duration": 216461,
+      "artists": [
+        {
+          "name": "Happy Five Years"
+        }
+      ],
+      "album": {
+        "name": "BY YOUR SIDE"
+      }
+    },
+    {
+      "id": 28952149,
+      "name": "By Your Side",
+      "duration": 274964,
+      "artists": [
+        {
+          "name": "Sade"
+        }
+      ],
+      "album": {
+        "name": "100 Лирических песен для двоих"
+      }
+    },
+    {
+      "id": 97357,
+      "name": "那些年",
+      "duration": 371080,
+      "artists": [
+        {
+          "name": "胡夏"
+        }
+      ],
+      "album": {
+        "name": "那些年，我们一起追的女孩 电影原声带"
+      }
+    },
+    {
+      "id": 488641898,
+      "name": "那些年",
+      "duration": 290452,
+      "artists": [
+        {
+          "name": "胡夏"
+        },
+        {
+          "name": "徐佳麟"
+        },
+        {
+          "name": "谢雅儿"
+        },
+        {
+          "name": "王睿超"
+        }
+      ],
+      "album": {
+        "name": "我想和你唱 第二季 第11期"
+      }
+    },
+    {
+      "id": 29728219,
+      "name": "那些年 (Live)",
+      "duration": 161000,
+      "artists": [
+        {
+          "name": "胡夏"
+        }
+      ],
+      "album": {
+        "name": "中国正在听 第二期"
+      }
+    },
+    {
+      "id": 1942504468,
+      "name": "那些年 （温柔男生版）",
+      "duration": 115343,
+      "artists": [
+        {
+          "name": "李书恒"
+        }
+      ],
+      "album": {
+        "name": "刘昂俊的翻唱"
+      }
+    },
+    {
+      "id": 406907335,
+      "name": "那些年 (Live)",
+      "duration": 251193,
+      "artists": [
+        {
+          "name": "胡夏"
+        }
+      ],
+      "album": {
+        "name": "跨年演唱会2012-2013 华语篇2"
+      }
+    },
+    {
+      "id": 400162317,
+      "name": "那些年",
+      "duration": 370782,
+      "artists": [
+        {
+          "name": "胡夏"
+        }
+      ],
+      "album": {
+        "name": "遇上爱"
+      }
+    },
+    {
+      "id": 35090707,
+      "name": "あの頃~ジンジンバオヂュオニー~",
+      "duration": 346880,
+      "artists": [
+        {
+          "name": "whiteeeen"
+        }
+      ],
+      "album": {
+        "name": "あの頃～ジンジンバオヂュオニー～"
+      }
+    },
+    {
+      "id": 1917373206,
+      "name": "那些年（快手热门）",
+      "duration": 96517,
+      "artists": [
+        {
+          "name": "张孩"
+        }
+      ],
+      "album": {
+        "name": "深爱已久"
+      }
+    },
+    {
+      "id": 1461851148,
+      "name": "那些年",
+      "duration": 385000,
+      "artists": [
+        {
+          "name": "ye小雨"
+        }
+      ],
+      "album": {
+        "name": "翻唱合集"
+      }
+    },
+    {
+      "id": 34125005,
+      "name": "那些年",
+      "duration": 319399,
+      "artists": [
+        {
+          "name": "梁咏琪"
+        }
+      ],
+      "album": {
+        "name": "蒙面歌王 第六期"
+      }
+    },
+    {
+      "id": 65536,
+      "name": "爱情转移",
+      "duration": 259986,
+      "artists": [
+        {
+          "name": "陈奕迅"
+        }
+      ],
+      "album": {
+        "name": "认了吧"
+      }
+    },
+    {
+      "id": 65766,
+      "name": "富士山下",
+      "duration": 259213,
+      "artists": [
+        {
+          "name": "陈奕迅"
+        }
+      ],
+      "album": {
+        "name": "What's Going On…?"
+      }
+    },
+    {
+      "id": 2060079395,
+      "name": "爱情转移·2023",
+      "duration": 223000,
+      "artists": [
+        {
+          "name": "刘大拿"
+        },
+        {
+          "name": "SipSu小口酥"
+        }
+      ],
+      "album": {
+        "name": "爱情转移·2023"
+      }
+    },
+    {
+      "id": 2062947450,
+      "name": "爱情转移（温柔御音）",
+      "duration": 260440,
+      "artists": [
+        {
+          "name": "絮舍"
+        }
+      ],
+      "album": {
+        "name": "爱情转移（温柔御音）"
+      }
+    },
+    {
+      "id": 429482531,
+      "name": "爱情转移 (Live)",
+      "duration": 270412,
+      "artists": [
+        {
+          "name": "汪晨蕊"
+        }
+      ],
+      "album": {
+        "name": "中国新歌声 第9期"
+      }
+    },
+    {
+      "id": 64956,
+      "name": "富士山下",
+      "duration": 257120,
+      "artists": [
+        {
+          "name": "陈奕迅"
+        }
+      ],
+      "album": {
+        "name": "Solidays 新曲+精选"
+      }
+    },
+    {
+      "id": 5252854,
+      "name": "爱情转移",
+      "duration": 290847,
+      "artists": [
+        {
+          "name": "陈奕迅"
+        }
+      ],
+      "album": {
+        "name": "环球音乐通 (07年精选)"
+      }
+    },
+    {
+      "id": 1908484717,
+      "name": "爱情转移（抖音版）",
+      "duration": 12561,
+      "artists": [
+        {
+          "name": "白叔"
+        }
+      ],
+      "album": {
+        "name": "别忘了来时的路."
+      }
+    },
+    {
+      "id": 1851228561,
+      "name": "富士山下",
+      "duration": 259133,
+      "artists": [
+        {
+          "name": "陈奕迅"
+        }
+      ],
+      "album": {
+        "name": "Nights of Missing You (想你的夜)"
+      }
+    },
+    {
+      "id": 1806031325,
+      "name": "爱情转移（翻自 汪晨蕊）",
+      "duration": 264724,
+      "artists": [
+        {
+          "name": "刘姿含"
+        }
+      ],
+      "album": {
+        "name": "刘姿含的流行翻唱"
+      }
+    },
+    {
+      "id": 1893127743,
+      "name": "[FREE]夜的第七章",
+      "duration": 238320,
+      "artists": [
+        {
+          "name": "Ljx Ghost"
+        },
+        {
+          "name": "GOAT CREW"
+        }
+      ],
+      "album": {
+        "name": "[FREE]夜的第七章 Jay Chou Type Beat"
+      }
+    },
+    {
+      "id": 2013700662,
+      "name": "夜的第七章",
+      "duration": 94687,
+      "artists": [
+        {
+          "name": "安眠音乐盒"
+        }
+      ],
+      "album": {
+        "name": "独处音乐|极致舒缓|听歌助眠"
+      }
+    },
+    {
+      "id": 2004624627,
+      "name": "夜的第七章",
+      "duration": 192632,
+      "artists": [
+        {
+          "name": "幽兰"
+        }
+      ],
+      "album": {
+        "name": "活该"
+      }
+    },
+    {
+      "id": 1931317106,
+      "name": "巴赫旧约",
+      "duration": 225324,
+      "artists": [
+        {
+          "name": "夜的第七章1129"
+        }
+      ],
+      "album": {
+        "name": "446"
+      }
+    },
+    {
+      "id": 2004464895,
+      "name": "夜的第七章（纯音乐）",
+      "duration": 107467,
+      "artists": [
+        {
+          "name": "吕阿权"
+        }
+      ],
+      "album": {
+        "name": "纯音乐/所遇皆温柔"
+      }
+    },
+    {
+      "id": 2002751659,
+      "name": "夜的第七章 (催眠曲)",
+      "duration": 73928,
+      "artists": [
+        {
+          "name": "纯音乐盒"
+        }
+      ],
+      "album": {
+        "name": "南烟｜催眠纯音｜焦虑治疗｜安抚情绪"
+      }
+    },
+    {
+      "id": 1985883208,
+      "name": "夜地第七章",
+      "duration": 56566,
+      "artists": [
+        {
+          "name": "段宇轩"
+        }
+      ],
+      "album": {
+        "name": "烟火与尘埃"
+      }
+    },
+    {
+      "id": 1952064712,
+      "name": "后会无期",
+      "duration": 211950,
+      "artists": [
+        {
+          "name": "夜的第七章"
+        }
+      ],
+      "album": {
+        "name": "jhl"
+      }
+    },
+    {
+      "id": 1944556418,
+      "name": "枫",
+      "duration": 147575,
+      "artists": [
+        {
+          "name": "夜的第七章"
+        }
+      ],
+      "album": {
+        "name": "枫"
+      }
+    },
+    {
+      "id": 1938979844,
+      "name": "从那天起",
+      "duration": 230791,
+      "artists": [
+        {
+          "name": "夜的第七章"
+        }
+      ],
+      "album": {
+        "name": "从那天起"
+      }
+    },
+    {
+      "id": 29004400,
+      "name": "烟火里的尘埃",
+      "duration": 321399,
+      "artists": [
+        {
+          "name": "华晨宇"
+        }
+      ],
+      "album": {
+        "name": "烟火里的尘埃"
+      }
+    },
+    {
+      "id": 1831769361,
+      "name": "烟火里的尘埃(抖音完整版)",
+      "duration": 131631,
+      "artists": [
+        {
+          "name": "墨哥"
+        }
+      ],
+      "album": {
+        "name": "百花香"
+      }
+    },
+    {
+      "id": 484732162,
+      "name": "烟火里的尘埃",
+      "duration": 198659,
+      "artists": [
+        {
+          "name": "华晨宇"
+        },
+        {
+          "name": "宿涵"
+        }
+      ],
+      "album": {
+        "name": "我想和你唱 第二季 第8期"
+      }
+    },
+    {
+      "id": 1831776322,
+      "name": "烟火里的尘埃(完整版)",
+      "duration": 191216,
+      "artists": [
+        {
+          "name": "精彩亦轩"
+        },
+        {
+          "name": "圈妹"
+        },
+        {
+          "name": "南辰Music"
+        }
+      ],
+      "album": {
+        "name": "烟火里的尘埃"
+      }
+    },
+    {
+      "id": 29418039,
+      "name": "烟火里的尘埃",
+      "duration": 321720,
+      "artists": [
+        {
+          "name": "华晨宇"
+        }
+      ],
+      "album": {
+        "name": "卡西莫多的礼物"
+      }
+    },
+    {
+      "id": 1805289501,
+      "name": "烟火里的尘埃(抖音版)",
+      "duration": 43259,
+      "artists": [
+        {
+          "name": "无忧"
+        }
+      ],
+      "album": {
+        "name": "无忧旋律"
+      }
+    },
+    {
+      "id": 1806145238,
+      "name": "烟火里的尘埃dj",
+      "duration": 144091,
+      "artists": [
+        {
+          "name": "暮暮"
+        }
+      ],
+      "album": {
+        "name": "流行"
+      }
+    },
+    {
+      "id": 1494172766,
+      "name": "烟火里的尘埃 (Live)",
+      "duration": 56581,
+      "artists": [
+        {
+          "name": "李雨婷"
+        }
+      ],
+      "album": {
+        "name": "翻唱歌曲合集"
+      }
+    },
+    {
+      "id": 1991716499,
+      "name": "烟火里的尘埃 0.8×",
+      "duration": 187616,
+      "artists": [
+        {
+          "name": "你是我的救赎"
+        }
+      ],
+      "album": {
+        "name": "烟火里的尘埃"
+      }
+    },
+    {
+      "id": 502925920,
+      "name": "烟火里的尘埃 (Live)",
+      "duration": 233953,
+      "artists": [
+        {
+          "name": "毛雨张"
+        }
+      ],
+      "album": {
+        "name": "中国新歌声第二季 第8期"
+      }
+    },
+    {
+      "id": 1917342495,
+      "name": "爱情废柴",
+      "duration": 220100,
+      "artists": [
+        {
+          "name": "LLLYL"
+        }
+      ],
+      "album": {
+        "name": "写着wanwanwan"
+      }
+    },
+    {
+      "id": 2006061715,
+      "name": "爱情废柴",
+      "duration": 147692,
+      "artists": [
+        {
+          "name": "Lean4Night"
+        }
+      ],
+      "album": {
+        "name": "爱情废柴"
+      }
+    },
+    {
+      "id": 1482236625,
+      "name": "爱情废柴",
+      "duration": 154185,
+      "artists": [
+        {
+          "name": "研究院保镖"
+        }
+      ],
+      "album": {
+        "name": "爱情废柴"
+      }
+    },
+    {
+      "id": 1849489678,
+      "name": "够钟",
+      "duration": 208026,
+      "artists": [
+        {
+          "name": "王震"
+        }
+      ],
+      "album": {
+        "name": "爱情废柴"
+      }
+    },
+    {
+      "id": 1990566212,
+      "name": "分手快乐",
+      "duration": 276712,
+      "artists": [
+        {
+          "name": "爱情废柴"
+        }
+      ],
+      "album": {
+        "name": "分手快乐"
+      }
+    },
+    {
+      "id": 2037432023,
+      "name": "爱情废柴pt2",
+      "duration": 165076,
+      "artists": [
+        {
+          "name": "Lean4Night"
+        }
+      ],
+      "album": {
+        "name": "爱情废柴"
+      }
+    },
+    {
+      "id": 1990732423,
+      "name": "Three people's concert",
+      "duration": 161594,
+      "artists": [
+        {
+          "name": "爱情废柴"
+        }
+      ],
+      "album": {
+        "name": "Three people's concert"
+      }
+    },
+    {
+      "id": 1999004421,
+      "name": "爱情废柴",
+      "duration": 206216,
+      "artists": [
+        {
+          "name": "幽兰"
+        }
+      ],
+      "album": {
+        "name": "谢谢你"
+      }
+    },
+    {
+      "id": 1986522800,
+      "name": "废柴爱情",
+      "duration": 159059,
+      "artists": [
+        {
+          "name": "蕾leisure"
+        }
+      ],
+      "album": {
+        "name": "废柴爱情"
+      }
+    },
+    {
+      "id": 2019892278,
+      "name": "残酷月光",
+      "duration": 35572,
+      "artists": [
+        {
+          "name": "爱情废柴辣"
+        }
+      ],
+      "album": {
+        "name": "残酷月光"
+      }
+    },
+    {
+      "id": 512489621,
+      "name": "遗憾 (Live)",
+      "duration": 238476,
+      "artists": [
+        {
+          "name": "薛之谦"
+        }
+      ],
+      "album": {
+        "name": "蒙面唱将猜猜猜第二季 第6期"
+      }
+    },
+    {
+      "id": 25657360,
+      "name": "遗憾",
+      "duration": 273827,
+      "artists": [
+        {
+          "name": "李代沫"
+        }
+      ],
+      "album": {
+        "name": "我的歌声里"
+      }
+    },
+    {
+      "id": 307018,
+      "name": "遗憾",
+      "duration": 281054,
+      "artists": [
+        {
+          "name": "许美静"
+        }
+      ],
+      "album": {
+        "name": "遗憾"
+      }
+    },
+    {
+      "id": 210287,
+      "name": "遺憾",
+      "duration": 257613,
+      "artists": [
+        {
+          "name": "陈洁仪"
+        }
+      ],
+      "album": {
+        "name": "重譯 陳潔儀"
+      }
+    },
+    {
+      "id": 1401671455,
+      "name": "Love Is Gone (Acoustic)",
+      "duration": 176971,
+      "artists": [
+        {
+          "name": "SLANDER"
+        },
+        {
+          "name": "Dylan Matthew"
+        }
+      ],
+      "album": {
+        "name": "Love Is Gone (Acoustic)"
+      }
+    },
+    {
+      "id": 520459745,
+      "name": "遺憾",
+      "duration": 257613,
+      "artists": [
+        {
+          "name": "陈洁仪"
+        }
+      ],
+      "album": {
+        "name": "重譯 陳潔儀.重奏"
+      }
+    },
+    {
+      "id": 1380149450,
+      "name": "遗憾",
+      "duration": 176000,
+      "artists": [
+        {
+          "name": "阿虾"
+        }
+      ],
+      "album": {
+        "name": "翻唱"
+      }
+    },
+    {
+      "id": 2042836592,
+      "name": "遗憾 (Live版)",
+      "duration": 252458,
+      "artists": [
+        {
+          "name": "张信哲"
+        },
+        {
+          "name": "张韶涵"
+        }
+      ],
+      "album": {
+        "name": "声生不息·宝岛季 第7期"
+      }
+    },
+    {
+      "id": 439139812,
+      "name": "遗憾",
+      "duration": 234144,
+      "artists": [
+        {
+          "name": "大壮"
+        }
+      ],
+      "album": {
+        "name": "大壮首张限量定制翻唱"
+      }
+    },
+    {
+      "id": 27946386,
+      "name": "遗憾",
+      "duration": 273000,
+      "artists": [
+        {
+          "name": "田馥甄"
+        }
+      ],
+      "album": {
+        "name": "热门华语194"
+      }
+    },
+    {
+      "id": 1416015057,
+      "name": "可爱女人 (Live)",
+      "duration": 151480,
+      "artists": [
+        {
+          "name": "刘珂"
+        }
+      ],
+      "album": {
+        "name": "好声音深圳演唱会"
+      }
+    },
+    {
+      "id": 410518144,
+      "name": "可爱女人",
+      "duration": 229026,
+      "artists": [
+        {
+          "name": "群星"
+        }
+      ],
+      "album": {
+        "name": "娓娓之音"
+      }
+    },
+    {
+      "id": 1971898406,
+      "name": "【Nuo】可爱女人【cover】",
+      "duration": 63142,
+      "artists": [
+        {
+          "name": "Nuo"
+        }
+      ],
+      "album": {
+        "name": "翻唱"
+      }
+    },
+    {
+      "id": 507721250,
+      "name": "可愛女人",
+      "duration": 216959,
+      "artists": [
+        {
+          "name": "Yzxxx"
+        },
+        {
+          "name": "Vayk浪味仙"
+        }
+      ],
+      "album": {
+        "name": "回收站"
+      }
+    },
+    {
+      "id": 1892435613,
+      "name": "可爱女人",
+      "duration": 57724,
+      "artists": [
+        {
+          "name": "爱唱歌的金牛座大聪明"
+        }
+      ],
+      "album": {
+        "name": "可爱女人"
+      }
+    },
+    {
+      "id": 1436628272,
+      "name": "可爱女人",
+      "duration": 188076,
+      "artists": [
+        {
+          "name": "刘冬鹏"
+        }
+      ],
+      "album": {
+        "name": "可爱女人"
+      }
+    },
+    {
+      "id": 1925939649,
+      "name": "可爱女人（prod by REVIVAL MUSIC）",
+      "duration": 185033,
+      "artists": [
+        {
+          "name": "杨鹤松"
+        }
+      ],
+      "album": {
+        "name": "可爱女人"
+      }
+    },
+    {
+      "id": 2063227225,
+      "name": "可爱女人",
+      "duration": 170000,
+      "artists": [
+        {
+          "name": "YIXING"
+        }
+      ],
+      "album": {
+        "name": "可爱女人"
+      }
+    },
+    {
+      "id": 1856914525,
+      "name": "可爱女人",
+      "duration": 183253,
+      "artists": [
+        {
+          "name": "Lil K"
+        }
+      ],
+      "album": {
+        "name": "比你帅"
+      }
+    },
+    {
+      "id": 1483622247,
+      "name": "可爱女人",
+      "duration": 147428,
+      "artists": [
+        {
+          "name": "坠落天使（Fallen angel）"
+        }
+      ],
+      "album": {
+        "name": "QUIETBOINOLUV"
+      }
+    },
+    {
+      "id": 25707139,
+      "name": "一生所爱",
+      "duration": 273666,
+      "artists": [
+        {
+          "name": "卢冠廷"
+        },
+        {
+          "name": "莫文蔚"
+        }
+      ],
+      "album": {
+        "name": "齐天周大圣之西游双记 电影歌乐游唱版"
+      }
+    },
+    {
+      "id": 393703,
+      "name": "一生所爱",
+      "duration": 273000,
+      "artists": [
+        {
+          "name": "卢冠廷"
+        },
+        {
+          "name": "莫文蔚"
+        }
+      ],
+      "album": {
+        "name": "武侠音乐精装特辑"
+      }
+    },
+    {
+      "id": 32785700,
+      "name": "一生所爱",
+      "duration": 256195,
+      "artists": [
+        {
+          "name": "卢冠廷"
+        }
+      ],
+      "album": {
+        "name": "Beyond Imagination"
+      }
+    },
+    {
+      "id": 110771,
+      "name": "一生所爱(Live)",
+      "duration": 292306,
+      "artists": [
+        {
+          "name": "卢冠廷"
+        },
+        {
+          "name": "岑宁儿"
+        }
+      ],
+      "album": {
+        "name": "卢冠廷 2050 演唱会"
+      }
+    },
+    {
+      "id": 25727660,
+      "name": "一生所爱",
+      "duration": 193358,
+      "artists": [
+        {
+          "name": "舒淇"
+        }
+      ],
+      "album": {
+        "name": "西游 降魔篇 电影原声带"
+      }
+    },
+    {
+      "id": 1447509875,
+      "name": "一生所爱国语版",
+      "duration": 221152,
+      "artists": [
+        {
+          "name": "李铁柱"
+        }
+      ],
+      "album": {
+        "name": "民谣翻唱"
+      }
+    },
+    {
+      "id": 25727661,
+      "name": "一生所爱(粤)",
+      "duration": 114144,
+      "artists": [
+        {
+          "name": "舒淇"
+        }
+      ],
+      "album": {
+        "name": "西游 降魔篇 电影原声带"
+      }
+    },
+    {
+      "id": 1976329288,
+      "name": "一生所爱（烟嗓版）",
+      "duration": 224000,
+      "artists": [
+        {
+          "name": "艾力-NM"
+        }
+      ],
+      "album": {
+        "name": "一生所爱"
+      }
+    },
+    {
+      "id": 1382001976,
+      "name": "高天霸 - 一生所爱 （烟嗓+嘶吼版）",
+      "duration": 282860,
+      "artists": [
+        {
+          "name": "高天霸"
+        }
+      ],
+      "album": {
+        "name": "想死却又不敢"
+      }
+    },
+    {
+      "id": 512099011,
+      "name": "一生所爱",
+      "duration": 268956,
+      "artists": [
+        {
+          "name": "莫文蔚"
+        }
+      ],
+      "album": {
+        "name": "天籁 - Studio Version"
+      }
+    }
+  ],
+  "before_selected_id": 5252854,
+  "note": "Public NetEase search metadata captured 2026-10-10. No lyrics or audio included; expected ID supplied by the user."
+}

@@ -6,9 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Newtonsoft.Json;
+using System.Reflection;
 
 internal static class Program
 {
@@ -20,6 +23,17 @@ internal static class Program
     private static int Main(string[] args)
     {
         if (args.Contains("--live")) return LiveSmoke();
+        if (args.Contains("--live-recording")) return LiveRecording();
+        if (args.Contains("--cookie-test"))
+        {
+            CookieTransportTest();
+            return _failed == 0 ? 0 : 1;
+        }
+        if (args.Contains("--audit-test"))
+        {
+            AuditorTests();
+            return _failed == 0 ? 0 : 1;
+        }
         if ((args.Contains("--expect-x64") && !Environment.Is64BitProcess) ||
             (args.Contains("--expect-x86") && Environment.Is64BitProcess))
         {
@@ -34,7 +48,7 @@ internal static class Program
             {
                 var handler = new Fixture((_, __) => Json(fixture));
                 using (var session = Session(handler)) Equal(0, NeteaseApi.Search("Song", session).Count());
-                Equal(2, handler.Calls.Count);
+                Equal(3, handler.Calls.Count);
             });
         }
         Test("A malformed new search falls back to a valid legacy search", () =>
@@ -78,13 +92,13 @@ internal static class Program
         {
             var handler = new Fixture((_, __) => { throw new HttpRequestException("offline"); });
             Equal(null, Lookup(CreatePlugin(handler, (source, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null)));
-            Equal(2, handler.Calls.Count);
+            Equal(3, handler.Calls.Count);
         });
         Test("Both rejected interfaces return no lyrics through the host callback", () =>
         {
             var handler = new Fixture((_, __) => Json("{\"code\":-460}"));
             Equal(null, Lookup(CreatePlugin(handler), "Singer", "Song", "Album"));
-            Equal(6, handler.Calls.Count);
+            Equal(9, handler.Calls.Count);
         });
         Test("Library tags missing: callback title and artist are used", () =>
         {
@@ -120,11 +134,11 @@ internal static class Program
             Equal(0, handler.Calls.Count);
             Equal(0, reads);
         });
-        Test("Bad entries and missing candidate artist/album are handled", () =>
+        Test("Bad entries and candidates without artist evidence are rejected", () =>
         {
             var handler = new Fixture((request, _) => Json(request.RequestUri.AbsolutePath.Contains("search")
                 ? "{\"code\":200,\"result\":{\"songCount\":5,\"songs\":[null,{}, {\"id\":-1,\"name\":\"Song\"},{\"id\":22},{\"id\":101,\"name\":\"Song\"}]}}" : Lyrics));
-            Equal("[00:01.00]Hello", Lookup(CreatePlugin(handler), "Singer", "Song", "Album"));
+            Equal(null, Lookup(CreatePlugin(handler), "Singer", "Song", "Album"));
         });
         Test("Unknown duration does not force the shortest recording", () =>
         {
@@ -210,7 +224,7 @@ internal static class Program
                     plugin.Configure(panel.Handle);
                     var checkboxes = panel.Controls.OfType<CheckBox>().ToArray();
                     var mode = checkboxes.Single(box => box.Text.StartsWith("Use legacy"));
-                    var fuzzy = checkboxes.Single(box => box.Text.StartsWith("Fuzzy"));
+                    var fuzzy = checkboxes.Single(box => box.Text.StartsWith("Allow small"));
                     Equal(legacy, fuzzy.Enabled);
                     mode.Checked = !legacy;
                     Equal(!legacy, fuzzy.Enabled);
@@ -269,6 +283,8 @@ internal static class Program
             var stopwatch = Stopwatch.StartNew();
             using (var session = new LookupSession(trace.Add, handler, TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(250)))
             {
+                Equal(null, session.Request<LyricResult>("deadline fixture", HttpMethod.Get,
+                    "https://music.163.com/api/song/lyric?id=101", null, r => r != null));
                 Equal(0, NeteaseApi.Search("Song", session).Count());
                 Equal(0, NeteaseApi.Search("Song Singer", session).Count());
                 Equal(null, NeteaseApi.RequestLyric(101, session));
@@ -277,12 +293,441 @@ internal static class Program
             Equal(1, handler.Calls.Count);
             True(trace.Any(line => line.Contains("lookup deadline reached")));
         });
+        CookieTransportTest();
+        AuditorTests();
+        MatchingTests();
         Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
         Console.WriteLine("Process architecture: " + (Environment.Is64BitProcess ? "x64" : "x86"));
         return _failed == 0 ? 0 : 1;
     }
 
     private static LookupSession Session(Fixture handler, Action<string> trace = null) => new LookupSession(trace, handler);
+
+    private static void AuditorTests()
+    {
+        Test("Redirects cannot silently choose an unencrypted request outside the fallback policy", () =>
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var url = "http://127.0.0.1:" + ((IPEndPoint)listener.LocalEndpoint).Port;
+            var server = Task.Run(async () =>
+            {
+                var accept = listener.AcceptTcpClientAsync();
+                if (await Task.WhenAny(accept, Task.Delay(5000)) != accept)
+                    throw new TimeoutException("Local redirect fixture received no request");
+                using (var client = await accept)
+                {
+                    client.ReceiveTimeout = 5000;
+                    using (var stream = client.GetStream())
+                    using (var reader = new StreamReader(stream, System.Text.Encoding.ASCII, false, 1024, true))
+                    {
+                        while (!string.IsNullOrEmpty(reader.ReadLine())) { }
+                        var response = System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 302 Found\r\nLocation: " +
+                            url + "/plain\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+                        await stream.WriteAsync(response, 0, response.Length);
+                    }
+                }
+                listener.Stop();
+            });
+            var trace = new List<string>();
+            var completed = false;
+            try
+            {
+                using (var session = new LookupSession(trace.Add))
+                    Equal(null, session.Request<ApiResponse>("redirect fixture", HttpMethod.Get, url, null, r => r != null));
+                True(trace.Any(t => t.Contains("HTTP 302")));
+                completed = true;
+            }
+            finally
+            {
+                listener.Stop();
+                try { server.GetAwaiter().GetResult(); }
+                catch when (!completed) { }
+            }
+        });
+        Test("A valid secure response never triggers HTTP fallback", () =>
+        {
+            var handler = new Fixture((request, _) =>
+            {
+                True(request.RequestUri.Scheme == "https");
+                return Json(request.RequestUri.AbsolutePath.Contains("search") ? Search : Lyrics);
+            });
+            Equal("[00:01.00]Hello", Lookup(CreatePlugin(handler), "Singer", "Song", "Album"));
+            Equal(2, handler.Calls.Count);
+        });
+        Test("A phone share URL retrieves lyrics without requiring title tags", () =>
+        {
+            var handler = new Fixture((_, __) => Json(Lyrics));
+            Equal("[00:01.00]Hello", Lookup(CreatePlugin(handler,
+                (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "https://y.music.163.com/m/song?id=101&uct2=example" : null)));
+            Equal(1, handler.Calls.Count);
+        });
+        Test("Blocked HTTPS falls back to HTTP for both search and lyrics", () =>
+        {
+            var handler = new Fixture((request, _) =>
+            {
+                if (request.RequestUri.Scheme == "https") throw new HttpRequestException("TLS blocked");
+                return Json(request.RequestUri.AbsolutePath.Contains("search") ? Search : Lyrics);
+            });
+            Equal("[00:01.00]Hello", Lookup(CreatePlugin(handler), "Singer", "Song", "Album"));
+            Equal(4, handler.Calls.Count);
+            True(handler.Calls[0].StartsWith("POST https://") && handler.Calls[1].StartsWith("GET https://"));
+            True(handler.Calls[2].StartsWith("GET http://") && handler.Calls[3].StartsWith("GET http://"));
+        });
+        Test("Silently stalled HTTPS leaves time for HTTP search and lyric recovery", () =>
+        {
+            var handler = new Fixture((request, _) => Json(request.RequestUri.AbsolutePath.Contains("search") ? Search : Lyrics))
+                { StallHttps = true };
+            var stopwatch = Stopwatch.StartNew();
+            using (var session = new LookupSession(null, handler, TimeSpan.FromMilliseconds(80), TimeSpan.FromMilliseconds(700)))
+            {
+                Equal(101L, SearchMatch.SearchAndMatch("Song", "Singer", "Album", null, session));
+                Equal("[00:01.00]Hello", NeteaseApi.RequestLyric(101, session)?.lrc?.lyric);
+            }
+            True(stopwatch.Elapsed < TimeSpan.FromMilliseconds(700));
+            Equal(1, handler.Calls.Count(c => c.StartsWith("POST ")));
+            Equal(2, handler.Calls.Count(c => c.StartsWith("GET http://")));
+        });
+        Test("Turning off HTTP fallback prevents unencrypted search and lyric requests", () =>
+        {
+            foreach (var useOverride in new[] { false, true })
+            {
+                var handler = new Fixture((request, _) =>
+                {
+                    if (request.RequestUri.Scheme == "https") throw new HttpRequestException("TLS blocked");
+                    throw new Exception("HTTP must not be called");
+                });
+                var plugin = CreatePlugin(handler, (_, tag) => useOverride && tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
+                SetConfig(plugin, "{\"AllowInsecureHttp\":false}");
+                Equal(null, Lookup(plugin, "Singer", "Song", "Album"));
+                Equal(2, handler.Calls.Count);
+                True(handler.Calls.All(c => c.Contains("https://")));
+            }
+        });
+        Test("The HTTP setting defaults on for existing configurations and saves the user's opt-out", () =>
+        {
+            var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
+            SetConfig(plugin, "{\"Format\":0}");
+            using (var panel = new Panel())
+            {
+                plugin.Configure(panel.Handle);
+                var option = panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP"));
+                True(option.Checked);
+                option.Checked = false;
+                plugin.SaveSettings();
+            }
+            plugin.ReadConfig();
+            using (var panel = new Panel())
+            {
+                plugin.Configure(panel.Handle);
+                True(!panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
+            }
+        });
+        Test("The search deadline preserves part of the lookup for available lyrics", () =>
+        {
+            var handler = new Fixture((_, __) => Json(Lyrics)) { StallSearch = true };
+            using (var session = new LookupSession(null, handler, TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(600)))
+            {
+                Equal(0, NeteaseApi.Search("Song", session).Count());
+                Equal(0, NeteaseApi.Search("Another query", session).Count());
+                True(NeteaseApi.RequestLyric(101, session) != null);
+            }
+        });
+        Test("Application version cookie is sent only to legacy interfaces and no login cookies are sent", () =>
+        {
+            var handler = new Fixture((request, _) =>
+            {
+                if (request.Method == HttpMethod.Post)
+                {
+                    True(!request.Headers.Contains("Cookie"));
+                    return Json("{\"code\":200}");
+                }
+                Equal("appver=1.5.0.75771;", string.Join("", request.Headers.GetValues("Cookie")));
+                return Json(Lyrics);
+            });
+            using (var session = Session(handler)) True(NeteaseApi.RequestLyric(101, session) != null);
+        });
+        Test("Phone share song links are accepted without accepting arbitrary subdomains", () =>
+        {
+            Equal(400875204L, Plugin.TryParseNeteaseUrl("https://y.music.163.com/m/song?id=400875204&uct2=example"));
+            Equal(0L, Plugin.TryParseNeteaseUrl("https://y.music.163.com.evil.test/m/song?id=400875204"));
+            Equal(0L, Plugin.TryParseNeteaseUrl("https://y.music.163.com/m/playlist?id=400875204"));
+        });
+        Test("A timed-out new search cannot starve the working legacy lyric download", () =>
+        {
+            var handler = new Fixture((request, _) => Json(request.RequestUri.AbsolutePath.Contains("search") ? Search : Lyrics))
+                { StallNew = true };
+            using (var session = new LookupSession(null, handler, TimeSpan.FromMilliseconds(80), TimeSpan.FromMilliseconds(260)))
+            {
+                Equal(101L, SearchMatch.SearchAndMatch("Song", "Singer", "Different album", null, session));
+                Equal("[00:01.00]Hello", NeteaseApi.RequestLyric(101, session)?.lrc?.lyric);
+            }
+            Equal(1, handler.Calls.Count(c => c.StartsWith("POST ")));
+            True(handler.Calls.Last().Contains("id=101&"));
+        });
+        Test("Instrumental placeholders return no lyrics and do not request fallback lyrics", () =>
+        {
+            foreach (var text in new[] { "纯音乐，请欣赏", "[00:00.000]纯音乐，请欣赏\n[00:01.000]", "[ti:Instrumental]\n[00:00.00]純音樂，請欣賞" })
+            {
+                var handler = new Fixture((_, __) => Json(JsonConvert.SerializeObject(new { code = 200, lrc = new { lyric = text } })));
+                Equal(null, Lookup(CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null)));
+                Equal(1, handler.Calls.Count);
+            }
+        });
+        Test("Real lyrics containing an instrumental phrase remain intact", () =>
+        {
+            var text = "[00:01.00]纯音乐，请欣赏\n[00:02.00]Actual singing";
+            var handler = new Fixture((_, __) => Json(JsonConvert.SerializeObject(new { code = 200, lrc = new { lyric = text } })));
+            Equal(text, Lookup(CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null)));
+        });
+        Test("An explicit instrumental flag suppresses even a nonempty placeholder body", () =>
+        {
+            var handler = new Fixture((_, __) => Json("{\"code\":200,\"nolyric\":true,\"lrc\":{\"lyric\":\"instrumental\"}}"));
+            Equal(null, Lookup(CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null)));
+            Equal(1, handler.Calls.Count);
+        });
+    }
+
+    private static void CookieTransportTest()
+    {
+        Test("Server cookies cannot change later anonymous searches in the same lookup", () =>
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var url = "http://127.0.0.1:" + ((IPEndPoint)listener.LocalEndpoint).Port + "/search";
+            var server = Task.Run(async () =>
+            {
+                for (var index = 0; index < 2; index++)
+                {
+                    var accept = listener.AcceptTcpClientAsync();
+                    if (await Task.WhenAny(accept, Task.Delay(5000)) != accept)
+                        throw new TimeoutException("Local fixture did not receive a request");
+                    using (var client = await accept)
+                    {
+                        client.ReceiveTimeout = 5000;
+                        using (var stream = client.GetStream())
+                        using (var reader = new StreamReader(stream, System.Text.Encoding.ASCII, false, 1024, true))
+                        {
+                            var headers = new List<string>();
+                            string line;
+                            while (!string.IsNullOrEmpty(line = reader.ReadLine())) headers.Add(line);
+                            var poisoned = headers.Any(h => h.StartsWith("Cookie:", StringComparison.OrdinalIgnoreCase)
+                                && h.Contains("search-state=poison"));
+                            var body = System.Text.Encoding.UTF8.GetBytes(poisoned
+                                ? SearchJson(new[] { Song(999, "Unrelated song", "Other artist", "Other album", 200000) })
+                                : Search);
+                            var response = System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n" +
+                                "Set-Cookie: search-state=poison; Path=/\r\nContent-Length: " + body.Length + "\r\nConnection: close\r\n\r\n");
+                            await stream.WriteAsync(response, 0, response.Length);
+                            await stream.WriteAsync(body, 0, body.Length);
+                        }
+                    }
+                }
+            });
+            var completed = false;
+            try
+            {
+                using (var session = new LookupSession(Console.WriteLine))
+                {
+                    for (var index = 0; index < 2; index++)
+                    {
+                        var result = session.Request<SearchResult>("cookie fixture", HttpMethod.Get, url, null,
+                            r => r != null && r.code == 200 && r.result?.songs != null);
+                        Equal(101L, result?.result?.songs.Single().id ?? 0);
+                    }
+                }
+                completed = true;
+            }
+            finally
+            {
+                listener.Stop();
+                try { server.GetAwaiter().GetResult(); }
+                catch when (!completed) { /* Preserve the request/assertion failure during fixture shutdown. */ }
+            }
+        });
+    }
+
+    private static void MatchingTests()
+    {
+        Test("Captured By Your Side search results are rejected rather than choosing another song", () =>
+        {
+            var fixture = ReadRecordingFixture();
+            Equal(0L, Select(fixture.observed, fixture.title, fixture.artist, fixture.album, fixture.duration_ms));
+        });
+        Test("The supplied NetEase recording matches singer-plus-composer tags and a Japanese album name", () =>
+        {
+            var fixture = ReadRecordingFixture();
+            Equal(400875204L, Select(fixture.observed.Concat(new[] { fixture.correct }), fixture.title,
+                fixture.artist, fixture.album, fixture.duration_ms));
+        });
+        Test("Captured irrelevant responses do not trigger a lyric download through MusicBee", () =>
+        {
+            var fixture = ReadRecordingFixture();
+            var json = SearchJson(fixture.observed);
+            var handler = new Fixture((_, __) => Json(json));
+            Equal(null, Lookup(CreatePlugin(handler), fixture.artist, fixture.title, fixture.album));
+            True(handler.Calls.All(c => c.Contains("/search/")));
+        });
+        Test("Legacy search recovers a valid song when code=200 new results are irrelevant", () =>
+        {
+            var fixture = ReadRecordingFixture();
+            var handler = new Fixture((request, _) =>
+            {
+                if (!request.RequestUri.AbsolutePath.Contains("search")) return Json(Lyrics);
+                return Json(SearchJson(request.Method == HttpMethod.Get ? new[] { fixture.correct } : fixture.observed));
+            });
+            using (var session = Session(handler))
+                Equal(400875204L, SearchMatch.SearchAndMatch(fixture.title, fixture.artist, fixture.album, fixture.duration_ms, session));
+            True(handler.Calls.Any(c => c.StartsWith("GET ") && Uri.UnescapeDataString(c).Contains("By Your Side 澤田かおり")));
+        });
+        Test("Legacy fuzzy mode rejects the captured unrelated songs", () =>
+        {
+            var fixture = ReadRecordingFixture();
+            var handler = new Fixture((_, __) => Json(SearchJson(fixture.observed)));
+            using (var session = Session(handler))
+                Equal(0L, SearchMatchLegacy.QueryWithFeatRemoved(fixture.title, fixture.artist, true, session));
+        });
+        Test("An exact title with the wrong artist is rejected even when album and duration agree", () =>
+            Equal(0L, Select(new[] { Song(1, "Song", "Other singer", "Album", 200000) })));
+        Test("An unrelated title with the right artist, album and duration is rejected", () =>
+            Equal(0L, Select(new[] { Song(1, "Different song", "Singer", "Album", 200000) })));
+        Test("Matching the first title word does not qualify a song", () =>
+            Equal(0L, Select(new[] { Song(1, "By Your Heart", "Singer", "Album", 200000) }, "By Your Side")));
+        Test("An exact title five seconds off beats a wrong title of identical duration", () =>
+            Equal(1L, Select(new[] { Song(1, "Song", "Singer", "Album", 205000), Song(2, "Wrong", "Singer", "Album", 200000) })));
+        Test("Artist evidence outweighs a close duration for the wrong artist", () =>
+            Equal(1L, Select(new[] { Song(1, "Song", "Singer", "Album", 205000), Song(2, "Song", "Other", "Album", 200000) })));
+        Test("A secondary composer credit cannot identify another recording by itself", () =>
+            Equal(0L, Select(new[] { Song(1, "Song", "Composer", "Other album", 200000) }, artist: "Singer/Composer")));
+        Test("A similar album cannot corroborate a secondary composer without the primary singer", () =>
+            Equal(0L, Select(new[] { Song(1, "Song", "Composer", "Soundtrack 03", 200000) },
+                artist: "Singer/Composer", album: "Soundtrack 02")));
+        Test("Reordered service credits need corroborating album and duration", () =>
+            Equal(1L, Select(new[] { Song(1, "Song", "Singer", "Album", 200000) }, artist: "Composer/Singer")));
+        Test("An exact album resolves recordings with the same title and artist", () =>
+            Equal(1L, Select(new[] { Song(1, "Song", "Singer", "Album", 200000), Song(2, "Song", "Singer", "Completely different", 200000) })));
+        Test("An exact album also distinguishes a similarly named deluxe album", () =>
+            Equal(1L, Select(new[] { Song(1, "Song", "Singer", "Album", 200000), Song(2, "Song", "Singer", "Album Deluxe", 200000) })));
+        Test("A translated album does not exclude a matching title, artist and duration", () =>
+            Equal(1L, Select(new[] { Song(1, "Song", "Singer", "English soundtrack name", 200000) }, album: "日本語のサウンドトラック")));
+        Test("Ambiguous recordings are rejected regardless of ID and response order", () =>
+        {
+            var songs = new[] { Song(1, "Song", "Singer", "One", 200000), Song(999, "Song", "Singer", "Two", 200000) };
+            Equal(0L, Select(songs, album: null));
+            Equal(0L, Select(songs.Reverse(), album: null));
+        });
+        Test("Duplicate appearances of the same ID do not create ambiguity", () =>
+        {
+            var song = Song(1, "Song", "Singer", "Album", 200000);
+            Equal(1L, Select(new[] { song, song }));
+        });
+        Test("Confirmed duration beats an otherwise identical candidate of unknown duration", () =>
+            Equal(1L, Select(new[] { Song(1, "Song", "Singer", "Album", 200000), Song(2, "Song", "Singer", "Album", 0) })));
+        Test("A very different recording length is rejected", () =>
+            Equal(0L, Select(new[] { Song(1, "Song", "Singer", "Album", 90000) })));
+        Test("An unknown local duration does not resolve ambiguous recordings by shortest length", () =>
+            Equal(0L, Select(new[] { Song(1, "Song", "Singer", "Album", 90000), Song(2, "Song", "Singer", "Album", 200000) }, duration: null)));
+        Test("Full-width punctuation, spacing and title case normalize consistently", () =>
+            Equal(1L, Select(new[] { Song(1, "ＢＹ　ＹＯＵＲ　ＳＩＤＥ！", "Singer", "Album", 200000) }, "By Your Side")));
+        Test("A small typo on a long title can match, but cannot bypass the artist check", () =>
+        {
+            Equal(1L, Select(new[] { Song(1, "By Your Sile", "Singer", "Album", 200000) }, "By Your Side"));
+            Equal(0L, Select(new[] { Song(1, "By Your Sile", "Other", "Album", 200000) }, "By Your Side"));
+        });
+        Test("Legacy exact mode refuses a spelling difference while fuzzy mode accepts it safely", () =>
+        {
+            foreach (var fuzzy in new[] { false, true })
+            {
+                var handler = new Fixture((_, __) => Json(SearchJson(new[] { Song(1, "Beautiful Songs", "Singer", "Album", 200000) })));
+                using (var session = Session(handler))
+                    Equal(fuzzy ? 1L : 0L, SearchMatchLegacy.QueryWithFeatRemoved("Beautiful Song", "Singer", fuzzy, session));
+            }
+        });
+        Test("Live, remix and TV-size recordings do not silently replace the requested edition", () =>
+        {
+            foreach (var suffix in new[] { " (Live)", " (Remix)", " (TV)", " (TV size)", " - Acoustic" })
+                Equal(0L, Select(new[] { Song(1, "A Very Long Meaningful Song Title" + suffix, "Singer", "Album", 200000) }, "A Very Long Meaningful Song Title"));
+        });
+        Test("A matching live edition remains eligible", () =>
+            Equal(1L, Select(new[] { Song(1, "Song (Live)", "Singer", "Album", 200000) }, "Song (Live)")));
+        Test("Feather and feature are not interpreted as featured artist credits", () =>
+        {
+            foreach (var title in new[] { "Birds of a Feather", "A feature film", "Feather" })
+            {
+                var split = SearchMatch.SplitTitleArtist(title, "Singer");
+                Equal(title, split.Item1);
+                Equal("Singer", string.Join(";", split.Item2));
+            }
+        });
+        Test("Featuring credits are extracted as complete names", () =>
+        {
+            foreach (var credit in new[] { " feat. Guest", " Featuring Guest", " (ft. Guest)" })
+            {
+                var split = SearchMatch.SplitTitleArtist("Song" + credit, "Singer");
+                Equal("Song", split.Item1);
+                Equal("Singer;Guest", string.Join(";", split.Item2));
+            }
+        });
+        Test("Real artist names retain slashes, ampersands, commas and middle dots", () =>
+        {
+            foreach (var name in new[] { "AC/DC", "ac/dc", "Simon & Garfunkel", "Tyler, The Creator", "迈克尔·杰克逊" })
+            {
+                Equal(name, SearchMatch.SplitTitleArtist("Song", name).Item2.Single());
+                Equal(1L, Select(new[] { Song(1, "Song", name, "Album", 200000) }, artist: name));
+            }
+        });
+        Test("Partial names created from punctuation do not match solo artists", () =>
+        {
+            foreach (var pair in new[] { new[] { "AC/DC", "AC" }, new[] { "Simon & Garfunkel", "Simon" }, new[] { "Tyler, The Creator", "Tyler" }, new[] { "迈克尔·杰克逊", "迈克尔" } })
+                Equal(0L, Select(new[] { Song(1, "Song", pair[1], "Album", 200000) }, artist: pair[0]));
+        });
+        Test("Japanese compatibility characters and explicit artist separators normalize safely", () =>
+        {
+            Equal("澤田かおり;服部隆之", string.Join(";", SearchMatch.SplitTitleArtist("Song", "澤田かおり/服部隆之").Item2));
+            Equal("澤田かおり;服部隆之", string.Join(";", SearchMatch.SplitTitleArtist("Song", "澤田かおり、服部隆之").Item2));
+            Equal(1L, Select(new[] { Song(1, "Song", "服部隆之", "Album", 200000) }, artist: "服部隆之"));
+        });
+        Test("An unsplit collaboration credit can match the service's separate artist fields", () =>
+        {
+            var song = Song(1, "Song", "Jonas Blue", "Album", 200000);
+            song.artists = new[] { new SearchResultArtist { name = "Jonas Blue" }, new SearchResultArtist { name = "RAYE" } };
+            Equal(1L, Select(new[] { song }, artist: "Jonas Blue & RAYE"));
+        });
+        Test("When artist is absent, a contradictory supplied album is rejected", () =>
+            Equal(0L, Select(new[] { Song(1, "Song", "Singer", "Other album", 200000) }, artist: null)));
+        Test("Ambiguous search results do not trigger a lyric download", () =>
+        {
+            var handler = new Fixture((_, __) => Json(SearchJson(new[] { Song(1, "Song", "Singer", "One", 200000), Song(2, "Song", "Singer", "Two", 200000) })));
+            Equal(null, Lookup(CreatePlugin(handler), "Singer", "Song"));
+            True(handler.Calls.All(c => c.Contains("/search/")));
+        });
+    }
+
+    private static SearchResultSong Song(long id, string title, string artist, string album, long duration) =>
+        new SearchResultSong { id = id, name = title, duration = duration,
+            artists = new[] { new SearchResultArtist { name = artist } }, album = new SearchResultAlbum { name = album } };
+    private static long Select(IEnumerable<SearchResultSong> songs, string title = "Song", string artist = "Singer", string album = "Album", long? duration = 200000) =>
+        SearchMatch.SelectCandidate(songs, title, artist, album, duration);
+    private static string SearchJson(IEnumerable<SearchResultSong> songs)
+    {
+        var values = songs.ToArray();
+        return JsonConvert.SerializeObject(new { code = 200, result = new { songCount = values.Length, songs = values } });
+    }
+    private static RecordingFixture ReadRecordingFixture()
+    {
+        using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("NeteaseLyricsTest.Fixtures.ByYourSide.json"))
+        using (var reader = new StreamReader(stream, System.Text.Encoding.UTF8))
+            return JsonConvert.DeserializeObject<RecordingFixture>(reader.ReadToEnd());
+    }
+    private sealed class RecordingFixture
+    {
+        public string title { get; set; }
+        public string artist { get; set; }
+        public string album { get; set; }
+        public long duration_ms { get; set; }
+        public SearchResultSong correct { get; set; }
+        public SearchResultSong[] observed { get; set; }
+    }
     private static HttpResponseMessage Json(string json) => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) };
     private static Plugin.MusicBeeApiInterface Host() => new Plugin.MusicBeeApiInterface
     {
@@ -331,7 +776,7 @@ internal static class Program
     {
         private readonly Func<HttpRequestMessage, int, HttpResponseMessage> _respond;
         internal readonly List<string> Calls = new List<string>();
-        internal bool StallFirst, StallAll;
+        internal bool StallFirst, StallAll, StallNew, StallHttps, StallSearch;
         internal Fixture(Func<HttpRequestMessage, int, HttpResponseMessage> respond) { _respond = respond; }
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -341,7 +786,8 @@ internal static class Program
                 var body = await request.Content.ReadAsStringAsync().ConfigureAwait(false);
                 True(body.Contains("params=") && body.Contains("encSecKey="));
             }
-            if (StallAll || (StallFirst && Calls.Count == 1))
+            if (StallAll || (StallFirst && Calls.Count == 1) || (StallNew && request.Method == HttpMethod.Post) ||
+                (StallHttps && request.RequestUri.Scheme == "https") || (StallSearch && request.RequestUri.AbsolutePath.Contains("search")))
                 await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
             return _respond(request, Calls.Count);
         }
@@ -361,5 +807,50 @@ internal static class Program
             Console.WriteLine("Live legacy HTTPS lyrics returned: " + !string.IsNullOrWhiteSpace(legacy?.lrc?.lyric));
             return songs.Length > 0 && !string.IsNullOrWhiteSpace(lyrics?.lrc?.lyric) && legacy != null ? 0 : 1;
         }
+    }
+
+    private static int LiveRecording()
+    {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        var fixture = ReadRecordingFixture();
+        string expected;
+        using (var session = new LookupSession(Console.WriteLine))
+            expected = NeteaseApi.RequestLyric(fixture.correct.id, session)?.lrc?.lyric;
+        if (string.IsNullOrWhiteSpace(expected))
+        {
+            Console.WriteLine("Cannot verify: reference lyrics unavailable");
+            return 1;
+        }
+        using (var session = new LookupSession(Console.WriteLine))
+        {
+            // Reproduce the earlier investigative probe's cookie-contaminated request sequence.
+            Console.WriteLine("Preliminary broad title search count: " + NeteaseApi.Search(fixture.title, session).Count());
+            var selected = SearchMatch.SearchAndMatch(fixture.title, fixture.artist, fixture.album, fixture.duration_ms, session);
+            Console.WriteLine("Automatic song ID after preliminary search: " + selected);
+            if (selected != fixture.correct.id) return 1;
+            var original = NeteaseApi.RequestLyric(selected, session)?.lrc?.lyric;
+            Console.WriteLine("Automatic lyrics equal reference recording: " + (original == expected));
+            if (original != expected) return 1;
+        }
+        foreach (var legacy in new[] { false, true })
+        {
+            var api = Host();
+            var directory = NewTestDirectory();
+            api.Setting_GetPersistentStoragePath = () => directory;
+            api.Library_GetFileTag = (_, tag) => tag == Plugin.MetaDataType.TrackTitle ? fixture.title
+                : tag == Plugin.MetaDataType.Artist ? fixture.artist
+                : tag == Plugin.MetaDataType.Album ? fixture.album : null;
+            api.Library_GetFileProperty = (_, property) => property == Plugin.FilePropertyType.Duration ? "4:46.300" : null;
+            var plugin = new Plugin(api, () => new LookupSession(Console.WriteLine));
+            _directories[plugin] = directory;
+            SetConfig(plugin, JsonConvert.SerializeObject(new NeteaseConfig
+                { UseLegacyMatch = legacy, Fuzzy = true, Format = NeteaseConfig.OutputFormat.Original }));
+            var original = Lookup(plugin);
+            Console.WriteLine("MusicBee callback mode=" + (legacy ? "legacy" : "default") +
+                ", Custom10 absent, lyrics equal correct recording: " + (original == expected));
+            if (original != expected) return 1;
+        }
+        Console.WriteLine("LIVE RECORDING: passed; no downloaded lyrics saved");
+        return 0;
     }
 }
