@@ -1,5 +1,7 @@
 # Netease Lyric
 
+This fork is developing **1.9.1-pre.1**, starting with reliability fixes for the upstream 1.9.0 pre-release. See [CHANGELOG.md](CHANGELOG.md) for this increment and [BUILDING.md](BUILDING.md) for building and testing. Local test builds are not a stable release.
+
 This is another lyrics retrieval plugin for music player MusicBee. It can get **synchronized** lyrics from Netease Cloud Music(网易云音乐, a cloud music service in China).
 
 It can combine the translation to the lyrics if available, like:  
