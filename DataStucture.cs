@@ -47,6 +47,12 @@ namespace MusicBeePlugin
         public bool nolyric;
         public LyricInner lrc;
         public LyricInner tlyric;
+        public LyricInner romalrc;
+    }
+
+    internal class LanguageResponse : ApiResponse
+    {
+        public Newtonsoft.Json.Linq.JObject data;
     }
 
     internal class LyricInner

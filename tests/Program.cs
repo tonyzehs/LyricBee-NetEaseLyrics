@@ -24,6 +24,7 @@ internal static partial class Program
     {
         if (args.Contains("--live")) return LiveSmoke();
         if (args.Contains("--live-recording")) return LiveRecording();
+        if (args.Contains("--live-pronunciation")) return LivePronunciation();
         if (args.Contains("--cookie-test"))
         {
             CookieTransportTest();
@@ -209,7 +210,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(3, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
+                    Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
                     plugin.SaveSettings();
                 }
                 plugin.SaveSettings(); // MusicBee may invoke this after the panel is disposed.
@@ -553,6 +554,7 @@ internal static partial class Program
     private static void TwoLineTests()
     {
         FormattingCompatibilityTests();
+        PronunciationTests();
         Test("Default host output uses two lines with one timestamp and no added slash", () =>
         {
             var handler = new Fixture((_, __) => Json(JsonConvert.SerializeObject(new
@@ -578,7 +580,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
+                    Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
                 }
                 Equal(scenario.Value == 3 || scenario.Value == 1 ? "Hello / Translation" :
                     scenario.Value == 2 ? "Translation" : "Hello", Lookup(plugin));
@@ -591,7 +593,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                Equal(3, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
+                Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
                 plugin.SaveSettings();
             }
             var saved = JsonConvert.DeserializeObject<NeteaseConfig>(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
@@ -600,7 +602,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                Equal(3, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
+                Equal(3, panel.Controls.OfType<ComboBox>().Single(c => c.Items.Count == 4).SelectedIndex);
             }
         });
         Test("Two-line mode leaves blank or missing translations alone", () =>
@@ -897,7 +899,7 @@ internal static partial class Program
     {
         private readonly Func<HttpRequestMessage, int, HttpResponseMessage> _respond;
         internal readonly List<string> Calls = new List<string>();
-        internal bool StallFirst, StallAll, StallNew, StallHttps, StallSearch;
+        internal bool StallFirst, StallAll, StallNew, StallHttps, StallSearch, StallLanguage;
         internal Fixture(Func<HttpRequestMessage, int, HttpResponseMessage> respond) { _respond = respond; }
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -908,7 +910,8 @@ internal static partial class Program
                 True(body.Contains("params=") && body.Contains("encSecKey="));
             }
             if (StallAll || (StallFirst && Calls.Count == 1) || (StallNew && request.Method == HttpMethod.Post) ||
-                (StallHttps && request.RequestUri.Scheme == "https") || (StallSearch && request.RequestUri.AbsolutePath.Contains("search")))
+                (StallHttps && request.RequestUri.Scheme == "https") || (StallSearch && request.RequestUri.AbsolutePath.Contains("search")) ||
+                (StallLanguage && request.RequestUri.AbsolutePath.Contains("/about/")))
                 await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
             return _respond(request, Calls.Count);
         }

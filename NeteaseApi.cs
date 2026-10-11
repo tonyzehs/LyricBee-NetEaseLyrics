@@ -66,13 +66,24 @@ namespace MusicBeePlugin
             var result = RequestNewApi<LyricResult>(session, "lyrics/new",
                 "https://music.163.com/weapi/song/lyric?csrf_token=", data, ValidLyrics);
             if (result != null) return result;
-            var route = "/api/song/lyric?os=pc&id=" + id + "&lv=-1&kv=-1&tv=-1";
+            var route = "/api/song/lyric?os=pc&id=" + id + "&lv=-1&kv=-1&tv=-1&rv=-1";
             result = session.Request<LyricResult>("lyrics/legacy", HttpMethod.Get,
                 "https://music.163.com" + route, null, ValidLyrics, RequestInterface.LegacyHttps);
             if (result == null && session.CanUseHttpFallback)
                 result = session.Request<LyricResult>("lyrics/http", HttpMethod.Get,
                     "http://music.163.com" + route, null, ValidLyrics, RequestInterface.LegacyHttp);
             return result;
+        }
+
+        internal static SongLanguage? RequestLanguage(long id, LookupSession session)
+        {
+            if (id <= 0 || !session.TryReserveLanguageRequest()) return null;
+            // Optional metadata shares the existing lyric budget and never downgrades to HTTP.
+            var result = session.Request<LanguageResponse>("language", HttpMethod.Get,
+                "https://music.163.com/api/song/play/about/block/page?songId=" + id, null,
+                r => r != null && r.code == 200 && r.data?["blocks"] is Newtonsoft.Json.Linq.JArray,
+                RequestInterface.LanguageHttps, maximumTimeout: TimeSpan.FromSeconds(2));
+            return result == null ? (SongLanguage?)null : LanguagePreferences.ParseServiceLanguage(result.data);
         }
 
         private static bool ValidLyrics(LyricResult result)
@@ -107,7 +118,7 @@ namespace MusicBeePlugin
         }
     }
 
-    internal enum RequestInterface { Other, NewApi, LegacyHttps, LegacyHttp }
+    internal enum RequestInterface { Other, NewApi, LegacyHttps, LegacyHttp, LanguageHttps }
     internal enum RequestOutcome { None, Success, TransportFailure, Rejected, InvalidResponse }
 
     // A synchronous MusicBee callback gets one client and one deadline, including all fallbacks.
@@ -117,6 +128,7 @@ namespace MusicBeePlugin
         internal const int MaxSearchRequests = 9;
         internal const int MaxLyricRequests = 9;
         private int _searchRequests, _lyricRequests;
+        private bool _languageRequested;
         private bool _secureRefusal;
         private readonly Dictionary<RequestInterface, RequestOutcome> _outcomes = new Dictionary<RequestInterface, RequestOutcome>();
         private readonly HttpClient _client;
@@ -159,6 +171,13 @@ namespace MusicBeePlugin
         internal bool CanRequest(RequestInterface api) => !_unavailable.Contains(api) &&
             (api != RequestInterface.LegacyHttp || AllowInsecureHttp);
 
+        internal bool TryReserveLanguageRequest()
+        {
+            if (_languageRequested || _lyricRequests >= MaxLyricRequests || _deadline.IsCancellationRequested) return false;
+            _languageRequested = true;
+            return true;
+        }
+
         private int AttemptsRemaining(RequestInterface api)
         {
             var ordered = new[] { RequestInterface.NewApi, RequestInterface.LegacyHttps, RequestInterface.LegacyHttp };
@@ -174,7 +193,8 @@ namespace MusicBeePlugin
         }
 
         internal T Request<T>(string label, HttpMethod method, string url, HttpContent content,
-            Func<T, bool> validate, RequestInterface api = RequestInterface.Other, bool search = false) where T : class
+            Func<T, bool> validate, RequestInterface api = RequestInterface.Other, bool search = false,
+            TimeSpan? maximumTimeout = null) where T : class
         {
             if (_deadline.IsCancellationRequested || !CanRequest(api)) return null;
             if ((search && _searchRequests >= MaxSearchRequests) ||
@@ -191,6 +211,7 @@ namespace MusicBeePlugin
             }
             // Each pending fallback gets a share of the remaining phase, capped per request.
             var requestBudget = TimeSpan.FromTicks(Math.Min(_requestTimeout.Ticks, remaining.Ticks / AttemptsRemaining(api)));
+            if (maximumTimeout.HasValue && maximumTimeout.Value < requestBudget) requestBudget = maximumTimeout.Value;
             try
             {
                 using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(search ? _searchDeadline.Token : _deadline.Token))
@@ -206,7 +227,7 @@ namespace MusicBeePlugin
                         if (!response.IsSuccessStatusCode)
                         {
                             _outcomes[api] = RequestOutcome.Rejected;
-                            if (request.RequestUri.Scheme == "https") _secureRefusal = true;
+                            if (request.RequestUri.Scheme == "https" && api != RequestInterface.LanguageHttps) _secureRefusal = true;
                             Trace(label + ": HTTP " + (int)response.StatusCode);
                             return null;
                         }
@@ -214,7 +235,8 @@ namespace MusicBeePlugin
                         if (validate(result)) { _outcomes[api] = RequestOutcome.Success; return result; }
                         var code = (result as ApiResponse)?.code;
                         _outcomes[api] = code.HasValue && code.Value != 200 ? RequestOutcome.Rejected : RequestOutcome.InvalidResponse;
-                        if (_outcomes[api] == RequestOutcome.Rejected && request.RequestUri.Scheme == "https") _secureRefusal = true;
+                        if (_outcomes[api] == RequestOutcome.Rejected && request.RequestUri.Scheme == "https" &&
+                            api != RequestInterface.LanguageHttps) _secureRefusal = true;
                         Trace(label + ": rejected or incomplete response" +
                             (code.HasValue ? " (code " + code.Value + ")" : ""));
                         return null;

@@ -44,6 +44,23 @@ namespace MusicBeePlugin
             if (translation.Entries.Count == 0) return originalLrc;
             var originals = Cues(original);
             var translations = Cues(translation).Where(c => HasLyricText(c.Text)).ToArray();
+            var alignment = ChooseAlignment(original, originals, translation, translations, trace);
+            var lines = new List<string>(original.Headers);
+            for (var index = 0; index < originals.Length; index++)
+            {
+                var cue = originals[index];
+                var content = cue.Text;
+                if (HasLyricText(content) && alignment.Pairs.TryGetValue(index, out var pair))
+                    content += (twoLines ? "\n" : "/") + translations[pair.Translation].Text;
+                // A single timestamp owns the original and its continuation in MusicBee.
+                lines.Add(FormatTimestamp(cue.Time) + content);
+            }
+            return string.Join("\n", lines);
+        }
+
+        private static Alignment ChooseAlignment(TimedDocument original, TimedText[] originals,
+            TimedDocument translation, TimedText[] translations, Action<string> trace)
+        {
             var adjusted = Align(originals, translations, original.Offset, translation.Offset);
             var raw = Align(originals, translations, 0, 0);
             var alignment = adjusted;
@@ -63,17 +80,136 @@ namespace MusicBeePlugin
                     alignment.Pairs.Count + " cue groups; maximum error " + alignment.MaxError + " ms (limit 50 ms)");
             if (original.InvalidTimes > 0 || translation.InvalidTimes > 0)
                 trace?.Invoke("Lyrics: isolated invalid timing lines from adjacent cues");
+            return alignment;
+        }
+
+        private sealed class AuxiliaryTrack
+        {
+            internal TimedText[] Cues;
+            internal Alignment Alignment;
+            internal bool Used;
+        }
+
+        internal static string MergePronunciation(string originalLrc, string pronunciationLrc, string translationLrc,
+            bool separateLines, Action<string> trace, out int usableTracks)
+        {
+            usableTracks = 0;
+            if (string.IsNullOrWhiteSpace(originalLrc)) return originalLrc;
+            var extraTexts = new[] { pronunciationLrc, translationLrc };
+            var original = ReadTimedDocument(originalLrc);
+            if (original.Entries.Count == 0) return FormatUntimedTracks(originalLrc, extraTexts, out usableTracks);
+            var originals = Cues(original);
+            var tracks = new List<AuxiliaryTrack>();
+            for (var extraIndex = 0; extraIndex < extraTexts.Length; extraIndex++)
+            {
+                var text = extraTexts[extraIndex];
+                if (!HasLyricText(text) || IsInstrumentalPlaceholder(text)) continue;
+                var document = ReadTimedDocument(text);
+                // An untimed auxiliary track cannot borrow a timed original's playback cues.
+                if (document.Entries.Count == 0) continue;
+                var cues = Cues(document).Where(c => HasLyricText(c.Text)).ToArray();
+                var label = extraIndex == 0 ? "Pronunciation: " : "Translation: ";
+                tracks.Add(new AuxiliaryTrack { Cues = cues,
+                    Alignment = ChooseAlignment(original, originals, document, cues, m => trace?.Invoke(label + m)) });
+            }
+            if (tracks.All(t => t.Alignment.Pairs.Count == 0)) return originalLrc;
             var lines = new List<string>(original.Headers);
             for (var index = 0; index < originals.Length; index++)
             {
                 var cue = originals[index];
-                var content = cue.Text;
-                if (HasLyricText(content) && alignment.Pairs.TryGetValue(index, out var pair))
-                    content += (twoLines ? "\n" : "/") + translations[pair.Translation].Text;
-                // A single timestamp owns the original and its continuation in MusicBee.
-                lines.Add(FormatTimestamp(cue.Time) + content);
+                var parts = new List<string> { cue.Text };
+                foreach (var track in tracks)
+                    if (HasLyricText(cue.Text) && track.Alignment.Pairs.TryGetValue(index, out var pair))
+                    {
+                        var extra = track.Cues[pair.Translation].Text;
+                        if (parts.Any(p => p.Trim() == extra.Trim())) continue;
+                        parts.Add(extra); track.Used = true;
+                    }
+                lines.Add(FormatTimestamp(cue.Time) + string.Join(separateLines ? "\n" : " / ", parts));
             }
-            return string.Join("\n", lines);
+            usableTracks = tracks.Count(t => t.Used);
+            trace?.Invoke("Lyrics: retained " + usableTracks + " requested auxiliary tracks; unavailable or unaligned lines omitted");
+            return usableTracks == 0 ? originalLrc : string.Join("\n", lines);
+        }
+
+        private sealed class UntimedTrack
+        {
+            internal string[] Lines;
+            internal List<string[]> Verses;
+            internal bool Positional, Used;
+            internal int Cursor;
+        }
+
+        private static string FormatUntimedTracks(string originalLrc, string[] extraTexts, out int usableTracks)
+        {
+            usableTracks = 0;
+            var originalLines = NormalizeLines(originalLrc).Split('\n');
+            var originalText = originalLines.Where(IsText).ToArray();
+            if (originalText.Length == 0) return originalLrc;
+            var originalVerses = SplitVerses(originalLines);
+            var tracks = new List<UntimedTrack>();
+            foreach (var text in extraTexts.Where(t => HasLyricText(t) && !IsInstrumentalPlaceholder(t)))
+            {
+                var lines = NormalizeLines(text).Split('\n').Select(l => LeadingTimes.Replace(l.Trim(), ""))
+                    .Where(l => !IsHeader(l)).ToArray();
+                var words = lines.Where(IsText).ToArray();
+                if (words.Length == 0 || words.SequenceEqual(originalText.Select(l => l.Trim())) ||
+                    tracks.Any(t => t.Lines.SequenceEqual(words))) continue;
+                var verses = SplitVerses(lines);
+                if (words.Length == originalText.Length || verses.Count == originalVerses.Count)
+                    tracks.Add(new UntimedTrack { Lines = words, Verses = verses, Positional = words.Length == originalText.Length });
+            }
+            if (tracks.Count == 0) return originalLrc;
+            if (tracks.All(t => t.Positional))
+            {
+                var output = originalLines.Select(line =>
+                {
+                    if (!IsText(line)) return line;
+                    var parts = new List<string> { line.Trim() };
+                    foreach (var track in tracks)
+                    {
+                        var extra = track.Lines[track.Cursor++].Trim();
+                        if (parts.Contains(extra)) continue;
+                        parts.Add(extra); track.Used = true;
+                    }
+                    return string.Join(" / ", parts);
+                }).ToArray();
+                usableTracks = tracks.Count(t => t.Used);
+                return usableTracks == 0 ? originalLrc : string.Join("\n", output).TrimEnd();
+            }
+            var result = originalLines.Where(l => MetadataLine.IsMatch(l.Trim()) || CreditLine.IsMatch(l.Trim())).ToList();
+            for (var verseIndex = 0; verseIndex < originalVerses.Count; verseIndex++)
+            {
+                if (verseIndex > 0) result.Add("");
+                var verse = originalVerses[verseIndex];
+                var count = verse.Count(IsText);
+                var extras = tracks.Select(t => t.Positional ? t.Lines.Skip(t.Cursor).Take(count).ToArray() :
+                    t.Verses[verseIndex].Where(IsText).ToArray()).ToArray();
+                foreach (var track in tracks.Where(t => t.Positional)) track.Cursor += count;
+                if (extras.All(e => e.Length == count))
+                {
+                    var lineIndex = 0;
+                    foreach (var line in verse)
+                    {
+                        if (!IsText(line)) { result.Add(line); continue; }
+                        var parts = new List<string> { line };
+                        for (var i = 0; i < tracks.Count; i++)
+                            if (!parts.Contains(extras[i][lineIndex])) { parts.Add(extras[i][lineIndex]); tracks[i].Used = true; }
+                        result.Add(string.Join(" / ", parts)); lineIndex++;
+                    }
+                }
+                else
+                {
+                    result.AddRange(verse);
+                    for (var i = 0; i < tracks.Count; i++)
+                    {
+                        if (extras[i].Length == 0 || extras[i].SequenceEqual(verse.Where(IsText))) continue;
+                        result.Add(""); result.AddRange(extras[i]); tracks[i].Used = true;
+                    }
+                }
+            }
+            usableTracks = tracks.Count(t => t.Used);
+            return usableTracks == 0 ? originalLrc : string.Join("\n", result);
         }
 
         private sealed class Pair { internal int Translation; internal long Error; }
