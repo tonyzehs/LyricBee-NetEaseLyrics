@@ -4,21 +4,11 @@ A lyrics retrieval plugin for [MusicBee](https://getmusicbee.com/) that download
 
 LyricBee is an independently maintained continuation of [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics), originally written by Charlie Jiang. Version **1.9.3** includes the reliability, matching and display improvements developed through **1.9.1-pre.1–pre.12**. The original licenses and upstream Git history are retained. Ongoing development and issue tracking take place in this repository on **master**. The [previous fork](https://github.com/tonyzehs/MusicBee-NeteaseLyrics) preserves historical download links.
 
-## Download and install
-
-Download [LyricBee-NetEaseLyrics_1.9.3.zip](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/download/v1.9.3/LyricBee-NetEaseLyrics_1.9.3.zip) from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll` and the license/attribution files; runtime dependencies are embedded. Source packages and checksums are available with each release. Older development releases are retained for reference; use 1.9.3 for normal installation.
-
-The plugin targets Windows and .NET Framework 4.8.
-
-1. Close MusicBee and back up the previous plugin DLL and settings if upgrading.
-2. Open MusicBee's **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**. Alternatively, replace the existing DLL while MusicBee is closed.
-3. In **Tags (2)**, set the lyrics provider priority to use **Netease Cloud Music**.
-4. Open the plugin settings to choose the display format and language preferences.
-5. Re-fetch lyrics for tracks whose display or matching you want to change.
-
-MusicBee can keep lyrics it has already downloaded or embedded. Installing an update or restarting playback does not replace that stored text. Clear or replace incorrect lyrics and search again to evaluate a new lookup.
-
 ## Feature additions
+
+[![Japanese lyrics, pronunciation and Chinese translation highlighted together in MusicBee's Now Playing panel](docs/screenshots/japanese-three-line.png)](docs/screenshots/japanese-three-line.png)
+
+**Japanese lyrics, pronunciation and Chinese translation**, grouped under one timed cue in MusicBee's Now Playing panel. Click the screenshot to inspect it at full size.
 
 ### Original, translation and pronunciation displays
 
@@ -46,7 +36,7 @@ Pronunciation
 Translated lyrics
 ```
 
-The continuation lines belong to the original cue; the plugin does not repeat its timestamp or add a slash marker to separate-line output. Two-line scrolling/highlighting has been confirmed in MusicBee's Now Playing panel. Check three-line rendering in the panel you use, since rendering is controlled by MusicBee.
+The continuation lines belong to the original cue; the plugin does not repeat its timestamp or add a slash marker to separate-line output. The screenshots show two- and three-line highlighting in MusicBee's Now Playing panel. MusicBee controls wrapping and appearance in other panels.
 
 ### Independent language preferences
 
@@ -63,6 +53,14 @@ Pronunciation comes from NetEase's `romalrc` track; this plugin does not generat
 The plugin uses NetEase's song-language label, with conservative kana/Hangul detection when that label is unavailable. Han characters alone cannot distinguish Cantonese from Mandarin. Unsupported, multilingual or unresolved language labels retain the general translation behavior. Pronunciation availability varies by song; no pronunciation setting is offered for other languages.
 
 Saved preferences carry over between recent versions. The defaults in the table apply when no choice has been saved; upgrading does not turn off a pronunciation mode you previously selected. Back up settings before rolling back: older builds may discard newer choices when saving, and pre.10/pre.11 fall back to translation for the new language-specific Lyrics choice.
+
+### Two-line examples
+
+Click either preview to open the full-size screenshot.
+
+| Japanese: lyrics + Chinese translation | Cantonese: lyrics + pronunciation |
+| :---: | :---: |
+| [<img src="docs/screenshots/japanese-two-line.png" alt="Japanese lyrics and Chinese translation highlighted together in MusicBee" width="400">](docs/screenshots/japanese-two-line.png) | [<img src="docs/screenshots/cantonese-two-line.png" alt="Cantonese lyrics and romanized pronunciation highlighted together in MusicBee" width="400">](docs/screenshots/cantonese-two-line.png) |
 
 ### Untimed lyrics
 
@@ -102,6 +100,20 @@ Desktop and phone-share song links are supported. Album, playlist, artist and un
 **Allow HTTP fallback (unencrypted metadata)** is enabled by default. HTTPS is tried first. Plain HTTP is used only after a transport failure on the legacy HTTPS interface; a secure HTTP/API refusal prevents that downgrade for the lookup. Turn this option off to require HTTPS. Optional language metadata always uses HTTPS.
 
 No login or account cookie is required. Anonymous server cookies are not stored and replayed between requests. The plugin supplies lyric text to MusicBee; MusicBee handles display and storage.
+
+## Download and install
+
+Download [LyricBee-NetEaseLyrics_1.9.3.zip](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/download/v1.9.3/LyricBee-NetEaseLyrics_1.9.3.zip) from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll` and the license/attribution files; runtime dependencies are embedded. Source packages and checksums are available with each release. Older development releases are retained for reference; use 1.9.3 for normal installation.
+
+The plugin targets Windows and .NET Framework 4.8.
+
+1. Close MusicBee and back up the previous plugin DLL and settings if upgrading.
+2. Open MusicBee's **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**. Alternatively, replace the existing DLL while MusicBee is closed.
+3. In **Tags (2)**, set the lyrics provider priority to use **Netease Cloud Music**.
+4. Open the plugin settings to choose the display format and language preferences.
+5. Re-fetch lyrics for tracks whose display or matching you want to change.
+
+MusicBee can keep lyrics it has already downloaded or embedded. Installing an update or restarting playback does not replace that stored text. Clear or replace incorrect lyrics and search again to evaluate a new lookup.
 
 ## Build and development history
 
