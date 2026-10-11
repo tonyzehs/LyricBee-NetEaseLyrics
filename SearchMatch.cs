@@ -31,6 +31,15 @@ namespace MusicBeePlugin
         private static readonly Regex PartNumber = new Regex(
             @"\b(?:part|pt\.?)\s*(?:[.:#-]\s*)?(?<number>[0-9]+|[ivxlcdm]+)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex SoundtrackSuffix = new Regex(
+            @"(?:\s*\((?<label>from\s+[^()\[\]\r\n]+)\)|\s*\[(?<label>from\s+[^()\[\]\r\n]+)\]|\s+[-–—]\s+(?<label>from\s+[^()\[\]\r\n]+))\s*$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex SourceMedium = new Regex(
+            @"^(?:the\s+)?(?:(?:original\s+)?soundtrack\s+(?:of|to)\s+|(?:(?:animated|television|tv)\s+series|series|film|movie|motion\s+picture|video\s+game|game|anime|musical)\s+)",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex SoundtrackAlbum = new Regex(
+            @"\b(?:soundtrack|ost|original\s+score)\b|原声|原聲",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         public static long SearchAndMatch(string title, string artist, string album, long? duration,
             LookupSession session, bool allowTypos = true)
@@ -118,6 +127,7 @@ namespace MusicBeePlugin
 
         private static bool Equivalent(Match a, Match b) => a.ExactTitleAndArtist && b.ExactTitleAndArtist &&
             a.Identity == b.Identity && a.Song.duration > 0 && b.Song.duration > 0 &&
+            (a.SoundtrackSource == null || b.SoundtrackSource == null || a.SoundtrackSource == b.SoundtrackSource) &&
             Math.Abs((double)a.Song.duration - b.Song.duration) <= 2000;
 
         private static Match Evaluate(SearchResultSong song, TrackIdentity request)
@@ -128,21 +138,36 @@ namespace MusicBeePlugin
             var candidate = SplitTitleArtist(song.name, string.Join(";", creditedArtists));
             var durationClose = request.Duration.HasValue && request.Duration > 0 && song.duration > 0 &&
                 Math.Abs((double)request.Duration.Value - song.duration) <= 2000;
-            var expected = PrepareTitle(request.RawTitle, durationClose, out var requestNotes);
-            var actual = PrepareTitle(candidate.Item1, durationClose, out var candidateNotes);
+            var artists = candidate.Item2.Select(Canonical).Where(a => a.Length > 0).ToArray();
+            var album = Canonical(song.album?.name);
+            var expectedRaw = request.RawTitle;
+            var actualRaw = candidate.Item1;
+            string soundtrackSource = null;
+            var conflictingSource = false;
+            var soundtrackNote = durationClose && request.Album.Length > 0 && request.Album == album &&
+                request.Artists.Length > 0 && request.Artists.Select(Canonical).Distinct().OrderBy(a => a, StringComparer.Ordinal)
+                    .SequenceEqual(artists.Distinct().OrderBy(a => a, StringComparer.Ordinal)) &&
+                RemoveSoundtrackAttribution(ref expectedRaw, ref actualRaw, album, song.album?.name, out soundtrackSource, out conflictingSource);
+            if (conflictingSource) return null;
+            // Without corroboration, attributed titles require their complete text to agree;
+            // spelling allowance must not substitute a different named work.
+            if (!soundtrackNote && (SoundtrackSuffix.IsMatch(expectedRaw) || SoundtrackSuffix.IsMatch(actualRaw)) &&
+                Canonical(expectedRaw) != Canonical(actualRaw)) return null;
+            var expected = PrepareTitle(expectedRaw, durationClose, out var requestNotes);
+            var actual = PrepareTitle(actualRaw, durationClose, out var candidateNotes);
             var title = Canonical(actual);
             var expectedTitle = Canonical(expected);
+            var editions = Editions(actualRaw);
             if (expectedTitle.Length == 0 || title.Length == 0 ||
-                Editions(request.RawTitle) != Editions(candidate.Item1) || Numbers(expected) != Numbers(actual)) return null;
+                Editions(expectedRaw) != editions || Numbers(expected) != Numbers(actual)) return null;
             var titleScore = Similarity(expectedTitle, title);
             var titleExact = expectedTitle == title;
+            if (soundtrackNote && !titleExact) return null;
             // Require the whole title, allowing at most two edits on sufficiently long titles.
             if (!titleExact && (!request.AllowTypos || titleScore < .9 ||
                 Math.Min(expectedTitle.Length, title.Length) < 6 || new Levenshtein().Distance(expectedTitle, title) > 2)) return null;
 
-            var artists = candidate.Item2.Select(Canonical).Where(a => a.Length > 0).ToArray();
             var artistScore = ArtistSimilarity(request.Artists.Take(1).ToArray(), artists, request.AllowTypos);
-            var album = Canonical(song.album?.name);
             var albumScore = Similarity(request.Album, album);
             // If no artist was supplied, an available album tag must support the match.
             if (request.Artists.Length == 0 && request.Album.Length > 0 && albumScore < .9) return null;
@@ -170,15 +195,46 @@ namespace MusicBeePlugin
                 Song = song,
                 AlbumScore = albumScore,
                 DurationDifference = durationDifference,
+                SoundtrackSource = soundtrackSource,
                 ExactTitleAndArtist = titleExact && artistScore == 1 && artists.Length > 0,
                 Identity = title + "\0" + string.Join(";", artists.Distinct().OrderBy(a => a, StringComparer.Ordinal)) +
-                    "\0" + Editions(candidate.Item1),
-                Notes = string.Join("/", new[] { requestNotes, candidateNotes }.Where(n => n.Length > 0).Distinct()),
+                    "\0" + editions,
+                Notes = string.Join("/", new[] { requestNotes, candidateNotes, soundtrackNote ? "soundtrack attribution" : "" }.Where(n => n.Length > 0).Distinct()),
                 Score = 60 * titleScore + 30 * artistScore + 5 * albumScore + 5 * durationScore,
                 ExactIdentityAndAlbum = titleExact && artistScore == 1 && albumScore == 1,
                 Strong = titleExact && artistScore == 1 && albumScore == 1 &&
                     (!request.Duration.HasValue || durationClose)
             };
+        }
+
+        private static bool RemoveSoundtrackAttribution(ref string expected, ref string actual, string album, string rawAlbum,
+            out string source, out bool conflicting)
+        {
+            source = null; conflicting = false;
+            var expectedMatch = SoundtrackSuffix.Match(NormalizeText(expected));
+            var actualMatch = SoundtrackSuffix.Match(NormalizeText(actual));
+            if (!expectedMatch.Success && !actualMatch.Success) return false;
+            var expectedSource = AttributionSource(expectedMatch, album, rawAlbum);
+            var actualSource = AttributionSource(actualMatch, album, rawAlbum);
+            if ((expectedMatch.Success && expectedSource == null) || (actualMatch.Success && actualSource == null)) return false;
+            if (expectedMatch.Success && actualMatch.Success && expectedSource != actualSource) { conflicting = true; return false; }
+            source = actualSource ?? expectedSource;
+            // Only the terminal attribution is removable. Other annotations and title numbers survive.
+            if (expectedMatch.Success) expected = NormalizeText(expected).Substring(0, expectedMatch.Index).Trim();
+            if (actualMatch.Success) actual = NormalizeText(actual).Substring(0, actualMatch.Index).Trim();
+            return true;
+        }
+
+        private static string AttributionSource(System.Text.RegularExpressions.Match match, string album, string rawAlbum)
+        {
+            if (!match.Success) return null;
+            var label = Regex.Replace(match.Groups["label"].Value, @"^from\s+", "", RegexOptions.IgnoreCase).Trim();
+            var medium = SourceMedium.Match(label);
+            // Bare 'from X' also requires the album to identify itself as a soundtrack/score.
+            if (!medium.Success && !SoundtrackAlbum.IsMatch(rawAlbum ?? "")) return null;
+            if (medium.Success) label = label.Substring(medium.Length);
+            var source = Canonical(label.Trim().Trim('"', '\'', '“', '”', '‘', '’'));
+            return source.Length >= 4 && album.Contains(source) ? source : null;
         }
 
         private static string PrepareTitle(string title, bool durationClose, out string notes)
@@ -325,6 +381,7 @@ namespace MusicBeePlugin
             internal double Score;
             internal double AlbumScore, DurationDifference;
             internal string Identity, Notes;
+            internal string SoundtrackSource;
             internal bool ExactTitleAndArtist;
             internal bool Strong;
             internal bool ExactIdentityAndAlbum;

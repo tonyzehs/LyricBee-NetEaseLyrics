@@ -672,6 +672,7 @@ internal static partial class Program
     private static void MatchingTests()
     {
         MatchingAuditTests();
+        SoundtrackTests();
         Test("Captured By Your Side search results are rejected rather than choosing another song", () =>
         {
             var fixture = ReadRecordingFixture();

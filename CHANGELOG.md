@@ -1,3 +1,13 @@
+# 1.9.1-pre.11 — guarded soundtrack attribution matching
+
+- Fix the supplied Stromae/Pomme **Ma Meilleure Ennemie** lookup: NetEase's matching recording appends `(from the series Arcane League of Legends)` while the local title omits it. Recognize terminal English film/series/game/anime/musical attributions in parentheses, brackets or a spaced dash suffix. Bare `from X` also requires soundtrack/OST/original-score album context.
+- Remove only a corroborated attribution: full supplied artist set and album must agree exactly, durations must be known and within two seconds, and the named work must occur in the album. Compare the remaining title exactly after existing normalization; retain title numbers and other edition labels. Do not remove arbitrary parentheses, substantive title words or uncorroborated attributions.
+- Reject conflicting named works, including near-spelling variants. Attributed titles without enough corroboration require full canonical title equality rather than fuzzy spelling. Conflicting attribution sources cannot merge as equivalent listings through a plain-title duplicate; keep existing pairwise grouping and ambiguity rejection.
+- Compare recording editions after removing a supported attribution so a work named **Live Forever** does not make a studio recording look like a live performance. Other live, remix, edit, cover, instrumental and substantive version labels remain significant. Trace the rule without raw song metadata. No search requests, lyric requests, timeout limits, settings or pronunciation behavior are added or changed.
+- Add 17 regression checks with recorded public search metadata, reversed candidate order, both matching modes, full-credit/album/duration guards, source conflicts, existing numbered titles and meaningful variants. All 232 checks pass in x64 and x86 against the packaged AnyCPU DLL.
+- Production HTTPS tests through the real lyric callback with a fake MusicBee host select ID3374505659 using unchanged tags and no Custom10, returning the correct original and original/translation lyrics. Native MusicBee testing remains pending. Re-fetch stored lyrics after upgrading; this is a local testing build.
+- Assembly/file version: `1.9.1.10`; product version: `1.9.1-pre.11`.
+
 # 1.9.1-pre.10 — pronunciation preferences and three-line output
 
 - Read NetEase's `romalrc` pronunciation alongside original and translated lyrics. Explicitly request it on the legacy endpoint using `rv=-1`; the existing encrypted request already requests it. Do not combine the newer word-timed `yromalrc` clock with ordinary LRC.

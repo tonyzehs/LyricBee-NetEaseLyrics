@@ -1,0 +1,435 @@
+{
+  "title": "Ma Meilleure Ennemie",
+  "artist": "Stromae/Pomme",
+  "album": "Arcane League of Legends: Season 2 (Soundtrack from the Animated Series)",
+  "duration_ms": 147973,
+  "correct": {
+    "id": 3374505659,
+    "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)",
+    "duration": 147973,
+    "artists": [
+      {
+        "name": "Stromae"
+      },
+      {
+        "name": "Pomme"
+      }
+    ],
+    "album": {
+      "name": "Arcane League of Legends: Season 2 (Soundtrack from the Animated Series)"
+    }
+  },
+  "observed": [
+    {
+      "id": 3374505659,
+      "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)",
+      "duration": 147973,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        }
+      ],
+      "album": {
+        "name": "Arcane League of Legends: Season 2 (Soundtrack from the Animated Series)"
+      }
+    },
+    {
+      "id": 2687085768,
+      "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)",
+      "duration": 147973,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie ft. Coldplay"
+      }
+    },
+    {
+      "id": 2688083012,
+      "name": "Ma Meilleure Ennemie (from Arcane)",
+      "duration": 168876,
+      "artists": [
+        {
+          "name": "Stromae Pomme"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie (from Arcane)"
+      }
+    },
+    {
+      "id": 3321512116,
+      "name": "Ma Meilleure Ennemie (Wavedash Remix)",
+      "duration": 207954,
+      "artists": [
+        {
+          "name": "双城之战"
+        },
+        {
+          "name": "WAVEDASH"
+        },
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        }
+      ],
+      "album": {
+        "name": "Arcane: Hexcore Nights (Wavedash Remixes)"
+      }
+    },
+    {
+      "id": 2687286043,
+      "name": "Ma Meilleure Ennemie",
+      "duration": 168994,
+      "artists": [
+        {
+          "name": "Stromae Pomme"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie"
+      }
+    },
+    {
+      "id": 3374504773,
+      "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)",
+      "duration": 147973,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        }
+      ],
+      "album": {
+        "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+      }
+    },
+    {
+      "id": 2687085098,
+      "name": "Ma Meilleure Ennemie ft. Coldplay",
+      "duration": 201933,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        },
+        {
+          "name": "Coldplay"
+        },
+        {
+          "name": "Elyanna"
+        },
+        {
+          "name": "双城之战"
+        },
+        {
+          "name": "英雄联盟"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie ft. Coldplay"
+      }
+    },
+    {
+      "id": 19086497,
+      "name": "Alors on danse",
+      "duration": 206066,
+      "artists": [
+        {
+          "name": "Stromae"
+        }
+      ],
+      "album": {
+        "name": "Cheese"
+      }
+    },
+    {
+      "id": 2657282433,
+      "name": "Ma Meilleure Ennemie (From \"Arcane: Leage of Legends\") (Piano Version)",
+      "duration": 178624,
+      "artists": [
+        {
+          "name": "AtinPiano"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie (From \"Arcane: Leage of Legends\") (Piano Version)"
+      }
+    },
+    {
+      "id": 3374505698,
+      "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)",
+      "duration": 147973,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        }
+      ],
+      "album": {
+        "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+      }
+    },
+    {
+      "id": 2686826723,
+      "name": "Ma Meilleure Ennemie ft. Coldplay (from the series Arcane League of Legends)",
+      "duration": 201933,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        },
+        {
+          "name": "Coldplay"
+        },
+        {
+          "name": "Elyanna"
+        },
+        {
+          "name": "双城之战"
+        },
+        {
+          "name": "英雄联盟"
+        }
+      ],
+      "album": {
+        "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+      }
+    },
+    {
+      "id": 2652277792,
+      "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)",
+      "duration": 127280,
+      "artists": [
+        {
+          "name": "Re:Imagine"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)"
+      }
+    },
+    {
+      "id": 2697668914,
+      "name": "Ma Meilleure Ennemie (Cover Español)",
+      "duration": 160944,
+      "artists": [
+        {
+          "name": "Lin"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie (Cover Español)"
+      }
+    },
+    {
+      "id": 2684030272,
+      "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)",
+      "duration": 147973,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        }
+      ],
+      "album": {
+        "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+      }
+    },
+    {
+      "id": 2658715051,
+      "name": "Ma meilleure ennemie (feat. Coeur de Glace) (cover)",
+      "duration": 149701,
+      "artists": [
+        {
+          "name": "D. MigdiliX"
+        },
+        {
+          "name": "Coeur de Glace"
+        }
+      ],
+      "album": {
+        "name": "X-MVS"
+      }
+    },
+    {
+      "id": 2655930995,
+      "name": "ma meilleure ennemie (instrumental)",
+      "duration": 147272,
+      "artists": [
+        {
+          "name": "no/vox"
+        },
+        {
+          "name": "Karaokey"
+        }
+      ],
+      "album": {
+        "name": "ma meilleure ennemie (instrumental)"
+      }
+    },
+    {
+      "id": 2653398130,
+      "name": "Ma Meilleure Ennemie (English Version)",
+      "duration": 148009,
+      "artists": [
+        {
+          "name": "Wønder"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie (English Version)"
+      }
+    },
+    {
+      "id": 2686826730,
+      "name": "Ma Meilleure Ennemie (from the series Arcane League of Legends)",
+      "duration": 147973,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        }
+      ],
+      "album": {
+        "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+      }
+    },
+    {
+      "id": 2653679289,
+      "name": "Ma Meilleure Ennemie (Piano Version)",
+      "duration": 135006,
+      "artists": [
+        {
+          "name": "gondoliano"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie (Piano Version)"
+      }
+    },
+    {
+      "id": 2654924129,
+      "name": "ma meilleure ennemie (sped up)",
+      "duration": 116016,
+      "artists": [
+        {
+          "name": "Ajima"
+        },
+        {
+          "name": "Velocity"
+        },
+        {
+          "name": "Tuneit"
+        }
+      ],
+      "album": {
+        "name": "ma meilleure ennemie (sped up)"
+      }
+    },
+    {
+      "id": 1361353458,
+      "name": "Ma meilleure ennemie",
+      "duration": 210057,
+      "artists": [
+        {
+          "name": "Myldness"
+        }
+      ],
+      "album": {
+        "name": "Ma meilleure ennemie"
+      }
+    },
+    {
+      "id": 3329911681,
+      "name": "Ma Meilleure Ennemie",
+      "duration": 164358,
+      "artists": [
+        {
+          "name": "Caliko"
+        }
+      ],
+      "album": {
+        "name": "Arcane Piano Works"
+      }
+    },
+    {
+      "id": 2653741026,
+      "name": "Forrozinho do Ma Meilleure Ennemie",
+      "duration": 130368,
+      "artists": [
+        {
+          "name": "KarnyX no Beat"
+        }
+      ],
+      "album": {
+        "name": "Forrozinho do Ma Meilleure Ennemie"
+      }
+    },
+    {
+      "id": 3374505747,
+      "name": "Ma Meilleure Ennemie ft. Coldplay (from the series Arcane League of Legends)",
+      "duration": 201933,
+      "artists": [
+        {
+          "name": "Stromae"
+        },
+        {
+          "name": "Pomme"
+        },
+        {
+          "name": "Coldplay"
+        },
+        {
+          "name": "Elyanna"
+        },
+        {
+          "name": "Arcane"
+        },
+        {
+          "name": "英雄联盟"
+        }
+      ],
+      "album": {
+        "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+      }
+    },
+    {
+      "id": 2650147968,
+      "name": "Ma Meilleure Ennemie / Ekko x Powder Dancing -Jinx (Arcane S2) (Sped Version)",
+      "duration": 128334,
+      "artists": [
+        {
+          "name": "Sliverk"
+        }
+      ],
+      "album": {
+        "name": "Ma Meilleure Ennemie / Ekko x Powder Dancing -Jinx (Arcane S2) (Sped Version)"
+      }
+    }
+  ],
+  "captured_date": "2026-10-11",
+  "note": "Recorded public search metadata only. No audio or lyrics."
+}
