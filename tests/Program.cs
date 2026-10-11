@@ -13,7 +13,7 @@ using System.Windows.Forms;
 using Newtonsoft.Json;
 using System.Reflection;
 
-internal static class Program
+internal static partial class Program
 {
     private const string Lyrics = "{\"code\":200,\"lrc\":{\"lyric\":\"[00:01.00]Hello\"}}";
     private const string Search = "{\"code\":200,\"result\":{\"songCount\":1,\"songs\":[{\"id\":101,\"name\":\"Song\",\"duration\":200000,\"artists\":[{\"name\":\"Singer\"}],\"album\":{\"name\":\"Album\"}}]}}";
@@ -48,7 +48,7 @@ internal static class Program
             {
                 var handler = new Fixture((_, __) => Json(fixture));
                 using (var session = Session(handler)) Equal(0, NeteaseApi.Search("Song", session).Count());
-                Equal(3, handler.Calls.Count);
+                Equal(2, handler.Calls.Count);
             });
         }
         Test("A malformed new search falls back to a valid legacy search", () =>
@@ -98,7 +98,7 @@ internal static class Program
         {
             var handler = new Fixture((_, __) => Json("{\"code\":-460}"));
             Equal(null, Lookup(CreatePlugin(handler), "Singer", "Song", "Album"));
-            Equal(9, handler.Calls.Count);
+            Equal(6, handler.Calls.Count);
         });
         Test("Library tags missing: callback title and artist are used", () =>
         {
@@ -153,12 +153,12 @@ internal static class Program
             SetConfig(plugin, "{\"UseLegacyMatch\":true}");
             Equal("[00:01.00]Hello", Lookup(plugin, null, "Song"));
         });
-        Test("Untimed original is preserved in the existing same-line combined output", () =>
+        Test("Untimed texts pair in the shared same-line combined output", () =>
         {
             var handler = new Fixture((_, __) => Json("{\"code\":200,\"lrc\":{\"lyric\":\"Hello\"},\"tlyric\":{\"lyric\":\"Translation\"}}"));
             var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
             SetConfig(plugin, "{\"Format\":1}");
-            Equal("Hello", Lookup(plugin));
+            Equal("Hello / Translation", Lookup(plugin));
         });
         Test("Blank translation is treated as absent", () =>
         {
@@ -172,7 +172,7 @@ internal static class Program
                 var handler = new Fixture((_, __) => Json("{\"code\":200,\"lrc\":{\"lyric\":\"[00:01.00]Hello\"},\"tlyric\":{\"lyric\":\"[00:01.00]Translation\"}}"));
                 var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
                 SetConfig(plugin, "{\"Format\":" + format + "}");
-                Equal(new[] { "[00:01.00]Hello", "[00:01.00]Hello/Translation", "[00:01.00]Translation" }[format], Lookup(plugin));
+                Equal(new[] { "[00:01.00]Hello", "[00:01.000]Hello/Translation", "[00:01.00]Translation" }[format], Lookup(plugin));
             }
         });
         Test("Unrelated provider skips network and host access", () =>
@@ -215,7 +215,7 @@ internal static class Program
                 plugin.SaveSettings(); // MusicBee may invoke this after the panel is disposed.
             }
         });
-        Test("Fuzzy option is enabled only for legacy matching, initially and after toggling", () =>
+        Test("Spelling customization enables its allowance initially and after toggling", () =>
         {
             foreach (var legacy in new[] { false, true })
             {
@@ -225,7 +225,7 @@ internal static class Program
                 {
                     plugin.Configure(panel.Handle);
                     var checkboxes = panel.Controls.OfType<CheckBox>().ToArray();
-                    var mode = checkboxes.Single(box => box.Text.StartsWith("Use legacy"));
+                    var mode = checkboxes.Single(box => box.Text.StartsWith("Customize spelling"));
                     var fuzzy = checkboxes.Single(box => box.Text.StartsWith("Allow small"));
                     Equal(legacy, fuzzy.Enabled);
                     mode.Checked = !legacy;
@@ -552,6 +552,7 @@ internal static class Program
 
     private static void TwoLineTests()
     {
+        FormattingCompatibilityTests();
         Test("Default host output uses two lines with one timestamp and no added slash", () =>
         {
             var handler = new Fixture((_, __) => Json(JsonConvert.SerializeObject(new
@@ -579,7 +580,7 @@ internal static class Program
                     plugin.Configure(panel.Handle);
                     Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
                 }
-                Equal(scenario.Value == 3 ? "Hello / Translation" :
+                Equal(scenario.Value == 3 || scenario.Value == 1 ? "Hello / Translation" :
                     scenario.Value == 2 ? "Translation" : "Hello", Lookup(plugin));
             }
         });
@@ -614,8 +615,8 @@ internal static class Program
             Equal("[ti:Title]\n[offset: +500]\n[00:01.000]Original\nTranslation",
                 LyricProcessor.InjectTranslationTwoLines("[ti:Title]\n[offset: +500]\n[00:01]Original",
                     "[offset:-500]\n[00:00.00]Translation")));
-        Test("Translation metadata cannot override the original timing offset", () =>
-            Equal("[offset:1000]\n[00:02.000]Original",
+        Test("Raw alignment recovers translation while preserving the original playback offset", () =>
+            Equal("[offset:1000]\n[00:02.000]Original\nUnaligned",
                 LyricProcessor.InjectTranslationTwoLines("[offset:1000]\n[00:02]Original", "[offset:0]\n[00:02]Unaligned")));
         Test("Multiple timestamps can attach different translations to repeated originals", () =>
             Equal("[00:01.000]Repeated\nOne\n[00:02.000]Repeated\nTwo",
@@ -630,8 +631,8 @@ internal static class Program
         Test("Literal slash characters in lyrics are retained", () =>
             Equal("[00:01.000]AC/DC / Original\nTranslation / Text",
                 LyricProcessor.InjectTranslationTwoLines("[00:01]AC/DC / Original", "[00:01]Translation / Text")));
-        Test("Untimed texts with different line counts combine their corresponding verse", () =>
-            Equal("One Two / Translated paragraph",
+        Test("Untimed unequal line counts preserve verse line breaks", () =>
+            Equal("One\nTwo\n\nTranslated paragraph",
                 LyricProcessor.InjectTranslationTwoLines("One\nTwo", "Translated paragraph")));
         Test("Untimed original does not inherit translation timing", () =>
             Equal("Original / Translation",
@@ -651,7 +652,7 @@ internal static class Program
             Equal("One / First\nTwo / Second\n\nThree / Third",
                 LyricProcessor.InjectTranslationTwoLines("One\nTwo\n\nThree", "First\nSecond\nThird")));
         Test("Untimed verse pairs retain both texts when translation splits a line", () =>
-            Equal("One Two / First\n\nThree / Second Third Fourth",
+            Equal("One\nTwo\n\nFirst\n\nThree\n\nSecond\nThird\nFourth",
                 LyricProcessor.InjectTranslationTwoLines("One\nTwo\n\nThree", "First\n\nSecond\nThird\nFourth")));
         Test("Untimed unpairable structures preserve the original instead of guessing", () =>
             Equal("One\n\nTwo", LyricProcessor.InjectTranslationTwoLines("One\n\nTwo", "First\nSecond\nThird")));
@@ -668,6 +669,7 @@ internal static class Program
 
     private static void MatchingTests()
     {
+        MatchingAuditTests();
         Test("Captured By Your Side search results are rejected rather than choosing another song", () =>
         {
             var fixture = ReadRecordingFixture();
@@ -731,7 +733,7 @@ internal static class Program
             Equal(1L, Select(new[] { Song(1, "Song", "Singer", "English soundtrack name", 200000) }, album: "日本語のサウンドトラック")));
         Test("Ambiguous recordings are rejected regardless of ID and response order", () =>
         {
-            var songs = new[] { Song(1, "Song", "Singer", "One", 200000), Song(999, "Song", "Singer", "Two", 200000) };
+            var songs = new[] { Song(1, "Song", "Singer", "One", 200000), Song(999, "Song", "Singer", "Two", 205000) };
             Equal(0L, Select(songs, album: null));
             Equal(0L, Select(songs.Reverse(), album: null));
         });
@@ -816,7 +818,7 @@ internal static class Program
             Equal(0L, Select(new[] { Song(1, "Song", "Singer", "Other album", 200000) }, artist: null)));
         Test("Ambiguous search results do not trigger a lyric download", () =>
         {
-            var handler = new Fixture((_, __) => Json(SearchJson(new[] { Song(1, "Song", "Singer", "One", 200000), Song(2, "Song", "Singer", "Two", 200000) })));
+            var handler = new Fixture((_, __) => Json(SearchJson(new[] { Song(1, "Song", "Singer", "One", 200000), Song(2, "Song", "Singer", "Two", 205000) })));
             Equal(null, Lookup(CreatePlugin(handler), "Singer", "Song"));
             True(handler.Calls.All(c => c.Contains("/search/")));
         });

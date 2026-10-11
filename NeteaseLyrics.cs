@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
 using System.Globalization;
+using System.Runtime.Serialization;
+using Newtonsoft.Json.Linq;
 
 [assembly: InternalsVisibleTo("NeteaseLyricsTest")]
 
@@ -26,9 +28,15 @@ namespace MusicBeePlugin
         }
 
         public OutputFormat Format { get; set; } = OutputFormat.BothTwoLines;
+        public bool? TwoLineTranslation { get; set; }
         public bool Fuzzy { get; set; }
         public bool UseLegacyMatch { get; set; }
         public bool AllowInsecureHttp { get; set; } = true;
+        [OnDeserialized]
+        private void RestoreTwoLineFormat(StreamingContext context)
+        {
+            if (Format == OutputFormat.Both && TwoLineTranslation == true) Format = OutputFormat.BothTwoLines;
+        }
     }
 
     public partial class Plugin
@@ -110,7 +118,7 @@ namespace MusicBeePlugin
                 Width = 390
             };
             _formatComboBox.Items.Add("Only original text");
-            _formatComboBox.Items.Add("Original text and translation (same line)");
+            _formatComboBox.Items.Add("Original text and translation (same line: JP / CN)");
             _formatComboBox.Items.Add("Only translation");
             _formatComboBox.Items.Add("Original text and translation (two lines)");
             _formatComboBox.SelectedIndex = (int)_config.Format;
@@ -118,7 +126,7 @@ namespace MusicBeePlugin
 
             _useLegacyCheckBox = new CheckBox
             {
-                Text = "Use legacy matching strategy",
+                Text = "Customize spelling matching",
                 Location = new Point(0, 50),
                 Checked = _config.UseLegacyMatch,
                 AutoSize = true
@@ -126,7 +134,7 @@ namespace MusicBeePlugin
 
             _fuzzyCheckBox = new CheckBox
             {
-                Text = "Allow small spelling differences (legacy matching only)",
+                Text = "Allow small spelling differences",
                 Location = new Point(0, 80),
                 Checked = _config.Fuzzy,
                 Enabled = _config.UseLegacyMatch,
@@ -135,7 +143,7 @@ namespace MusicBeePlugin
 
             _useLegacyCheckBox.CheckedChanged += (sender, e) =>
             {
-                // "Fuzzy" not available when using new strategy
+                // Without customization, the default permits small spelling differences.
                 _fuzzyCheckBox.Enabled = _useLegacyCheckBox.Checked;
             };
 
@@ -179,7 +187,10 @@ namespace MusicBeePlugin
             {
                 var configPath = Path.Combine(_mbApiInterface.Setting_GetPersistentStoragePath(), ConfigFilename);
                 temporaryPath = configPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
-                File.WriteAllText(temporaryPath, JsonConvert.SerializeObject(_config), Encoding.UTF8);
+                var stored = JObject.FromObject(_config);
+                stored["TwoLineTranslation"] = _config.Format == NeteaseConfig.OutputFormat.BothTwoLines;
+                if (_config.Format == NeteaseConfig.OutputFormat.BothTwoLines) stored["Format"] = 1;
+                File.WriteAllText(temporaryPath, stored.ToString(Formatting.None), Encoding.UTF8);
                 if (File.Exists(configPath)) File.Replace(temporaryPath, configPath, null);
                 else File.Move(temporaryPath, configPath);
                 return true;
@@ -234,6 +245,7 @@ namespace MusicBeePlugin
                 using (var session = _sessionFactory())
                 {
                     session.AllowInsecureHttp = _config.AllowInsecureHttp;
+                    var candidates = id > 0 ? new[] { id } : new long[0];
                     if (id == 0)
                     {
                         var realArtist = FirstNonBlank(ReadTag(sourceFileUrl, MetaDataType.Artist), artist);
@@ -241,24 +253,22 @@ namespace MusicBeePlugin
                         string durationStr = null;
                         try { durationStr = _mbApiInterface.Library_GetFileProperty?.Invoke(sourceFileUrl, FilePropertyType.Duration); }
                         catch (Exception ex) { Trace("Failed to read duration: " + ex.GetType().Name); }
-                        id = !_config.UseLegacyMatch
-                            ? SearchMatch.SearchAndMatch(realTitle, realArtist, realAlbum, ParseDurationString(durationStr), session)
-                            : SearchMatchLegacy.QueryWithFeatRemoved(realTitle, realArtist, _config.Fuzzy, session);
+                        candidates = SearchMatch.SearchCandidates(realTitle, realArtist, realAlbum,
+                            ParseDurationString(durationStr), session, !_config.UseLegacyMatch || _config.Fuzzy);
                     }
-                    if (id == 0) return null;
-                    var result = NeteaseApi.RequestLyric(id, session);
-                    if (NeteaseApi.IsInstrumental(result)) return null;
-                    var original = result?.lrc?.lyric;
-                    if (string.IsNullOrWhiteSpace(original)) return null;
-                    var translation = result.tlyric?.lyric;
-                    if (string.IsNullOrWhiteSpace(translation) || _config.Format == NeteaseConfig.OutputFormat.Original)
-                        return original;
-                    if (_config.Format == NeteaseConfig.OutputFormat.Translation) return translation;
-                    if (_config.Format == NeteaseConfig.OutputFormat.BothTwoLines)
-                        return LyricProcessor.InjectTranslationTwoLines(original, translation);
-                    var merged = LyricProcessor.InjectTranslation(original, translation);
-                    // Untimed lyrics cannot be aligned; preserve them rather than returning an empty string.
-                    return string.IsNullOrWhiteSpace(merged) ? original : merged;
+                    LyricResult result = null;
+                    foreach (var candidate in candidates)
+                    {
+                        if (candidate != candidates[0]) session.Report("Lyrics: trying compatible song ID " + candidate);
+                        var attempt = NeteaseApi.RequestLyric(candidate, session);
+                        // An explicit instrumental is authoritative; do not replace it with another listing's words.
+                        if (NeteaseApi.IsInstrumental(attempt)) return result == null ? null : FormatLyrics(result, session.Report);
+                        if (!LyricProcessor.HasLyricText(attempt?.lrc?.lyric)) continue;
+                        if (result == null) result = attempt;
+                        if (_config.Format == NeteaseConfig.OutputFormat.Original ||
+                            LyricProcessor.HasLyricText(attempt.tlyric?.lyric)) { result = attempt; break; }
+                    }
+                    return FormatLyrics(result, session.Report);
                 }
             }
             catch (Exception ex)
@@ -266,6 +276,20 @@ namespace MusicBeePlugin
                 Trace("Lookup failed: " + ex.GetType().Name);
                 return null;
             }
+        }
+
+        private string FormatLyrics(LyricResult result, Action<string> trace)
+        {
+            var original = result?.lrc?.lyric;
+            if (string.IsNullOrWhiteSpace(original)) return null;
+            var translation = result.tlyric?.lyric;
+            if (!LyricProcessor.HasLyricText(translation) || _config.Format == NeteaseConfig.OutputFormat.Original)
+                return original;
+            if (_config.Format == NeteaseConfig.OutputFormat.Translation) return translation;
+            var merged = LyricProcessor.MergeTranslation(original, translation,
+                _config.Format == NeteaseConfig.OutputFormat.BothTwoLines, trace);
+            // Untimed lyrics cannot be aligned; preserve them rather than returning an empty string.
+            return string.IsNullOrWhiteSpace(merged) ? original : merged;
         }
 
         private string ReadTag(string source, MetaDataType tag)
@@ -285,10 +309,22 @@ namespace MusicBeePlugin
             {
                 var configPath = Path.Combine(_mbApiInterface.Setting_GetPersistentStoragePath(), ConfigFilename);
                 if (!File.Exists(configPath)) return;
-                var config = JsonConvert.DeserializeObject<NeteaseConfig>(File.ReadAllText(configPath, Encoding.UTF8));
+                var configText = File.ReadAllText(configPath, Encoding.UTF8);
+                var config = JsonConvert.DeserializeObject<NeteaseConfig>(configText);
                 _config = config ?? new NeteaseConfig();
                 if (!Enum.IsDefined(typeof(NeteaseConfig.OutputFormat), _config.Format))
                     _config.Format = NeteaseConfig.OutputFormat.BothTwoLines;
+                if (JObject.Parse(configText)["Format"]?.ToString() == "3")
+                {
+                    try
+                    {
+                        // Migration failures must not discard valid loaded preferences, including HTTP opt-out.
+                        var backup = configPath + ".pre9.bak";
+                        if (!File.Exists(backup)) File.Copy(configPath, backup);
+                        if (SaveSettingsInternal()) Trace("Settings: migrated two-line preference to rollback-safe storage; backup retained");
+                    }
+                    catch (Exception ex) { Trace("Settings migration deferred: " + ex.GetType().Name); }
+                }
             }
             catch (Exception ex)
             {

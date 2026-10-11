@@ -36,7 +36,7 @@ namespace MusicBeePlugin
                 var route = "/api/search/get?s=" + Uri.EscapeDataString(query) + "&type=1&offset=0&total=true&limit=6";
                 var result = session.Request<SearchResult>("search/legacy", HttpMethod.Get,
                     "https://music.163.com" + route, null, ValidSearch, RequestInterface.LegacyHttps, true);
-                if (result == null && session.AllowInsecureHttp)
+                if (result == null && session.CanUseHttpFallback)
                     result = session.Request<SearchResult>("search/http", HttpMethod.Get,
                         "http://music.163.com" + route, null, ValidSearch, RequestInterface.LegacyHttp, true);
                 return UsableSongs(result);
@@ -69,7 +69,7 @@ namespace MusicBeePlugin
             var route = "/api/song/lyric?os=pc&id=" + id + "&lv=-1&kv=-1&tv=-1";
             result = session.Request<LyricResult>("lyrics/legacy", HttpMethod.Get,
                 "https://music.163.com" + route, null, ValidLyrics, RequestInterface.LegacyHttps);
-            if (result == null && session.AllowInsecureHttp)
+            if (result == null && session.CanUseHttpFallback)
                 result = session.Request<LyricResult>("lyrics/http", HttpMethod.Get,
                     "http://music.163.com" + route, null, ValidLyrics, RequestInterface.LegacyHttp);
             return result;
@@ -79,7 +79,7 @@ namespace MusicBeePlugin
         {
             // An explicit instrumental response is a valid absence. A bare code=200 is not.
             return result != null && result.code == 200 &&
-                (IsInstrumental(result) || !string.IsNullOrWhiteSpace(result.lrc?.lyric));
+                (IsInstrumental(result) || LyricProcessor.HasLyricText(result.lrc?.lyric));
         }
 
         internal static bool IsInstrumental(LyricResult result) => result?.nolyric == true ||
@@ -108,11 +108,17 @@ namespace MusicBeePlugin
     }
 
     internal enum RequestInterface { Other, NewApi, LegacyHttps, LegacyHttp }
+    internal enum RequestOutcome { None, Success, TransportFailure, Rejected, InvalidResponse }
 
     // A synchronous MusicBee callback gets one client and one deadline, including all fallbacks.
     // The handler seam lets regression tests exercise the real request and parsing code offline.
     internal sealed class LookupSession : IDisposable
     {
+        internal const int MaxSearchRequests = 9;
+        internal const int MaxLyricRequests = 9;
+        private int _searchRequests, _lyricRequests;
+        private bool _secureRefusal;
+        private readonly Dictionary<RequestInterface, RequestOutcome> _outcomes = new Dictionary<RequestInterface, RequestOutcome>();
         private readonly HttpClient _client;
         private readonly CancellationTokenSource _deadline;
         private readonly CancellationTokenSource _searchDeadline;
@@ -146,7 +152,10 @@ namespace MusicBeePlugin
         }
 
         internal bool AllowInsecureHttp { get; set; } = true;
-        internal bool CanSearch => !_searchDeadline.IsCancellationRequested && _elapsed.Elapsed < _searchTimeout;
+        internal bool CanUseHttpFallback => AllowInsecureHttp && !_secureRefusal &&
+            _outcomes.TryGetValue(RequestInterface.LegacyHttps, out var outcome) && outcome == RequestOutcome.TransportFailure;
+        internal bool CanSearch => _searchRequests < MaxSearchRequests &&
+            !_searchDeadline.IsCancellationRequested && _elapsed.Elapsed < _searchTimeout;
         internal bool CanRequest(RequestInterface api) => !_unavailable.Contains(api) &&
             (api != RequestInterface.LegacyHttp || AllowInsecureHttp);
 
@@ -168,6 +177,12 @@ namespace MusicBeePlugin
             Func<T, bool> validate, RequestInterface api = RequestInterface.Other, bool search = false) where T : class
         {
             if (_deadline.IsCancellationRequested || !CanRequest(api)) return null;
+            if ((search && _searchRequests >= MaxSearchRequests) ||
+                (!search && _lyricRequests >= MaxLyricRequests))
+            {
+                Trace(search ? "Search request limit reached" : "Lyric request limit reached");
+                return null;
+            }
             var remaining = (search ? _searchTimeout : _lookupTimeout) - _elapsed.Elapsed;
             if (remaining <= TimeSpan.Zero || (search && !CanSearch))
             {
@@ -184,16 +199,22 @@ namespace MusicBeePlugin
                     if (api == RequestInterface.LegacyHttps || api == RequestInterface.LegacyHttp)
                         request.Headers.TryAddWithoutValidation("Cookie", "appver=1.5.0.75771;");
                     timeout.CancelAfter(requestBudget);
+                    if (search) _searchRequests++; else _lyricRequests++;
+                    _outcomes[api] = RequestOutcome.None;
                     using (var response = _client.SendAsync(request, timeout.Token).GetAwaiter().GetResult())
                     {
                         if (!response.IsSuccessStatusCode)
                         {
+                            _outcomes[api] = RequestOutcome.Rejected;
+                            if (request.RequestUri.Scheme == "https") _secureRefusal = true;
                             Trace(label + ": HTTP " + (int)response.StatusCode);
                             return null;
                         }
                         var result = JsonConvert.DeserializeObject<T>(response.Content.ReadAsStringAsync().GetAwaiter().GetResult());
-                        if (validate(result)) return result;
+                        if (validate(result)) { _outcomes[api] = RequestOutcome.Success; return result; }
                         var code = (result as ApiResponse)?.code;
+                        _outcomes[api] = code.HasValue && code.Value != 200 ? RequestOutcome.Rejected : RequestOutcome.InvalidResponse;
+                        if (_outcomes[api] == RequestOutcome.Rejected && request.RequestUri.Scheme == "https") _secureRefusal = true;
                         Trace(label + ": rejected or incomplete response" +
                             (code.HasValue ? " (code " + code.Value + ")" : ""));
                         return null;
@@ -202,22 +223,26 @@ namespace MusicBeePlugin
             }
             catch (OperationCanceledException)
             {
-                var phaseExpired = search && !CanSearch;
-                if (!_deadline.IsCancellationRequested && !phaseExpired && api == RequestInterface.NewApi)
+                _outcomes[api] = RequestOutcome.TransportFailure;
+                var phaseExpired = search && (_searchDeadline.IsCancellationRequested || _elapsed.Elapsed >= _searchTimeout);
+                if (!_deadline.IsCancellationRequested && !phaseExpired && api != RequestInterface.Other)
                 {
                     _unavailable.Add(api);
-                    Trace("New interface disabled for this lookup after timeout");
+                    Trace(api == RequestInterface.NewApi ? "New interface disabled for this lookup after timeout" :
+                        api + " interface disabled for this lookup after timeout");
                 }
                 Trace(label + (_deadline.IsCancellationRequested ? ": lookup deadline reached" :
                     phaseExpired ? ": search budget exhausted" : ": request timed out"));
             }
             catch (HttpRequestException ex)
             {
+                _outcomes[api] = RequestOutcome.TransportFailure;
                 if (api != RequestInterface.Other) _unavailable.Add(api);
                 Trace(label + ": " + ex.GetType().Name);
             }
             catch (Exception ex)
             {
+                _outcomes[api] = RequestOutcome.InvalidResponse;
                 // Do not log response bodies, URLs, song tags or local file paths.
                 Trace(label + ": " + ex.GetType().Name);
             }
