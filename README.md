@@ -58,7 +58,7 @@ The continuation lines belong to the original cue; the plugin does not repeat it
 
 These preferences apply to the two combined global formats. **Lyrics only** and **Translation only** override them for all languages. The language-specific **Lyrics** choice returns the original unchanged.
 
-Pronunciation comes from NetEase's supplied `romalrc` track; this plugin does not generate readings locally. Cantonese pronunciation replaces the translation extra when enabled. For Japanese/Korean triple-line output, a missing or safely unalignable extra is omitted while the other is retained. If both extras are missing, the original is retained. Pronunciation-only does not substitute translation when pronunciation is unavailable. Translation-only also falls back to the original when no usable translation exists.
+Pronunciation comes from NetEase's `romalrc` track; this plugin does not generate readings locally. Cantonese pronunciation replaces the translation extra when enabled. For Japanese/Korean triple-line output, a missing or safely unalignable extra is omitted while the other is retained. If both extras are missing, the original is retained. Pronunciation-only does not substitute translation when pronunciation is unavailable. Translation-only also falls back to the original when no usable translation exists.
 
 The plugin uses NetEase's song-language label, with conservative kana/Hangul detection when that label is unavailable. Han characters alone cannot distinguish Cantonese from Mandarin. Unsupported, multilingual or unresolved language labels retain the general translation behavior. Pronunciation availability varies by song; no pronunciation setting is offered for other languages.
 
@@ -109,7 +109,7 @@ See [BUILDING.md](BUILDING.md) for the Windows/.NET build instructions and valid
 
 The latest build passes **246 regression checks in both 64-bit and 32-bit test processes**, using the packaged DLL with embedded dependencies. Fixtures cover the MusicBee callback, matching, timing, configuration and controlled network failures; they do not replace native MusicBee testing or guarantee NetEase availability in every region.
 
-The [release history](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases) publishes seven substantial milestones from the original saved development packages. Smaller steps are folded into the following milestone. Padded prerelease tags keep GitHub’s same-day release sorting in numeric order; product versions and package filenames retain their original names. Commits and releases were reconstructed from saved snapshots; publication dates are not original local build dates. Historical source packages retain their original documentation. The current README describes 1.9.2.
+The [release history](https://github.com/tonyzehs/MusicBee-NeteaseLyrics/releases) groups development into seven milestones. Each release uses its original build packages; smaller updates are included in the next milestone. Padded prerelease tags keep the listing in numeric order. Tags identify archived source snapshots, and release dates reflect their publication. Source packages include the documentation from each build; this README describes 1.9.2.
 
 | Milestone | Included development steps | Main changes |
 |---|---|---|
