@@ -8,8 +8,6 @@ LyricBee is an independently maintained continuation of [cqjjjzr/MusicBee-Neteas
 
 [![Japanese lyrics, pronunciation and Chinese translation highlighted together in MusicBee's Now Playing panel](docs/screenshots/japanese-three-line.png)](docs/screenshots/japanese-three-line.png)
 
-**Japanese lyrics, pronunciation and Chinese translation**, grouped under one timed cue in MusicBee's Now Playing panel. Click the screenshot to inspect it at full size.
-
 ### Original, translation and pronunciation displays
 
 The global format offers:
@@ -76,9 +74,20 @@ Title, artist, album and available duration contribute to matching. The plugin r
 - Live, remix, radio-edit and other meaningful version labels remain significant.
 - Recognized remaster notes can be ignored. Mono/stereo and album-version notes require known, closely matching durations.
 - Compatible duplicate catalogue listings are grouped. If the chosen listing lacks lyrics or requested extras, another compatible listing can be tried.
-- A terminal soundtrack attribution such as **(from the series Arcane League of Legends)** can be ignored only when complete artist credits, album, duration and the named work corroborate it. This fixes recordings such as Stromae/Pomme's **Ma Meilleure Ennemie** without removing meaningful title words indiscriminately.
+- A terminal soundtrack attribution such as **(from the series Arcane League of Legends)** can be ignored only when complete artist credits, album, duration and the named work corroborate it. Meaningful title words and recording-version labels remain significant.
 
 Missing tags, translated titles or unresolved editions can still prevent a confident match. The manual song override remains available.
+
+### Real-song examples
+
+These cases show the earlier lookup failures and the corrected results. Both automatic lookups were verified in MusicBee with the existing file tags and no Custom10 override.
+
+| Recording | Earlier lookup behavior | Corrected result |
+| --- | --- | --- |
+| **[By Your Side](https://music.163.com/song?id=400875204)** — 澤田かおり / 服部隆之, from the *Mobile Suit Gundam The Origin* soundtrack | Paired the Japanese recording with unrelated Cantonese lyrics. | Retrieves the intended recording, **ID 400875204**. Recognizes the singer alongside the composer credit, checks title/artist/album/duration, and rejects unrelated songs. |
+| **[Ma Meilleure Ennemie](https://music.163.com/song?id=3374505659)** — Stromae / Pomme, from the *Arcane Season 2* soundtrack | Returned no lyrics even though the correct recording was available. NetEase appends **(from the series Arcane League of Legends)** to the title, while the local title omits it. | Retrieves the intended recording, **ID 3374505659**. Accepts the soundtrack attribution only when the artist credits, album, duration and named work corroborate the match. |
+
+Re-fetch affected tracks to replace lyrics MusicBee already stored.
 
 ### Select a specific NetEase song
 
