@@ -21,10 +21,11 @@ namespace MusicBeePlugin
         {
             Original = 0,
             Both = 1,
-            Translation = 2
+            Translation = 2,
+            BothTwoLines = 3
         }
 
-        public OutputFormat Format { get; set; } = OutputFormat.Both;
+        public OutputFormat Format { get; set; } = OutputFormat.BothTwoLines;
         public bool Fuzzy { get; set; }
         public bool UseLegacyMatch { get; set; }
         public bool AllowInsecureHttp { get; set; } = true;
@@ -106,11 +107,12 @@ namespace MusicBeePlugin
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 AutoSize = true,
                 Location = new Point(0, 0),
-                Width = 300
+                Width = 390
             };
             _formatComboBox.Items.Add("Only original text");
-            _formatComboBox.Items.Add("Original text and translation");
+            _formatComboBox.Items.Add("Original text and translation (same line)");
             _formatComboBox.Items.Add("Only translation");
+            _formatComboBox.Items.Add("Original text and translation (two lines)");
             _formatComboBox.SelectedIndex = (int)_config.Format;
             configPanel.Controls.Add(_formatComboBox);
 
@@ -159,8 +161,8 @@ namespace MusicBeePlugin
             if (_formatComboBox == null || _formatComboBox.IsDisposed ||
                 _fuzzyCheckBox == null || _fuzzyCheckBox.IsDisposed ||
                 _useLegacyCheckBox == null || _useLegacyCheckBox.IsDisposed) return;
-            if (_formatComboBox.SelectedIndex < 0 || _formatComboBox.SelectedIndex > 2)
-                _config.Format = NeteaseConfig.OutputFormat.Both;
+            if (_formatComboBox.SelectedIndex < 0 || _formatComboBox.SelectedIndex >= _formatComboBox.Items.Count)
+                _config.Format = NeteaseConfig.OutputFormat.BothTwoLines;
             else
                 _config.Format = (NeteaseConfig.OutputFormat)_formatComboBox.SelectedIndex;
             _config.Fuzzy = _fuzzyCheckBox.Checked;
@@ -252,6 +254,8 @@ namespace MusicBeePlugin
                     if (string.IsNullOrWhiteSpace(translation) || _config.Format == NeteaseConfig.OutputFormat.Original)
                         return original;
                     if (_config.Format == NeteaseConfig.OutputFormat.Translation) return translation;
+                    if (_config.Format == NeteaseConfig.OutputFormat.BothTwoLines)
+                        return LyricProcessor.InjectTranslationTwoLines(original, translation);
                     var merged = LyricProcessor.InjectTranslation(original, translation);
                     // Untimed lyrics cannot be aligned; preserve them rather than returning an empty string.
                     return string.IsNullOrWhiteSpace(merged) ? original : merged;
@@ -284,7 +288,7 @@ namespace MusicBeePlugin
                 var config = JsonConvert.DeserializeObject<NeteaseConfig>(File.ReadAllText(configPath, Encoding.UTF8));
                 _config = config ?? new NeteaseConfig();
                 if (!Enum.IsDefined(typeof(NeteaseConfig.OutputFormat), _config.Format))
-                    _config.Format = NeteaseConfig.OutputFormat.Both;
+                    _config.Format = NeteaseConfig.OutputFormat.BothTwoLines;
             }
             catch (Exception ex)
             {

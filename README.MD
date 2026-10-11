@@ -1,6 +1,6 @@
 # Netease Lyric
 
-This fork is developing **1.9.1-pre.4**, improving slow-network fallback and phone share links alongside the conservative song matching and reliability fixes for upstream 1.9.0. See [CHANGELOG.md](CHANGELOG.md) for the changes and [BUILDING.md](BUILDING.md) for building and testing. Local test builds are not a stable release. HTTP fallback is enabled by default; it sends metadata without encryption if HTTPS fails. Turn off **Allow HTTP fallback (unencrypted metadata)** to require HTTPS.
+This fork is developing **1.9.1-pre.7**, using two-line timed original/translation output by default and a spaced ` / ` separator for untimed pairs, alongside the network fallback, conservative song matching and reliability fixes for upstream 1.9.0. See [CHANGELOG.md](CHANGELOG.md) for the changes and [BUILDING.md](BUILDING.md) for building and testing. Local test builds are not a stable release. HTTP fallback is enabled by default; it sends metadata without encryption if HTTPS fails. Turn off **Allow HTTP fallback (unencrypted metadata)** to require HTTPS.
 
 This is another lyrics retrieval plugin for music player MusicBee. It can get **synchronized** lyrics from Netease Cloud Music(网易云音乐, a cloud music service in China).
 
@@ -11,6 +11,23 @@ is wrapped to: Blalalala/Alalalalala
 etc..
 
 But if you don't want this function you can disable it in plugin settings.
+
+The default format is **Original text and translation (two lines)**. An explicit saved format is retained when upgrading; choose this option in the plugin's settings to change an older selection. Each pair uses a single timed cue:
+
+```text
+[00:12.300]Original text
+Translated text
+[00:17.500]Next original line
+Next translated line
+```
+
+Only the original line has a timestamp. The translation is a continuation of that cue, so the host can highlight and scroll both lines together. Repeating the timestamp on each line makes MusicBee select the last line instead, according to [this MusicBee forum report](https://getmusicbee.com/forum/index.php?topic=40063.0). The user confirmed the pre.5 two-line format works in MusicBee's Now Playing panel; pre.6 removes its slash marker while keeping the same timing structure. Other players may handle untimestamped continuation lines differently.
+
+Timed two-line output adds no `/` marker; slashes already present in the lyrics are retained. The formatter matches equivalent timestamp spellings numerically, accounts for each document's offset, keeps original metadata and groups simultaneous lines into one cue. It does not guess translation matches for different times. If only the translation is untimed, it retains the timed original without inventing synchronization. The optional same-line format still uses `/` between timed paired texts.
+
+When the original lyrics have no timestamps, the default format uses `Original text / Translated text` without language-specific labels. It pairs nonblank lines in the provider's order when counts agree, preserving original verse breaks and metadata. If counts differ but blank-separated verse counts agree, it pairs verses; within each verse, matching line counts use line pairs and differing counts combine the verse into one `original verse / translated verse` paragraph. If neither structure agrees, it retains the original text instead of forcing correspondence. This is positional formatting, not verification of translation meaning. It never manufactures timing; translation timestamps, if present without original timing, are stripped before formatting.
+
+MusicBee may retain previously retrieved lyrics. After changing the format, re-search or replace the displayed lyrics for the track; simply restarting playback may keep the old cached text. This changes future retrieval output, not existing lyrics in audio tags.
 
 ## Usage
 To use this plugin, download it from links below:  

@@ -1,3 +1,31 @@
+# 1.9.1-pre.7 — spaced separators for untimed lyrics
+
+- As requested, keep timed original/translation output on two lines, without a generated slash, and retain that default. Change only the untimed fallback of this format to language-neutral `original / translation` pairs.
+- Replace the separate Original:/Translation: sections. Pair nonblank lines in provider order when counts agree, preserving original metadata and blank verse breaks. With differing line counts but equal blank-separated verse counts, pair verses and combine split/merged lines within each verse. When neither structure agrees, preserve the original instead of forcing pairings. Positional correspondence is a best effort formatting assumption, not semantic verification.
+- Strip translation timestamps when originals are untimed; never borrow or invent timing. Blank or metadata-only translations preserve originals. Literal slashes remain intact. The optional same-line timed formatter and saved settings are unchanged.
+- Add five regressions for spaced line/verse pairs, unpairable structures, metadata/literal slashes and blank translations; update existing untimed expectations. All 111 cases pass in x64 and x86 processes.
+- Assembly/file version: `1.9.1.6`; product version: `1.9.1-pre.7`.
+
+# 1.9.1-pre.6 — two-line output by default, without slash markers
+
+- Remove the generated `/` marker from two-line output. Each pair still uses one timestamp on the original followed by the translation on the next line. Literal slashes in lyric text are preserved; the optional same-line format retains its separator.
+- Default new/missing configurations and invalid-format recovery to **Original text and translation (two lines)**. Retain explicit saved original-only, translation-only, same-line and two-line choices when upgrading, along with legacy no-translation preferences.
+- The user confirmed pre.5's two-line display works in MusicBee's Now Playing panel. This increment retains that structure and changes only the generated marker and default choice.
+- Untimed behavior remains labelled original/translation sections in two-line mode. Historically, upstream v1.9.0's combined formatter could return empty text for wholly untimed originals when a translation was present; pre.1–pre.4 preserved only the original through an empty-merge fallback. Original-only and translation-only modes passed through their respective text, with original fallback when translation was absent.
+- Update formatting expectations and add configuration compatibility coverage. All 106 regression cases pass in x64 and x86 processes.
+- Assembly/file version: `1.9.1.5`; product version: `1.9.1-pre.6`.
+
+# 1.9.1-pre.5 — optional stacked bilingual lyrics
+
+- Add **Original text and translation (two lines)** as a fourth output choice. Existing enum values and saved settings remain compatible; the same-line output remains the default. The selection persists through MusicBee's Apply/Save flow.
+- Emit one timestamp for each bilingual cue: original text followed by `/`, then an untimestamped translation continuation. This follows the MusicBee forum's reported approach for highlighting both lines; two repeated timestamps reportedly highlight only the last line. Native Now Playing rendering still needs user verification; fixture tests validate the returned text, not the host's visual behavior.
+- In the new format, align equivalent numeric timestamps, including one/two/three decimal places and colon fractions; sort numerically; expand repeated timestamps; group simultaneous lines into one cue; retain original metadata and existing text continuations. Apply each document's offset when finding matching translations, preserving the original offset for host playback. Blank or missing translations do not add `/`.
+- Use labelled original/translation sections when original lyrics are untimed. Strip translation time tags in that case rather than borrowing their timing. Do not infer pairs from equal line counts. A timed original with untimed translation is retained without fabricated pairing.
+- Preserve the existing original-only, translation-only and same-line formatters. General metadata/timing fixes in the existing same-line formatter remain outstanding.
+- The user confirmed pre.3 automatically retrieves the correct supplied recording inside MusicBee. This increment includes the intervening pre.4 network and phone-link fixes; native tests of those conditions remain pending.
+- Add 15 regressions for host callback formatting, settings persistence, normalized timestamps, offsets, repeated/simultaneous cues, literal slashes, newline conventions and untimed fallbacks. All 105 cases pass in x64 and x86 processes.
+- Assembly/file version: `1.9.1.4`; product version: `1.9.1-pre.5`.
+
 # 1.9.1-pre.4 — address the independent pre.1 audit
 
 - Restore legacy plain-HTTP search/lyrics as the last resort after the HTTPS interfaces fail or return unusable responses. As requested by the fork owner, fallback is enabled by default with an **Allow HTTP fallback (unencrypted metadata)** setting to disable it. Existing configurations default to enabled. Valid secure empty searches and declared instrumentals do not trigger HTTP fallback.

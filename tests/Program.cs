@@ -153,10 +153,12 @@ internal static class Program
             SetConfig(plugin, "{\"UseLegacyMatch\":true}");
             Equal("[00:01.00]Hello", Lookup(plugin, null, "Song"));
         });
-        Test("Untimed original is preserved in combined output", () =>
+        Test("Untimed original is preserved in the existing same-line combined output", () =>
         {
             var handler = new Fixture((_, __) => Json("{\"code\":200,\"lrc\":{\"lyric\":\"Hello\"},\"tlyric\":{\"lyric\":\"Translation\"}}"));
-            Equal("Hello", Lookup(CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null)));
+            var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
+            SetConfig(plugin, "{\"Format\":1}");
+            Equal("Hello", Lookup(plugin));
         });
         Test("Blank translation is treated as absent", () =>
         {
@@ -207,7 +209,7 @@ internal static class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(1, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
+                    Equal(3, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
                     plugin.SaveSettings();
                 }
                 plugin.SaveSettings(); // MusicBee may invoke this after the panel is disposed.
@@ -295,6 +297,7 @@ internal static class Program
         });
         CookieTransportTest();
         AuditorTests();
+        TwoLineTests();
         MatchingTests();
         Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
         Console.WriteLine("Process architecture: " + (Environment.Is64BitProcess ? "x64" : "x86"));
@@ -544,6 +547,122 @@ internal static class Program
                 try { server.GetAwaiter().GetResult(); }
                 catch when (!completed) { /* Preserve the request/assertion failure during fixture shutdown. */ }
             }
+        });
+    }
+
+    private static void TwoLineTests()
+    {
+        Test("Default host output uses two lines with one timestamp and no added slash", () =>
+        {
+            var handler = new Fixture((_, __) => Json(JsonConvert.SerializeObject(new
+            {
+                code = 200, lrc = new { lyric = "[00:01.00]日本語\n[00:03.00]次の行" },
+                tlyric = new { lyric = "[00:01.000]中文\n[00:03.00]下一行" }
+            })));
+            var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
+            Equal("[00:01.000]日本語\n中文\n[00:03.000]次の行\n下一行", Lookup(plugin));
+        });
+        Test("Missing format uses the two-line default while explicit saved choices are retained", () =>
+        {
+            var scenarios = new Dictionary<string, int>
+            {
+                ["{}"] = 3, ["{\"AllowInsecureHttp\":false}"] = 3,
+                ["{\"Format\":0}"] = 0, ["{\"Format\":1}"] = 1, ["{\"Format\":2}"] = 2
+            };
+            foreach (var scenario in scenarios)
+            {
+                var handler = new Fixture((_, __) => Json("{\"code\":200,\"lrc\":{\"lyric\":\"Hello\"},\"tlyric\":{\"lyric\":\"Translation\"}}"));
+                var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
+                SetConfig(plugin, scenario.Key);
+                using (var panel = new Panel())
+                {
+                    plugin.Configure(panel.Handle);
+                    Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
+                }
+                Equal(scenario.Value == 3 ? "Hello / Translation" :
+                    scenario.Value == 2 ? "Translation" : "Hello", Lookup(plugin));
+            }
+        });
+        Test("Two-line format persists across closing and reopening the settings", () =>
+        {
+            var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
+            SetConfig(plugin, "{\"Format\":3}");
+            using (var panel = new Panel())
+            {
+                plugin.Configure(panel.Handle);
+                Equal(3, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
+                plugin.SaveSettings();
+            }
+            var saved = JsonConvert.DeserializeObject<NeteaseConfig>(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
+            Equal(NeteaseConfig.OutputFormat.BothTwoLines, saved.Format);
+            plugin.ReadConfig();
+            using (var panel = new Panel())
+            {
+                plugin.Configure(panel.Handle);
+                Equal(3, panel.Controls.OfType<ComboBox>().Single().SelectedIndex);
+            }
+        });
+        Test("Two-line mode leaves blank or missing translations alone", () =>
+            Equal("[00:01.000]Original\n[00:02.000]Second\n[00:03.000]",
+                LyricProcessor.InjectTranslationTwoLines("[00:01.00]Original\n[00:02.00]Second\n[00:03.00]",
+                    "[00:01.00] \n[00:03.00]Rest translation")));
+        Test("Two-line mode normalizes equivalent timestamp spellings and sorts numerically", () =>
+            Equal("[02:00.000]First\nOne\n[10:00.100]Later\nTwo",
+                LyricProcessor.InjectTranslationTwoLines("[10:00.1]Later\n[2:00]First",
+                    "[02:00.000]One\n[10:00:10]Two")));
+        Test("Two-line mode preserves original metadata and aligns differing offsets", () =>
+            Equal("[ti:Title]\n[offset: +500]\n[00:01.000]Original\nTranslation",
+                LyricProcessor.InjectTranslationTwoLines("[ti:Title]\n[offset: +500]\n[00:01]Original",
+                    "[offset:-500]\n[00:00.00]Translation")));
+        Test("Translation metadata cannot override the original timing offset", () =>
+            Equal("[offset:1000]\n[00:02.000]Original",
+                LyricProcessor.InjectTranslationTwoLines("[offset:1000]\n[00:02]Original", "[offset:0]\n[00:02]Unaligned")));
+        Test("Multiple timestamps can attach different translations to repeated originals", () =>
+            Equal("[00:01.000]Repeated\nOne\n[00:02.000]Repeated\nTwo",
+                LyricProcessor.InjectTranslationTwoLines("[00:01][00:02.00]Repeated", "[00:01]One\n[00:02]Two")));
+        Test("Simultaneous lines form one cue and retain all distinct text", () =>
+            Equal("[00:01.000]One\nTwo\nFirst\nSecond",
+                LyricProcessor.InjectTranslationTwoLines("[00:01]One\n[00:01.00]Two",
+                    "[00:01]First\n[00:01]Second\n[00:01.000]First")));
+        Test("Existing continuation lines remain inside their original cue", () =>
+            Equal("[00:01.000]One\nContinuation\nTranslation\nTranslation continuation",
+                LyricProcessor.InjectTranslationTwoLines("[00:01]One\nContinuation", "[00:01]Translation\nTranslation continuation")));
+        Test("Literal slash characters in lyrics are retained", () =>
+            Equal("[00:01.000]AC/DC / Original\nTranslation / Text",
+                LyricProcessor.InjectTranslationTwoLines("[00:01]AC/DC / Original", "[00:01]Translation / Text")));
+        Test("Untimed texts with different line counts combine their corresponding verse", () =>
+            Equal("One Two / Translated paragraph",
+                LyricProcessor.InjectTranslationTwoLines("One\nTwo", "Translated paragraph")));
+        Test("Untimed original does not inherit translation timing", () =>
+            Equal("Original / Translation",
+                LyricProcessor.InjectTranslationTwoLines("Original", "[00:01]Translation")));
+        Test("Timed original with untimed translation is retained without invented alignment", () =>
+            Equal("[00:01]Original", LyricProcessor.InjectTranslationTwoLines("[00:01]Original", "Unaligned translation")));
+        Test("Newline conventions and UTF-8 BOM do not obstruct two-line alignment", () =>
+            Equal("[00:01.000]Original\nTranslation\n[00:02.000]Second\nNext",
+                LyricProcessor.InjectTranslationTwoLines("\uFEFF[00:01]Original\r\n[00:02]Second\r\n",
+                    "\uFEFF[00:01]Translation\r[00:02]Next\r")));
+        Test("Two-line absent translation returns the unmodified original", () =>
+        {
+            Equal("[00:01]Original", LyricProcessor.InjectTranslationTwoLines("[00:01]Original", null));
+            Equal("[00:01]Original", LyricProcessor.InjectTranslationTwoLines("[00:01]Original", " \n"));
+        });
+        Test("Untimed line pairs use a spaced slash and retain original verse breaks", () =>
+            Equal("One / First\nTwo / Second\n\nThree / Third",
+                LyricProcessor.InjectTranslationTwoLines("One\nTwo\n\nThree", "First\nSecond\nThird")));
+        Test("Untimed verse pairs retain both texts when translation splits a line", () =>
+            Equal("One Two / First\n\nThree / Second Third Fourth",
+                LyricProcessor.InjectTranslationTwoLines("One\nTwo\n\nThree", "First\n\nSecond\nThird\nFourth")));
+        Test("Untimed unpairable structures preserve the original instead of guessing", () =>
+            Equal("One\n\nTwo", LyricProcessor.InjectTranslationTwoLines("One\n\nTwo", "First\nSecond\nThird")));
+        Test("Untimed metadata is retained but never treated as a lyric pair", () =>
+            Equal("[ti:Original title]\nAC/DC / 中文 / 译文",
+                LyricProcessor.InjectTranslationTwoLines("\uFEFF[ti:Original title]\r\nAC/DC / 中文",
+                    "[ti:Translated title]\r\n译文")));
+        Test("Untimed blank or metadata-only translations leave originals unchanged", () =>
+        {
+            Equal("Original", LyricProcessor.InjectTranslationTwoLines("Original", "[ti:Translation]\n\n"));
+            Equal("Original", LyricProcessor.InjectTranslationTwoLines("Original", "[00:01]\n"));
         });
     }
 
