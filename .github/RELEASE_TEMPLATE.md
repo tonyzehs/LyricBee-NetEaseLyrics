@@ -43,7 +43,7 @@ See [INSTALL.md](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/blob/v{{VERS
 - DLL SHA-256: `{{DLL_SHA256}}`.
 - Installation ZIP SHA-256: `{{ZIP_SHA256}}`.
 - Source commit: [`{{COMMIT}}`](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/commit/{{COMMIT}}).
-- Regression checks: {{CHECK_COUNT}} passed in each isolated x64/x86 process against the packaged DLL.
+- Regression checks: {{CHECK_COUNT}} (x64/x86).
 - CI: [{{CI_STATUS}}]({{CI_URL}}).
 
 </details>

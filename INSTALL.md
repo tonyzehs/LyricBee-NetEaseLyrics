@@ -9,7 +9,7 @@ Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https:
 
 ### Upgrading
 
-(Optional) Back up your settings before installing. Previous plugin versions are available in the [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases), so keeping the old DLL is unnecessary.
+(Optional) Back up your settings before installing. Previous plugin versions are available in the [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases).
 
 1. Download the latest installation ZIP.
 2. Open MusicBee’s **Preferences → Plugins**, use **Add plugin**, and select the new ZIP to update LyricBee.
@@ -29,7 +29,7 @@ Older settings are repaired automatically when the plugin loads, with the previo
 
 ### 升级
 
-（可选）备份设置。旧版插件可从[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)下载，无需保存旧 DLL。
+（可选）备份设置。旧版插件可从[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)下载。
 
 1. 下载最新安装 ZIP。
 2. 打开 MusicBee 的**首选项 → 插件**，使用“添加插件”选择新的 ZIP，以更新 LyricBee。

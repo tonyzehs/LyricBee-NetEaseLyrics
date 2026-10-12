@@ -134,7 +134,7 @@ Requires MusicBee 3.x on Windows with .NET Framework 4.8. Tested with MusicBee 3
 
 ### Upgrading
 
-(Optional) Back up your settings first. Previous plugin versions remain available in the [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases), so keeping a copy of the old DLL is unnecessary.
+(Optional) Back up your settings first. Previous plugin versions remain available in the [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases).
 
 1. Download the latest installation ZIP.
 2. Open MusicBee’s **Preferences → Plugins**, use **Add plugin**, and select the new ZIP to update LyricBee.

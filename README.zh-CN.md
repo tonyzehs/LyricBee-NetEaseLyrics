@@ -134,7 +134,7 @@ netease=29126914
 
 ### 升级
 
-（可选）先备份设置。旧版插件可从[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)下载，无需另存一份旧 DLL。
+（可选）先备份设置。旧版插件可从[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)下载。
 
 1. 下载最新安装 ZIP。
 2. 打开 MusicBee 的**首选项 → 插件**，使用“添加插件”选择新的 ZIP，以更新 LyricBee。
