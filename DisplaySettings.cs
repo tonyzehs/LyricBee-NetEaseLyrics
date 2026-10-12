@@ -41,7 +41,9 @@ namespace MusicBeePlugin
             InterfaceLanguage = ReadEnum<UiLanguage>(stored["InterfaceLanguage"]) ?? UiLanguage.Automatic;
             if (modern)
             {
-                CantoneseOverride = ReadEnum<AccompanyingText>(stored["CantoneseOverride"]);
+                var cantonese = ReadEnum<AccompanyingText>(stored["CantoneseOverride"]);
+                // Remove obsolete translation choices while preserving the user's pronunciation preference.
+                CantoneseOverride = cantonese.HasValue ? (AccompanyingText?)FromExtras(false, HasPronunciation(cantonese.Value)) : null;
                 JapaneseOverride = ReadEnum<AccompanyingText>(stored["JapaneseOverride"]);
                 KoreanOverride = ReadEnum<AccompanyingText>(stored["KoreanOverride"]);
                 var english = ReadEnum<AccompanyingText>(stored["EnglishOverride"]);

@@ -1,4 +1,4 @@
-# Settings redesign — 1.9.4-test.1
+# Settings redesign — 1.9.4-test.2
 
 This is a local test build. The current public release remains 1.9.3.
 
@@ -6,11 +6,13 @@ This is a local test build. The current public release remains 1.9.3.
 
 - Original lyrics are always included. There is no original checkbox or translation-only mode.
 - **Default display:** translation on, pronunciation off. The two checkboxes select extras independently.
+- On first installation, every language override starts at **Follow default**. Existing saved choices are retained when upgrading.
 - **Layout:** separate lines by default, or the same line separated by ` / `. Layout applies across languages. Untimed texts retain their existing alignment and verse safeguards.
-- **Language overrides:** Cantonese, Japanese and Korean each offer Follow default, Lyrics, Lyrics + Translation, Lyrics + Pronunciation, and Lyrics + Pronunciation + Translation. English offers Follow default, Lyrics, and Lyrics + Translation. An override replaces the default content selection for that language; it remains active even when default extras are off.
+- **Language overrides:** Japanese and Korean each offer Follow default, Lyrics, Lyrics + Translation, Lyrics + Pronunciation, and Lyrics + Pronunciation + Translation. Cantonese offers Follow default, Lyrics, and Lyrics + Pronunciation; it appears below Japanese and Korean. English offers Follow default, Lyrics, and Lyrics + Translation. An override replaces the default content selection for that language; it remains active even when default extras are off.
 - Pronunciation is supplied by NetEase for supported songs. Missing or unalignable extras are omitted independently; original lyrics remain available.
 - English identification uses NetEase's language metadata. French and other languages are not classified as English merely because they use Latin letters. Unresolved or mixed-language labels retain the default translation preference. Existing conservative Japanese/Korean script fallback remains.
-- **Interface language:** Automatic / English / 简体中文. Automatic follows the process's Windows UI culture; all Chinese UI cultures select Simplified Chinese text. Changing it preserves unsaved choices and does not change the lyrics' language.
+- **Spelling matching:** one Allow small spelling differences checkbox, enabled by default. Existing effective spelling preferences are retained.
+- **Interface language / 界面语言:** Automatic / English / 简体中文. Automatic follows the process's Windows UI culture; all Chinese UI cultures select Simplified Chinese text. Changing it preserves unsaved choices and does not change the lyrics' language.
 
 ## Existing settings and rollback
 
@@ -20,7 +22,7 @@ The first save of an older settings file preserves `netease_config.pre-display.b
 
 ## Download and install
 
-1. Use the supplied local `LyricBee-NetEaseLyrics_1.9.4-test.1.zip` package. It is not on the GitHub releases page.
+1. Use the supplied local `LyricBee-NetEaseLyrics_1.9.4-test.2.zip` package. It is not on the GitHub releases page.
 2. Close MusicBee and keep a copy of your existing `mb_NeteaseLyrics.dll` for rollback.
 3. Replace that DLL in MusicBee's Plugins directory with the DLL from the ZIP. Keep only one installed copy.
 4. Restart MusicBee, open LyricBee's settings and try both interface languages.
@@ -30,13 +32,13 @@ Try Japanese triple-line output, Cantonese pronunciation, Korean output, English
 
 ## 下载与安装
 
-1. 使用随附的本地测试包 `LyricBee-NetEaseLyrics_1.9.4-test.1.zip`；此版本尚未发布到 GitHub Releases。
+1. 使用随附的本地测试包 `LyricBee-NetEaseLyrics_1.9.4-test.2.zip`；此版本尚未发布到 GitHub Releases。
 2. 关闭 MusicBee，并备份现有的 `mb_NeteaseLyrics.dll`，以便回退。
 3. 用 ZIP 中的 DLL 替换 MusicBee 的 Plugins 目录中的同名文件。只保留一份插件。
 4. 重启 MusicBee，打开 LyricBee 设置，测试 English 和简体中文界面。
 5. 应用设置后，重新搜索歌词。MusicBee 已保存的歌词不会自动替换。
 
-原文歌词始终显示。默认开启翻译、关闭发音，并采用分行显示。“语言覆盖设置”可为粤语、日语、韩语和英语指定独立选择；“使用默认设置”跟随上方的默认选项。英语不提供发音选项。翻译和发音取决于网易云是否提供，无法安全配对的附加内容会被省略。
+原文歌词始终显示。默认开启翻译、关闭发音，并采用分行显示。“语言覆盖设置”可为粤语、日语、韩语和英语指定独立选择；“使用默认设置”跟随上方的默认选项。首次安装时，所有语言均采用“使用默认设置”，升级时保留已有选择。英语不提供发音选项；粤语不提供翻译选项，并位于日语和韩语下方。拼写匹配采用单个“允许少量拼写差异”复选框。翻译和发音取决于网易云是否提供，无法安全配对的附加内容会被省略。
 
 请测试日语三行显示、粤语发音、韩语、英语翻译开关，以及关闭英语翻译后法语歌曲是否仍能显示翻译。另请测试排列方式切换、默认选项与语言覆盖设置的关系，以及重启后的设置保存。
 

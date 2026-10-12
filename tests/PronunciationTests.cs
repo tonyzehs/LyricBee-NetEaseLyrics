@@ -55,10 +55,10 @@ internal static partial class Program
             Equal("[00:01.000]中文歌词\nroman", Lookup(PronunciationPlugin(handler, "\"EnableCantonesePronunciation\":true")));
             Equal(2, handler.Calls.Count);
         });
-        Test("Cantonese checkbox off preserves translation even when Japanese pronunciation is enabled", () =>
+        Test("Cantonese pronunciation off returns only original when Japanese pronunciation is enabled", () =>
         {
             var handler = PronunciationFixture(PronunciationJson("[00:01]中文歌词"), Wiki("粤语"));
-            Equal("[00:01.000]中文歌词\n译文", Lookup(PronunciationPlugin(handler, "\"JapaneseText\":1")));
+            Equal("[00:01]中文歌词", Lookup(PronunciationPlugin(handler, "\"JapaneseText\":1")));
         });
         Test("Japanese pronunciation selection excludes translation", () =>
             Equal("[00:01.000]にほんごの歌詞\nroman", Lookup(PronunciationPlugin(

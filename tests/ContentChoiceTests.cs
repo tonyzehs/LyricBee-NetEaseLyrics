@@ -162,28 +162,24 @@ internal static partial class Program
             True(watch.Elapsed < TimeSpan.FromSeconds(4));
             Equal(2, handler.Calls.Count);
         });
-        Test("Default spelling hint replaces the disabled checkbox without losing the saved choice", () =>
+        Test("Spelling checkbox preserves the effective allowance of all old setting combinations", () =>
         {
-            var plugin = PronunciationPlugin(new Fixture((_, __) => Json(Lyrics)), "\"UseLegacyMatch\":false,\"Fuzzy\":true");
-            using (var form = new Form { ShowInTaskbar = false, StartPosition = FormStartPosition.Manual, Location = new System.Drawing.Point(-32000, -32000) })
-            using (var panel = new Panel { Dock = DockStyle.Fill })
+            foreach (var legacy in new[] { false, true })
+            foreach (var fuzzy in new[] { false, true })
             {
-                form.Controls.Add(panel);
-                plugin.Configure(panel.Handle); form.Show(); Application.DoEvents();
-                var parent = panel.Controls.OfType<CheckBox>().Single(c => c.Text == "Customize spelling matching");
-                var child = panel.Controls.OfType<CheckBox>().Single(c => c.Text == "Allow small spelling differences");
-                var hint = panel.Controls.OfType<Label>().Single(c => c.Name == "SpellingDefault");
-                True(hint.Visible); True(!child.Visible); True(!child.Enabled); True(child.Checked);
-                parent.Checked = true;
-                True(!hint.Visible); True(child.Visible); True(child.Enabled); True(child.Checked);
-                child.Checked = false; parent.Checked = false;
-                True(hint.Visible); True(!child.Visible);
-                parent.Checked = true;
-                True(child.Visible); True(!child.Checked);
-                plugin.SaveSettings(); form.Close();
+                var plugin = PronunciationPlugin(new Fixture((_, __) => Json(Lyrics)),
+                    "\"UseLegacyMatch\":" + legacy.ToString().ToLowerInvariant() + ",\"Fuzzy\":" + fuzzy.ToString().ToLowerInvariant());
+                using (var panel = new Panel())
+                {
+                    plugin.Configure(panel.Handle);
+                    var check = panel.Controls.OfType<CheckBox>().Single(c => c.Name == "SmallSpellingDifferences");
+                    True(check.Enabled); Equal(!legacy || fuzzy, check.Checked);
+                    True(!panel.Controls.Cast<Control>().Any(c => c.Name == "SpellingDefault" || c.Name == "CustomizeSpelling"));
+                    plugin.SaveSettings();
+                }
+                var saved = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
+                Equal(true, (bool)saved["UseLegacyMatch"]); Equal(!legacy || fuzzy, (bool)saved["Fuzzy"]);
             }
-            var saved = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
-            Equal(true, (bool)saved["UseLegacyMatch"]); Equal(false, (bool)saved["Fuzzy"]);
         });
     }
 }

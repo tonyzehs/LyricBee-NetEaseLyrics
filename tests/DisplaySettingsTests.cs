@@ -42,13 +42,14 @@ internal static partial class Program
             Test("Independent defaults " + lang + " translation=" + trans + " pronunciation=" + roma + " separate=" + layout, () =>
             {
                 var label = lang == "Other" ? "法语" : lang;
-                var handler = PronunciationFixture(PronunciationJson("[00:01]Original"), Wiki(label));
+                var handler = PronunciationFixture(PronunciationJson("[00:01]Original", translation: lang == "Cantonese" ? null : "[00:01]译文"), Wiki(label));
                 var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
                 SetConfig(plugin, ModernSettings(trans, roma, layout));
                 var includeRoma = roma && lang != "English" && lang != "Other";
-                var expected = !trans && !includeRoma ? "[00:01]Original" : "[00:01.000]Original" +
+                var includeTranslation = trans && lang != "Cantonese";
+                var expected = !includeTranslation && !includeRoma ? "[00:01]Original" : "[00:01.000]Original" +
                     (includeRoma ? (layout ? "\n" : " / ") + "roman" : "") +
-                    (trans ? (layout ? "\n" : " / ") + "译文" : "");
+                    (includeTranslation ? (layout ? "\n" : " / ") + "译文" : "");
                 Equal(expected, Lookup(plugin));
                 Equal(roma ? 2 : 1, handler.Calls.Count);
             });
@@ -56,7 +57,7 @@ internal static partial class Program
         foreach (var language in new[] { "Cantonese", "Japanese", "Korean" })
         foreach (var value in new[] { 3, 0, 1, 2 })
         {
-            var lang = language; var choice = value;
+            var lang = language; var choice = language == "Cantonese" ? (value == 0 ? 3 : value == 2 ? 1 : value) : value;
             Test(lang + " override replaces default independently: " + choice, () =>
             {
                 var handler = PronunciationFixture(PronunciationJson("[00:01]Original"), Wiki(lang));
@@ -95,6 +96,61 @@ internal static partial class Program
             {
                 plugin.Configure(panel.Handle);
                 Equal("Follow default|Lyrics|Lyrics + Translation", string.Join("|", LanguageControl(panel, "English").Items.Cast<string>()));
+            }
+        });
+        Test("Language selector is visibly bilingual in either interface and Cantonese follows Japanese and Korean", () =>
+        {
+            foreach (var ui in new[] { 1, 2 })
+            {
+                var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
+                SetConfig(plugin, ModernSettings(extra: "\"InterfaceLanguage\":" + ui));
+                using (var panel = new Panel())
+                {
+                    plugin.Configure(panel.Handle);
+                    var caption = panel.Controls.OfType<Label>().Single(c => c.Name == "InterfaceLanguageLabel");
+                    True(caption.Text.Contains("界面语言") && caption.Text.Contains("Interface language"));
+                    True(DisplayCombo(panel, "InterfaceLanguage").Left > caption.Right);
+                    Equal("JapaneseContent|KoreanContent|CantoneseContent|EnglishContent", string.Join("|", panel.Controls.OfType<ComboBox>()
+                        .Where(c => c.Name.EndsWith("Content")).OrderBy(c => c.Top).Select(c => c.Name)));
+                    var items = LanguageControl(panel, "Cantonese").Items.Cast<string>().ToArray();
+                    Equal(ui == 1 ? "Follow default|Lyrics|Lyrics + Pronunciation" : "使用默认设置|歌词|歌词 + 发音", string.Join("|", items));
+                }
+            }
+        });
+        Test("Cantonese choices save and reopen without mapping pronunciation to translation", () =>
+        {
+            var handler = PronunciationFixture(PronunciationJson("[00:01]粤语歌词"), Wiki("粤语"));
+            var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
+            SetConfig(plugin, ModernSettings());
+            foreach (var index in new[] { 0, 1, 2 })
+            {
+                using (var panel = new Panel())
+                {
+                    plugin.Configure(panel.Handle); LanguageControl(panel, "Cantonese").SelectedIndex = index; plugin.SaveSettings();
+                }
+                var saved = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
+                if (index == 0) Equal(JTokenType.Null, saved["CantoneseOverride"].Type);
+                else Equal(index == 1 ? 3 : 1, (int)saved["CantoneseOverride"]);
+                plugin.ReadConfig();
+                using (var panel = new Panel()) { plugin.Configure(panel.Handle); Equal(index, LanguageControl(panel, "Cantonese").SelectedIndex); }
+                if (index > 0) Equal(index == 1 ? "[00:01]粤语歌词" : "[00:01.000]粤语歌词\nroman", Lookup(plugin));
+            }
+        });
+        Test("Obsolete Cantonese translation settings migrate without losing pronunciation or other settings", () =>
+        {
+            foreach (var choice in new[] { 0, 2 })
+            {
+                var handler = PronunciationFixture(PronunciationJson("[00:01]粤语歌词"), Wiki("粤语"));
+                var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null);
+                SetConfig(plugin, ModernSettings(extra: "\"CantoneseOverride\":" + choice + ",\"AllowInsecureHttp\":false,\"JapaneseOverride\":2"));
+                using (var panel = new Panel())
+                {
+                    plugin.Configure(panel.Handle);
+                    Equal(choice == 0 ? 1 : 2, LanguageControl(panel, "Cantonese").SelectedIndex);
+                    Equal(4, LanguageControl(panel, "Japanese").SelectedIndex);
+                    True(!DisplayCheck(panel, "AllowHttpFallback").Checked);
+                }
+                Equal(choice == 0 ? "[00:01]粤语歌词" : "[00:01.000]粤语歌词\nroman", Lookup(plugin));
             }
         });
         Test("Changing interface language preserves unsaved content layout and network choices", () =>

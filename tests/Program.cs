@@ -223,7 +223,7 @@ internal static partial class Program
                 plugin.SaveSettings(); // MusicBee may invoke this after the panel is disposed.
             }
         });
-        Test("Spelling customization enables its allowance initially and after toggling", () =>
+        Test("Single spelling allowance reflects existing settings and remains directly editable", () =>
         {
             foreach (var legacy in new[] { false, true })
             {
@@ -232,12 +232,15 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    var checkboxes = panel.Controls.OfType<CheckBox>().ToArray();
-                    var mode = checkboxes.Single(box => box.Text.StartsWith("Customize spelling"));
-                    var fuzzy = checkboxes.Single(box => box.Text.StartsWith("Allow small"));
-                    Equal(legacy, fuzzy.Enabled);
-                    mode.Checked = !legacy;
-                    Equal(!legacy, fuzzy.Enabled);
+                    var fuzzy = panel.Controls.OfType<CheckBox>().Single(box => box.Name == "SmallSpellingDifferences");
+                    True(fuzzy.Enabled); Equal(!legacy, fuzzy.Checked);
+                    fuzzy.Checked = legacy; plugin.SaveSettings();
+                }
+                plugin.ReadConfig();
+                using (var panel = new Panel())
+                {
+                    plugin.Configure(panel.Handle);
+                    Equal(legacy, panel.Controls.OfType<CheckBox>().Single(box => box.Name == "SmallSpellingDifferences").Checked);
                 }
             }
         });

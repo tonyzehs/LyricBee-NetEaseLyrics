@@ -87,7 +87,8 @@ namespace MusicBeePlugin
             var choice = config.DefaultContent;
             switch (language)
             {
-                case SongLanguage.Cantonese: return config.CantoneseOverride ?? choice;
+                case SongLanguage.Cantonese:
+                    return NeteaseConfig.FromExtras(false, NeteaseConfig.HasPronunciation(config.CantoneseOverride ?? choice));
                 case SongLanguage.Japanese: return config.JapaneseOverride ?? choice;
                 case SongLanguage.Korean: return config.KoreanOverride ?? choice;
                 case SongLanguage.English: choice = config.EnglishOverride ?? choice; break;
