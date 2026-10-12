@@ -186,7 +186,7 @@ internal static partial class Program
             var handler = new Fixture((request, _) => Json(request.RequestUri.AbsolutePath.Contains("search") ?
                 SearchJson(new[] { Song(1, "Lemon", "Singer", "Album", 200000) }) : Lyrics));
             var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.TrackTitle ? "01. Lemon" :
-                tag == Plugin.MetaDataType.TrackNo ? "1" : null);
+                tag == Plugin.MetaDataType.TrackNo ? "1" : null, duration: "3:20");
             Equal("[00:01.00]Hello", Lookup(plugin, "Singer", "ignored", "Album"));
         });
         Test("Soundtrack aliases require the same named work in both albums plus artist and duration guards", () =>

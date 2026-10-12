@@ -1,8 +1,8 @@
 # Build and test
 
-The current build passes **343 checks in each isolated x64/x86 process**. SHA256SUMS.txt includes the installer and the `mb_NeteaseLyrics.dll` inside it; the source package checksum is appended when that package is prepared. The default extra-retry cap saves one lyric attempt in a three-listing, missing-translation fixture. The cached Mandarin shortcut is opportunistic and does not run under fresh defaults unless a label was already obtained earlier.
+The current build passes **354 checks with diagnostics and 350 without diagnostics, in each isolated x64/x86 process**. SHA256SUMS.txt includes the installer and the `mb_NeteaseLyrics.dll` inside it; the source package checksum is appended when that package is prepared. The default extra-retry cap saves one lyric attempt in a three-listing, missing-translation fixture. The cached Mandarin shortcut is opportunistic and does not run under fresh defaults unless a label was already obtained earlier.
 
-The current local test build is **1.9.5-test.2** (assembly/file version 1.9.5.2). It has not been published. `tests/AuditUpdateTests.cs` covers load-time rollback repair, failed repair, Cancel/Save after interface switching, bounded extra retries, per-listing instrumental recovery, cached Mandarin labels, 5xx recovery, guarded title normalization and uninstall cleanup. `tests/AuditFollowupTests.cs` covers isolated malformed timing with usable auxiliary tracks, repeated timestamps, continuations, offsets, Roman-word classification and guarded space-separated track prefixes. Deadline fixtures control linked cancellation tokens instead of relying on tiny timed waits.
+The current local test build is **1.9.5-test.3** (assembly/file version 1.9.5.3), developed on `dev`. It has not been published. `master` remains the stable branch. `tests/AuditUpdateTests.cs` covers load-time rollback repair, failed repair, Cancel/Save after interface switching, bounded extra retries, per-listing instrumental recovery, cached Mandarin labels, 5xx recovery, guarded title normalization and uninstall cleanup. `tests/AuditFollowupTests.cs` and `tests/NextAuditTests.cs` cover isolated malformed timing, repeated cues, whitespace continuations, offsets, Roman-word classification and corroborated track prefixes. Deadline fixtures control linked cancellation tokens instead of relying on tiny timed waits.
 
 For independent rollback probes, compile `tests/RollbackProbe.cs` as a standalone .NET Framework console executable and run `RollbackProbe.exe plugin.dll repaired-settings.json http://127.0.0.1:PORT`. Each invocation loads one shipped DLL and exercises its lookup through a local fixture proxy; the proxy must serve all NetEase HTTP/HTTPS responses locally. `NeteaseLyricsTest.exe --repair-settings old.json repaired.json` exports the actual load-time repair for these probes. Tests against published v1.8.1, v1.9.0, pre.7 and 1.9.3 confirm conservative legacy flags. All four reject an unrelated first listing; v1.8.1 still accepts a same-title cover because its own matcher checks only the first title segment. The other three select the correct recording in that fixture. This limit is separate from the repaired settings regression.
 
@@ -17,6 +17,19 @@ From the repository root, run:
 ```
 
 The script restores locked dependencies, builds Release configurations, and runs the regression executable in both 64-bit (AnyCPU on 64-bit Windows) and 32-bit processes. Both runs load the same AnyCPU plugin DLL that goes into the package. Each run uses an isolated folder containing only the test executable/config and the plugin DLL, checking that embedded dependencies load without loose dependency DLLs. It then produces a MusicBee ZIP containing `mb_NeteaseLyrics.dll`, `LICENSE`, `LICENSE-Zony`, `NOTICE` and bilingual `INSTALL.md`, a SHA-256 checksum and test reports in `artifacts/dist`. A failed build or regression test stops packaging.
+
+For an unpublished development build with the Copy diagnostic report button:
+
+```powershell
+.\build.ps1 -DevelopmentDiagnostics -OutputDirectory artifacts/dev
+.\tests\BuildGuardTests.ps1
+```
+
+The flag is off by default and must be explicitly supplied. It is accepted by the packaging script only for test/prerelease informational versions; a stable version refuses it before invoking the SDK. `tests/DiagnosticTests.cs` checks that non-diagnostic DLLs contain no recorder, clipboard hook, button, labels or DEV BUILD marker. The `dev` branch CI verifies both profiles. Branch names alone do not enable diagnostics.
+
+Development builds show DEV BUILD in the plugin description and settings. The recorder holds only the last five lookups in memory, with forty structured events per lookup and a 32 KiB report limit; closing the plugin clears it. Reports contain interface/outcome codes, request counts, selection/grouping/normalization decisions, NetEase IDs, build/runtime and whitelisted display settings. They exclude lyrics, tag values, file paths, URLs, cookies, response bodies and exception messages. No arbitrary trace text enters the recorder. Copying is manual, uses the Windows clipboard, and sends nothing to a server. NetEase IDs can reveal listening history; the bilingual button note discloses this. Current reports distinguish unsupported and ambiguous matching but do not enumerate every rejected candidate.
+
+Track-prefix fallback now requires a matching TrackNo, known durations within two seconds, the same full artist set, and an exact normalized album when supplied. Plain-space prefixes additionally require zero padding, so `01 Lemon` can normalize but `7 Rings`, `99 Problems` and `1 2 Step` cannot lose their numbers. Ordinary searches run first, followed by at most one cleaned-title query when they yield no eligible recording. Differing valid lowercase Roman tokens are protected pairwise, while title-case words such as Mc retain the existing spelling rules.
 
 If the SDK executable is not on PATH:
 
@@ -56,7 +69,7 @@ Lookup is capped at 30 seconds and eighteen network requests: at most nine searc
 
 Automatic matching returns no lyrics for contradictory or ambiguous candidates. The spelling checkbox can disable minor spelling differences, while retaining number, artist and recording checks and all available callback metadata. If a wrong lyric was previously saved/cached, clear that lyric in MusicBee before judging a fresh search: returning no new lyric may leave an existing lyric visible. Live automatic checks retrieve "By Your Side" (ID 400875204) without Custom10. The cookie-replay regression and its correction are documented in the changelog. Custom10 `netease=400875204` remains an optional explicit override on the requested file.
 
-CI runs the same offline build script on Windows and uploads test artifacts. It does not publish releases or run live NetEase requests.
+CI runs the offline build script on Windows and uploads test artifacts; dev branch builds also verify the diagnostic profile. It does not publish releases or run live NetEase requests.
 
 Dependencies are locked and clean source builds have been verified. Byte-for-byte reproducibility is not established: builds in different folders produced different module identifiers/checksums after dependency embedding, despite the compiler's deterministic setting. Published checksums identify the delivered artifacts.
 
@@ -71,7 +84,7 @@ Pronunciation checks in MusicBee:
 - [ ] Korean choice independent of Japanese; confirm an English-only cue is not needlessly repeated.
 - [ ] Japanese ID 400875204 with Lyrics + Pronunciation + Translation: missing pronunciation must retain the working original/translation display.
 - [ ] Missing or unaligned extras: retain the usable extra, then original only when neither works.
-- [ ] Save/reopen settings and rollback with the new fields present. Earlier builds may discard new preferences when saving; back up the configuration.
+- [ ] Save/reopen settings and rollback with the new fields present. Keep the repaired current settings; earlier builds may discard new preferences when saving.
 
 Optional metadata never downgrades to HTTP and a refusal there does not affect lyric transport fallback. Its request is capped at two seconds and remains inside the total request/time budgets; known language labels use a bounded six-hour per-ID cache. Unknown or multilingual language labels retain translation behavior, while missing language metadata permits conservative kana/Hangul inference. Fresh language overrides use Follow default; the default display enables translation and disables pronunciation.
 
@@ -94,6 +107,6 @@ Verify that fresh settings select Follow default for every language, translation
 
 ## Current settings validation
 
-`tests/DisplaySettingsTests.cs` covers independent default extras, language overrides, English identification without Latin-script guessing, the bilingual language label, Cantonese menu ordering and content choices, saved-preference migration and rollback backup, interface switching without lost edits, request counts and common panel widths/font sizes. The release passes 313 checks in each isolated x64 and x86 process.
+`tests/DisplaySettingsTests.cs` covers independent default extras, language overrides, English identification without Latin-script guessing, the bilingual language label, Cantonese menu ordering and content choices, saved-preference migration and rollback backup, interface switching without lost edits, request counts and common panel widths/font sizes, including the taller development panel.
 
-Fresh installations use Follow default for all languages, translation on, pronunciation off and separate lines. Upgrades preserve saved choices. Test English and Simplified Chinese settings in MusicBee, re-fetch after every display change, and verify the previous settings backup before rollback.
+Fresh installations use Follow default for all languages, translation on, pronunciation off and separate lines. Upgrades preserve saved choices. Test English and Simplified Chinese settings in MusicBee, re-fetch after every display change, and keep the repaired current settings when rolling back. Historical backups can restore unsafe legacy flags.

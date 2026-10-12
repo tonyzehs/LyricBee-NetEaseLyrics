@@ -22,8 +22,17 @@ jobs:
       - name: Build, test and package
         shell: pwsh
         run: ./build.ps1
+      - name: Verify stable diagnostics packaging guard
+        shell: pwsh
+        run: ./tests/BuildGuardTests.ps1
+      - name: Verify development diagnostics
+        if: github.ref == 'refs/heads/dev' || github.head_ref == 'dev'
+        shell: pwsh
+        run: ./build.ps1 -DevelopmentDiagnostics -OutputDirectory artifacts/dev
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: NeteaseLyrics-test-build
-          path: artifacts/dist/*
+          path: |
+            artifacts/dist/*
+            artifacts/dev/*
           if-no-files-found: error

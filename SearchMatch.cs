@@ -54,8 +54,7 @@ namespace MusicBeePlugin
             if (request.Title.Length == 0) return new long[0];
             var songs = new List<SearchResultSong>();
             var queries = BuildQueries(split.Item1, request.Artists, album).ToArray();
-            var alternateQueries = alternate == null ? new string[0] : BuildQueries(alternate.RawTitle, alternate.Artists, album).ToArray();
-            foreach (var query in queries.SelectMany((q, i) => i < alternateQueries.Length ? new[] { q, alternateQueries[i] } : new[] { q }).Distinct())
+            foreach (var query in queries)
             {
                 if (!session.CanSearch) break;
                 var found = NeteaseApi.Search(query, session).ToArray();
@@ -66,9 +65,25 @@ namespace MusicBeePlugin
                 var best = Choose(songs, request, alternate);
                 if (best.Length > 0 && best[0].Strong) return ReportSelection(best, session);
             }
+            // Try one normalized query only if the ordinary searches found no eligible identity.
+            if (alternate != null && session.CanSearch && !songs.Any(s => Evaluate(s, request) != null || Evaluate(s, alternate) != null))
+            {
+                var query = BuildQueries(alternate.RawTitle, alternate.Artists, null).FirstOrDefault();
+                if (query != null)
+                {
+                    var found = NeteaseApi.Search(query, session).ToArray(); songs.AddRange(found);
+                    if (!found.Any(s => Evaluate(s, alternate) != null)) songs.AddRange(NeteaseApi.SearchLegacy(query, session));
+                }
+            }
             var final = Choose(songs, request, alternate);
             if (final.Length == 0)
+            {
                 session.Report("Matching: no sufficiently supported, unambiguous candidate");
+#if LYRICBEE_DEV_DIAGNOSTICS
+                session.Diagnostic(songs.Any(s => Evaluate(s, request) != null || (alternate != null && Evaluate(s, alternate) != null)) ?
+                    DiagnosticKind.MatchingAmbiguous : DiagnosticKind.MatchingNoEligible, count: songs.Count);
+#endif
+            }
             return ReportSelection(final, session);
         }
 
@@ -85,6 +100,14 @@ namespace MusicBeePlugin
         private static long[] ReportSelection(Match[] matches, LookupSession session)
         {
             if (matches.Length == 0) return new long[0];
+#if LYRICBEE_DEV_DIAGNOSTICS
+            session.Diagnostic(DiagnosticKind.MatchingSelected, songId: matches[0].Song.id, count: matches.Length);
+            if (matches.Length > 1) session.Diagnostic(DiagnosticKind.CompatibleGroup, count: matches.Length);
+            if (matches[0].Notes.Contains("remaster")) session.Diagnostic(DiagnosticKind.RemasterNote);
+            if (matches[0].Notes.Contains("mono") || matches[0].Notes.Contains("stereo") || matches[0].Notes.Contains("album version")) session.Diagnostic(DiagnosticKind.VersionNote);
+            if (matches[0].Notes.Contains("soundtrack")) session.Diagnostic(DiagnosticKind.SoundtrackNote);
+            if (matches[0].Notes.Contains("TrackNo")) session.Diagnostic(DiagnosticKind.TrackPrefixNote);
+#endif
             if (matches.Length > 1)
                 session.Report("Matching: grouped " + matches.Length + " compatible listings; selected song ID " +
                     matches[0].Song.id + " by album similarity, then duration, then ID");
@@ -152,6 +175,10 @@ namespace MusicBeePlugin
                 Math.Abs((double)request.Duration.Value - song.duration) <= 2000;
             var artists = candidate.Item2.Select(Canonical).Where(a => a.Length > 0).ToArray();
             var album = Canonical(song.album?.name);
+            if (request.PrefixIdentity && (!durationClose || request.Artists.Length == 0 ||
+                !request.Artists.Select(Canonical).Distinct().OrderBy(a => a, StringComparer.Ordinal)
+                    .SequenceEqual(artists.Distinct().OrderBy(a => a, StringComparer.Ordinal)) ||
+                (request.Album.Length > 0 && request.Album != album))) return null;
             var expectedRaw = request.RawTitle;
             var actualRaw = candidate.Item1;
             string soundtrackSource = null;
@@ -173,7 +200,8 @@ namespace MusicBeePlugin
             var editions = Editions(actualRaw);
             if (expectedTitle.Length == 0 || title.Length == 0 ||
                 Editions(expectedRaw) != editions ||
-                Numbers(expectedTitle == title ? expected.ToUpperInvariant() : expected) != Numbers(expectedTitle == title ? actual.ToUpperInvariant() : actual)) return null;
+                Numbers(expectedTitle == title ? expected.ToUpperInvariant() : expected) != Numbers(expectedTitle == title ? actual.ToUpperInvariant() : actual) ||
+                DifferentRomanToken(expected, actual)) return null;
             var titleScore = Similarity(expectedTitle, title);
             var titleExact = expectedTitle == title;
             if (soundtrackNote && !titleExact) return null;
@@ -311,7 +339,9 @@ namespace MusicBeePlugin
         internal static string RemoveTaggedTrackNumber(string title, string trackNumber)
         {
             if (!int.TryParse((trackNumber ?? "").Split('/')[0].Trim(), out var tagged) || tagged <= 0) return title;
-            var prefix = Regex.Match(NormalizeText(title), @"^(?<number>[0-9]+)(?:\.(?![0-9])\s*|\s+-\s+|\s+)(?<title>.+)$");
+            var prefix = Regex.Match(NormalizeText(title), @"^(?<number>[0-9]+)(?:(?<marked>\.(?![0-9])\s*|\s+-\s+)|\s+)(?<title>.+)$");
+            if (prefix.Success && !prefix.Groups["marked"].Success &&
+                !(prefix.Groups["number"].Value.Length > 1 && prefix.Groups["number"].Value.StartsWith("0"))) return title;
             return prefix.Success && int.TryParse(prefix.Groups["number"].Value, out var number) && number == tagged ?
                 prefix.Groups["title"].Value.Trim() : title;
         }
@@ -321,7 +351,21 @@ namespace MusicBeePlugin
             var clean = RemoveTaggedTrackNumber(title, trackNumber);
             if (clean == title) return null;
             var split = SplitTitleArtist(clean, artist);
-            return new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos);
+            return new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos, true);
+        }
+
+        private static bool DifferentRomanToken(string expected, string actual)
+        {
+            var left = Regex.Matches(expected, @"[\p{L}\p{Nd}]+").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Value).ToArray();
+            var right = Regex.Matches(actual, @"[\p{L}\p{Nd}]+").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Value).ToArray();
+            if (left.Length != right.Length) return false;
+            var different = Enumerable.Range(0, left.Length).Where(i => !left[i].Equals(right[i], StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (different.Length != 1) return false;
+            var index = different[0];
+            // Title-case words such as Mc are names; this guard covers the otherwise unprotected lowercase pair.
+            return left[index] == left[index].ToLowerInvariant() && right[index] == right[index].ToLowerInvariant() &&
+                left[index].Length >= 2 && right[index].Length >= 2 && RomanNumber(left[index]) > 0 &&
+                RomanNumber(right[index]) > 0 && RomanNumber(left[index]) != RomanNumber(right[index]);
         }
 
         private static double ArtistSimilarity(string[] expected, string[] actual, bool allowTypos)
@@ -412,10 +456,11 @@ namespace MusicBeePlugin
             internal readonly string[] Artists;
             internal readonly long? Duration;
             internal readonly bool AllowTypos;
-            internal TrackIdentity(string title, string[] artists, string album, long? duration, bool allowTypos)
+            internal readonly bool PrefixIdentity;
+            internal TrackIdentity(string title, string[] artists, string album, long? duration, bool allowTypos, bool prefixIdentity = false)
             {
                 RawTitle = title; Title = Canonical(title); Artists = artists;
-                Album = Canonical(album); RawAlbum = album; Duration = duration; AllowTypos = allowTypos;
+                Album = Canonical(album); RawAlbum = album; Duration = duration; AllowTypos = allowTypos; PrefixIdentity = prefixIdentity;
             }
         }
 

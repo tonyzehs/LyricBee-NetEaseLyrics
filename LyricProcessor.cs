@@ -385,7 +385,7 @@ namespace MusicBeePlugin
                         document.Entries.Add(entry); previous.Add(entry);
                     }
                     if (previous.Count == 0) isolate(line);
-                    else lastTime = previous.Max(c => c.Time);
+                    else lastTime = previous.Min(c => c.Time);
                 }
                 else if (IsHeader(line))
                 {
@@ -402,7 +402,7 @@ namespace MusicBeePlugin
                 {
                     if (line.Length > 0) foreach (var entry in previous) entry.Text += "\n" + line;
                 }
-                else if (lastLoose != null) lastLoose.Text += "\n" + line;
+                else if (lastLoose != null && !string.IsNullOrWhiteSpace(line)) lastLoose.Text += "\n" + line;
                 else if (!string.IsNullOrWhiteSpace(line)) document.Headers.Add(line);
             }
             return document;

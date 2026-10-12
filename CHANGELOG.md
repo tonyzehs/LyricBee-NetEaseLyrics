@@ -1,3 +1,15 @@
+# 1.9.5-test.3 — matching safeguards and development diagnostics (local testing build)
+
+- Keep malformed text after the earliest occurrence of a compressed repeat-tag line; discard whitespace-only continuations after malformed rows. Valid pronunciation and translation remain aligned independently.
+- Reject differing valid lowercase Roman-numeral tokens, such as Symphony vii/viii, without classifying title-case names as numerals or relaxing the existing spelling threshold.
+- Tighten TrackNo-prefix matching: plain-space prefixes require zero padding, and all stripped matches require known durations within two seconds, full artist agreement and an exact normalized album when present. 7 Rings, 99 Problems and 1 2 Step retain their numbers even when the original title is absent from search results.
+- Run ordinary searches first, then at most one cleaned-title query if they produce no eligible recording. Existing request/time limits remain unchanged.
+- Finish aligning rollback instructions: keep repaired current settings; historical backups may restore unsafe flags.
+- Add an explicitly enabled development-only Copy diagnostic report button in English and Simplified Chinese, with DEV BUILD labels and disclosure that NetEase song IDs can reveal listening history. The bounded in-memory report excludes lyrics, tags, paths, URLs, cookies and response/exception text; copying sends nothing to a server.
+- Compile the recorder, clipboard hook and diagnostic controls out of the default profile. Refuse diagnostic packaging for stable informational versions. CI on dev checks both profiles.
+- Product version: `1.9.5-test.3`; assembly/file version: `1.9.5.3`. Development work is on `dev`; `master` remains unchanged. This build is unpublished and needs independent audit and real MusicBee checks before release.
+- All 354 diagnostic-profile and 350 non-diagnostic-profile checks pass in each isolated x64/x86 process, with no build warnings/errors. Stable diagnostic packaging is rejected before SDK invocation; the non-diagnostic DLL contains no diagnostic recorder or controls.
+
 # 1.9.5-test.2 — isolate malformed cues (local testing build)
 
 - Retain a malformed original line as untimed text after its preceding valid cue, including its untimed continuations. Valid cues still receive independently aligned pronunciation/translation; broken original or auxiliary stamps never supply alignment times. Repeated tags do not duplicate an isolated line. Entirely unusable original clocks or unpaired extras retain the untouched original.

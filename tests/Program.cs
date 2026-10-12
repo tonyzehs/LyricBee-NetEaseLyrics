@@ -31,7 +31,7 @@ internal static partial class Program
         }
         if (args.Contains("--audit-update-tests"))
         {
-            AuditUpdateTests(); AuditFollowupTests(); Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
+            AuditUpdateTests(); AuditFollowupTests(); NextAuditTests(); DiagnosticTests(); Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
             return _failed == 0 ? 0 : 1;
         }
         if (args.Contains("--settings-tests"))
@@ -328,6 +328,8 @@ internal static partial class Program
         MatchingTests();
         AuditUpdateTests();
         AuditFollowupTests();
+        NextAuditTests();
+        DiagnosticTests();
         Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
         Console.WriteLine("Process architecture: " + (Environment.Is64BitProcess ? "x64" : "x86"));
         return _failed == 0 ? 0 : 1;
@@ -901,12 +903,13 @@ internal static partial class Program
         MB_Trace = _ => { }
     };
 
-    private static Plugin CreatePlugin(Fixture handler, Plugin.Library_GetFileTagDelegate tags = null)
+    private static Plugin CreatePlugin(Fixture handler, Plugin.Library_GetFileTagDelegate tags = null, string duration = null)
     {
         var api = Host();
         var directory = NewTestDirectory();
         api.Setting_GetPersistentStoragePath = () => directory;
         if (tags != null) api.Library_GetFileTag = tags;
+        if (duration != null) api.Library_GetFileProperty = (_, __) => duration;
         var plugin = new Plugin(api, () => Session(handler));
         _directories[plugin] = directory;
         return plugin;

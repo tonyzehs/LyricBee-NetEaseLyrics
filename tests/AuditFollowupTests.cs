@@ -29,7 +29,7 @@ internal static partial class Program
         {
             var text = LyricProcessor.MergePronunciation("[00:10][00:12]one\n[00:60]loose\n[00:14]three", null,
                 "[00:10]1\n[00:12]2\n[00:14]3", true, null, out var tracks);
-            Equal("[00:10.000]one\n1\n[00:12.000]one\n2\nloose\n[00:14.000]three\n3", text); Equal(1, tracks);
+            Equal("[00:10.000]one\n1\nloose\n[00:12.000]one\n2\n[00:14.000]three\n3", text); Equal(1, tracks);
         });
         Test("A mixed valid and invalid repeat-tag line is isolated without dropping other cues", () =>
         {
@@ -96,7 +96,7 @@ internal static partial class Program
             var handler = new Fixture((request, _) => Json(request.RequestUri.AbsolutePath.Contains("search") ?
                 SearchJson(new[] { Song(1, "Lemon", "Singer", "Album", 200000) }) : Lyrics));
             var plugin = CreatePlugin(handler, (_, tag) => tag == Plugin.MetaDataType.TrackTitle ? "01 Lemon" :
-                tag == Plugin.MetaDataType.TrackNo ? "1" : null);
+                tag == Plugin.MetaDataType.TrackNo ? "1" : null, duration: "3:20");
             Equal("[00:01.00]Hello", Lookup(plugin, "Singer", "ignored", "Album"));
             True(handler.Calls.Count(c => c.Contains("search")) <= LookupSession.MaxSearchRequests);
         });

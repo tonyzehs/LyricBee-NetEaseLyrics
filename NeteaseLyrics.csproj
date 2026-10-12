@@ -10,9 +10,12 @@
     <Deterministic>true</Deterministic>
     <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <DevelopmentDiagnostics Condition="'$(DevelopmentDiagnostics)' == ''">false</DevelopmentDiagnostics>
+    <DefineConstants Condition="'$(DevelopmentDiagnostics)' == 'true'">$(DefineConstants);LYRICBEE_DEV_DIAGNOSTICS</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="tests\**\*.cs" />
+    <Compile Remove="DevelopmentDiagnostics.cs" Condition="'$(DevelopmentDiagnostics)' != 'true'" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Numerics" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />

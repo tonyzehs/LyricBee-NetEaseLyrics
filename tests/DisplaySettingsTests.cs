@@ -274,7 +274,7 @@ internal static partial class Program
                 SetConfig(plugin, ModernSettings(extra: "\"InterfaceLanguage\":" + ui));
                 using (var form = new Form { ShowInTaskbar = false, Location = new Point(-32000, -32000), StartPosition = FormStartPosition.Manual })
                 using (var font = new Font("Segoe UI", size))
-                using (var panel = new Panel { Size = new Size(width, 455), Font = font })
+                using (var panel = new Panel { Size = new Size(width, Plugin.SettingsPanelHeight + 25), Font = font })
                 {
                     form.Controls.Add(panel); plugin.Configure(panel.Handle); form.Show(); Application.DoEvents();
                     foreach (var control in panel.Controls.Cast<Control>().Where(c => c.Visible))
@@ -300,8 +300,8 @@ internal static partial class Program
             var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
             SetConfig(plugin, ModernSettings(extra: "\"InterfaceLanguage\":" + ui));
             using (var form = new Form { ShowInTaskbar = false, StartPosition = FormStartPosition.Manual, Location = new Point(-32000, -32000) })
-            using (var panel = new Panel { Size = new Size(560, 455), BackColor = Color.FromArgb(45, 45, 45), ForeColor = Color.Gainsboro, Font = new Font("Segoe UI", 10f) })
-            using (var bitmap = new Bitmap(560, 455))
+            using (var panel = new Panel { Size = new Size(560, Plugin.SettingsPanelHeight + 25), BackColor = Color.FromArgb(45, 45, 45), ForeColor = Color.Gainsboro, Font = new Font("Segoe UI", 10f) })
+            using (var bitmap = new Bitmap(560, Plugin.SettingsPanelHeight + 25))
             {
                 form.ClientSize = panel.Size; form.Controls.Add(panel); plugin.Configure(panel.Handle);
                 form.Show(); Application.DoEvents(); panel.DrawToBitmap(bitmap, panel.ClientRectangle);
