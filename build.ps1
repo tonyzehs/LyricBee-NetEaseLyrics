@@ -35,7 +35,7 @@ try {
     $plugin = Join-Path $PSScriptRoot 'bin\Release\net48\mb_NeteaseLyrics.dll'
     $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($plugin).ProductVersion
     $package = Join-Path $OutputDirectory "LyricBee-NetEaseLyrics_$version.zip"
-    $packageFiles = @($plugin) + @('LICENSE', 'LICENSE-Zony', 'NOTICE' | ForEach-Object { Join-Path $PSScriptRoot $_ })
+    $packageFiles = @($plugin) + @('LICENSE', 'LICENSE-Zony', 'NOTICE', 'INSTALL.md' | ForEach-Object { Join-Path $PSScriptRoot $_ })
     Compress-Archive -LiteralPath $packageFiles -DestinationPath $package -Force
     $hash = (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([IO.Path]::GetFileName($package))" | Set-Content -LiteralPath ($package + '.sha256') -Encoding ascii

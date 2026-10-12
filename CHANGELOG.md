@@ -1,3 +1,15 @@
+# 1.9.4 — bilingual settings and language overrides
+
+- Always include original lyrics. Separate the Translation and Pronunciation checkboxes from the common layout setting; use spaced ` / ` separators in same-line output and retain two-/three-line timed cues.
+- Add English/Simplified Chinese settings with Automatic UI-language selection and a bilingual language-selector label. Switching interface language preserves unsaved preferences.
+- Group language controls under Language overrides. Fresh installations use Follow default for every language. Japanese and Korean also offer the four original-inclusive content choices; Cantonese appears below them and offers Lyrics or Lyrics + Pronunciation; English offers Lyrics or Lyrics + Translation.
+- Identify English from service metadata without guessing from Latin text. Retain conservative script fallback and existing request/time limits.
+- Replace spelling customization and its nested hint/control with one Allow small spelling differences checkbox, preserving older effective preferences and recording-identity guards.
+- Migrate Translation-only to original + translation, retain original-only behavior, preserve existing language/network preferences, and back up older settings before the first save. Keep valid legacy format values for rollback; older builds cannot represent every new override combination.
+- Package bilingual installation instructions with the DLL, licenses and attribution. Preserve the existing plugin/provider identity for normal upgrades.
+- All 313 regression checks pass in isolated x64 and x86 processes. The local settings iterations were 1.9.4-test.1 and 1.9.4-test.2.
+- Assembly/file version: `1.9.4.3`; product version: `1.9.4`.
+
 # 1.9.3 — LyricBee standalone project
 
 - Continue development on master in `tonyzehs/LyricBee-NetEaseLyrics`, with the full upstream/fork history and historical release tags preserved.

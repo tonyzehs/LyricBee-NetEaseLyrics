@@ -1,6 +1,4 @@
-# Settings redesign — 1.9.4-test.2
-
-This is a local test build. The current public release remains 1.9.3.
+# Display settings
 
 ## Display settings
 
@@ -22,7 +20,7 @@ The first save of an older settings file preserves `netease_config.pre-display.b
 
 ## Download and install
 
-1. Use the supplied local `LyricBee-NetEaseLyrics_1.9.4-test.2.zip` package. It is not on the GitHub releases page.
+1. Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest).
 2. Close MusicBee and keep a copy of your existing `mb_NeteaseLyrics.dll` for rollback.
 3. Replace that DLL in MusicBee's Plugins directory with the DLL from the ZIP. Keep only one installed copy.
 4. Restart MusicBee, open LyricBee's settings and try both interface languages.
@@ -32,7 +30,7 @@ Try Japanese triple-line output, Cantonese pronunciation, Korean output, English
 
 ## 下载与安装
 
-1. 使用随附的本地测试包 `LyricBee-NetEaseLyrics_1.9.4-test.2.zip`；此版本尚未发布到 GitHub Releases。
+1. 从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。
 2. 关闭 MusicBee，并备份现有的 `mb_NeteaseLyrics.dll`，以便回退。
 3. 用 ZIP 中的 DLL 替换 MusicBee 的 Plugins 目录中的同名文件。只保留一份插件。
 4. 重启 MusicBee，打开 LyricBee 设置，测试 English 和简体中文界面。

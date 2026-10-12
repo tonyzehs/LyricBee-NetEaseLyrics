@@ -8,7 +8,7 @@ From the repository root, run:
 .\build.ps1
 ```
 
-The script restores locked dependencies, builds Release configurations, and runs the regression executable in both 64-bit (AnyCPU on 64-bit Windows) and 32-bit processes. Both runs load the same AnyCPU plugin DLL that goes into the package. Each run uses an isolated folder containing only the test executable/config and the plugin DLL, checking that embedded dependencies load without loose dependency DLLs. It then produces a MusicBee ZIP containing `mb_NeteaseLyrics.dll`, `LICENSE`, `LICENSE-Zony` and `NOTICE`, a SHA-256 checksum and test reports in `artifacts/dist`. A failed build or regression test stops packaging.
+The script restores locked dependencies, builds Release configurations, and runs the regression executable in both 64-bit (AnyCPU on 64-bit Windows) and 32-bit processes. Both runs load the same AnyCPU plugin DLL that goes into the package. Each run uses an isolated folder containing only the test executable/config and the plugin DLL, checking that embedded dependencies load without loose dependency DLLs. It then produces a MusicBee ZIP containing `mb_NeteaseLyrics.dll`, `LICENSE`, `LICENSE-Zony`, `NOTICE` and bilingual `INSTALL.md`, a SHA-256 checksum and test reports in `artifacts/dist`. A failed build or regression test stops packaging.
 
 If the SDK executable is not on PATH:
 
@@ -26,7 +26,7 @@ An optional live smoke test makes a public search and known-ID lyric requests, i
 
 An additional optional `--live-recording` check sends the public metadata in the embedded "By Your Side" fixture to NetEase. It compares automatic selection and lyrics with the known recording after an earlier broad search, then checks both matching modes through the MusicBee callback with Custom10 absent. It prints IDs/status only; downloaded lyrics are not saved.
 
-Before a release, install the ZIP in MusicBee, check all four lyric formats and spelling customization, change/reopen settings, perform a background lookup for a different track while another song plays, and retry lyrics with desktop and phone-share Custom10 song URLs. Confirm the plugin description says `NetEase lyrics. Build 1.9.3`; The plugin name should be `LyricBee — NetEase Lyrics`. Native TLS must be tested inside MusicBee, since a test executable can inherit different runtime/network defaults. Record the MusicBee version, expected NetEase ID, observed lyric identity, translation behavior and outcome for each case below.
+Before a release, install the ZIP in MusicBee, check default extras, both layouts, language overrides, interface language and the spelling checkbox, change/reopen settings, perform a background lookup for a different track while another song plays, and retry lyrics with desktop and phone-share Custom10 song URLs. Confirm the plugin description says `NetEase lyrics. Build 1.9.4`; The plugin name should be `LyricBee — NetEase Lyrics`. Native TLS must be tested inside MusicBee, since a test executable can inherit different runtime/network defaults. Record the MusicBee version, expected NetEase ID, observed lyric identity, translation behavior and outcome for each case below.
 
 MusicBee verification checklist (the automated suite does not cover these checks):
 
@@ -46,40 +46,46 @@ Plain-HTTP fallback is enabled by default, including configurations from earlier
 
 Lookup is capped at 30 seconds and eighteen network requests: at most nine search requests and nine lyric-phase requests, including all fallback interfaces and optional language metadata. Searches stop at 18 seconds so lyric retrieval has at least 12 seconds remaining. Compatible-listing recovery attempts at most three IDs. Multi-artist searches may reach the request cap before trying every possible query. Pending fallback interfaces share the remaining time in their phase, with each request capped at eight seconds. A timed-out interface is skipped for the rest of that lookup and becomes eligible again in a fresh lookup. This bounds waits and preserves a fallback opportunity; it cannot guarantee successful lyrics for arbitrarily slow servers.
 
-Automatic matching returns no lyrics for contradictory or ambiguous candidates. Spelling customization can disable minor spelling differences, while retaining number, artist and recording checks and all available callback metadata. If a wrong lyric was previously saved/cached, clear that lyric in MusicBee before judging a fresh search: returning no new lyric may leave an existing lyric visible. Live automatic checks retrieve "By Your Side" (ID 400875204) without Custom10. The cookie-replay regression and its correction are documented in the changelog. Custom10 `netease=400875204` remains an optional explicit override on the requested file.
+Automatic matching returns no lyrics for contradictory or ambiguous candidates. The spelling checkbox can disable minor spelling differences, while retaining number, artist and recording checks and all available callback metadata. If a wrong lyric was previously saved/cached, clear that lyric in MusicBee before judging a fresh search: returning no new lyric may leave an existing lyric visible. Live automatic checks retrieve "By Your Side" (ID 400875204) without Custom10. The cookie-replay regression and its correction are documented in the changelog. Custom10 `netease=400875204` remains an optional explicit override on the requested file.
 
 CI runs the same offline build script on Windows and uploads test artifacts. It does not publish releases or run live NetEase requests.
 
 Dependencies are locked and clean source builds have been verified. Byte-for-byte reproducibility is not established: builds in different folders produced different module identifiers/checksums after dependency embedding, despite the compiler's deterministic setting. Published checksums identify the delivered artifacts.
 
-Pronunciation tests cover independent language preferences, original/translation-only precedence, missing tracks, partial cues, offsets, the inclusive 50 ms alignment limit, duplicate auxiliary text, untimed verse formatting, language ambiguity, malformed metadata, a stalled metadata request, per-ID caching, compatible-listing recovery and settings compatibility. `tests/Fixtures/PronunciationRecordings.json` preserves actual timing, blank cues and language metadata from Cantonese ID 409931770, Japanese ID 1409311773 and Korean ID 2676664123, replacing all lyric text with synthetic labels. No downloaded full lyric text is distributed in that fixture.
+Pronunciation tests cover independent language preferences, legacy original/translation-only migration, missing tracks, partial cues, offsets, the inclusive 50 ms alignment limit, duplicate auxiliary text, untimed verse formatting, language ambiguity, malformed metadata, a stalled metadata request, per-ID caching, compatible-listing recovery and settings compatibility. `tests/Fixtures/PronunciationRecordings.json` preserves actual timing, blank cues and language metadata from Cantonese ID 409931770, Japanese ID 1409311773 and Korean ID 2676664123, replacing all lyric text with synthetic labels. No downloaded full lyric text is distributed in that fixture.
 
 An optional `--live-pronunciation` mode makes known-ID lyric and language requests, runs the packaged formatter, and prints only language, auxiliary-track and cue counts. It checks those three recordings and ID 400875204 for translation fallback with missing pronunciation. It does not save lyrics. Service changes can make a previously available sample fail; examine the trace rather than treating that as proof of a formatter bug.
 
 Pronunciation checks in MusicBee:
 
-- [ ] Cantonese checkbox on/off for ID 409931770; confirm both lines highlight and scroll.
-- [ ] Japanese dropdown in all four positions; confirm three lines highlight and scroll as one cue.
+- [ ] Cantonese Lyrics / Lyrics + Pronunciation choices for ID 409931770; confirm both lines highlight and scroll.
+- [ ] Japanese dropdown in Follow default and all four explicit modes; confirm three lines highlight and scroll as one cue.
 - [ ] Korean choice independent of Japanese; confirm an English-only cue is not needlessly repeated.
 - [ ] Japanese ID 400875204 with Lyrics + Pronunciation + Translation: missing pronunciation must retain the working original/translation display.
 - [ ] Missing or unaligned extras: retain the usable extra, then original only when neither works.
 - [ ] Save/reopen settings and rollback with the new fields present. Earlier builds may discard new preferences when saving; back up the configuration.
 
-Optional metadata never downgrades to HTTP and a refusal there does not affect lyric transport fallback. Its request is capped at two seconds and remains inside the total request/time budgets; known language labels use a bounded six-hour per-ID cache. Unknown or multilingual language labels retain translation behavior, while missing language metadata permits conservative kana/Hangul inference. New language settings default to the previous translation behavior.
+Optional metadata never downgrades to HTTP and a refusal there does not affect lyric transport fallback. Its request is capped at two seconds and remains inside the total request/time budgets; known language labels use a bounded six-hour per-ID cache. Unknown or multilingual language labels retain translation behavior, while missing language metadata permits conservative kana/Hangul inference. Fresh language overrides use Follow default; the default display enables translation and disables pronunciation.
 
 `tests/SoundtrackTests.cs` replays recorded public search metadata from `tests/Fixtures/MaMeilleureEnnemie.json`. The fixture contains no audio or lyrics. Its correct ID is 3374505659, matched against title Ma Meilleure Ennemie, artist Stromae/Pomme, the Arcane Season 2 soundtrack album and duration 147973 ms. This fixture checks attribution matching without changing request caps.
 
 Automatic lookup for this recording has been verified in MusicBee. Additional host checks should include missing duration or album tags and a meaningful live/remix title. The trace should show attribution removal only when artist, album, duration and named work corroborate it. Otherwise, attributed titles require full-title equality.
 
-`tests/ContentChoiceTests.cs` checks both languages in all four modes, both combined layouts, persistence with stable legacy values, malformed/unset choice fallback, global precedence, untouched original metadata/timing, absent pronunciation, bounded/stalled metadata, per-ID caching, compatible-listing stop counts and default spelling-hint visibility. The optional language request may now run without pronunciation when either language selects Lyrics. All request/time caps remain unchanged.
+`tests/ContentChoiceTests.cs` checks both languages in all four modes, both combined layouts, persistence with stable legacy values, malformed/unset choice fallback, legacy global-mode migration, untouched original metadata/timing, absent pronunciation, bounded/stalled metadata, per-ID caching, compatible-listing stop counts and the single spelling allowance and legacy flag migration. The optional language request may now run without pronunciation when either language selects Lyrics. All request/time caps remain unchanged.
 
 Settings checks in MusicBee:
 
-- [ ] Dark and light MusicBee skins: the default spelling hint is readable; enabling customization shows an enabled checkbox and retains its previous choice.
+- [ ] Dark and light MusicBee skins: the single Allow small spelling differences checkbox is readable, checked by default, and retains its effective value after save/reopen.
 - [ ] Description displays the build number without clipping; all four Japanese/Korean entries fit when selected and in the expanded list.
 - [ ] Select each content mode, re-fetch a Japanese and a Korean song, and confirm original-only versus two-/three-line output. Check missing extras and independent preferences.
-- [ ] Save/reopen existing translation/pronunciation/triple-line choices and new Lyrics choices. Back up config, load it with pre.11 and return to pre.12: old saved values retain meaning; new value 3 falls back to translation in pre.11. Saving there may discard the new choice.
+- [ ] Save/reopen existing translation/pronunciation/triple-line choices and new Lyrics choices. Back up config, load the previous plugin, and return to the current version. Earlier builds may discard new fields; restore the backup for exact previous preferences.
 
 Standalone WinForms previews verify layout and visibility only; they do not reproduce MusicBee's skin engine. MusicBee settings and scrolling checks are separate from these previews.
 
-For 1.9.3, verify a fresh settings folder and an older config without language fields both show Japanese/Korean Lyrics + Translation and Cantonese pronunciation unchecked. A previously saved pronunciation choice remains selected. Preview screenshots do not establish how a particular MusicBee skin renders the settings.
+Verify that fresh settings select Follow default for every language, translation on, pronunciation off and separate lines. Existing saved choices remain selected after migration. Preview screenshots do not establish how a particular MusicBee skin renders the settings.
+
+## Current settings validation
+
+`tests/DisplaySettingsTests.cs` covers independent default extras, language overrides, English identification without Latin-script guessing, the bilingual language label, Cantonese menu ordering and content choices, saved-preference migration and rollback backup, interface switching without lost edits, request counts and common panel widths/font sizes. The release passes 313 checks in each isolated x64 and x86 process.
+
+Fresh installations use Follow default for all languages, translation on, pronunciation off and separate lines. Upgrades preserve saved choices. Test English and Simplified Chinese settings in MusicBee, re-fetch after every display change, and verify the previous settings backup before rollback.

@@ -12,12 +12,13 @@ LyricBee is an independently maintained continuation of [cqjjjzr/MusicBee-Neteas
 
 ### Original, translation and pronunciation displays
 
-The global format offers:
+Original lyrics are always included. Choose the extras and their layout separately:
 
-- **Lyrics only**
-- **Lyrics + extras (same line: JP / CN)**
-- **Translation only**
-- **Lyrics + extras (separate lines)** — the default
+- **Translation** — enabled by default.
+- **Pronunciation** — disabled by default; availability depends on NetEase and the song's language.
+- **Layout** — **Separate lines** by default, or **Same line: JP / CN**, using a spaced ` / ` separator.
+
+Turn both extras off for original lyrics only. Language overrides can independently replace this default selection.
 
 Separate-line timed output groups the original and its extras under one timestamp:
 
@@ -38,21 +39,28 @@ Translated lyrics
 
 The continuation lines belong to the original cue; the plugin does not repeat its timestamp or add a slash marker to separate-line output. The screenshots show two- and three-line highlighting in MusicBee's Now Playing panel. MusicBee controls wrapping and appearance in other panels.
 
-### Independent language preferences
+### Language overrides
 
-| Language | Choices | Default |
-| --- | --- | --- |
-| Cantonese | Enable pronunciation checkbox | Off |
-| Japanese | Lyrics; Lyrics + Translation; Lyrics + Pronunciation; Lyrics + Pronunciation + Translation | Lyrics + Translation |
-| Korean | Lyrics; Lyrics + Translation; Lyrics + Pronunciation; Lyrics + Pronunciation + Translation | Lyrics + Translation |
+The language-specific controls appear together under **Language overrides**. Every language starts at **Follow default** on a fresh installation.
 
-These preferences apply to the two combined global formats. **Lyrics only** and **Translation only** override them for all languages. The language-specific **Lyrics** choice returns the original unchanged.
+| Language | Choices besides Follow default |
+| --- | --- |
+| Japanese | Lyrics; Lyrics + Translation; Lyrics + Pronunciation; Lyrics + Pronunciation + Translation |
+| Korean | Lyrics; Lyrics + Translation; Lyrics + Pronunciation; Lyrics + Pronunciation + Translation |
+| Cantonese | Lyrics; Lyrics + Pronunciation |
+| English | Lyrics; Lyrics + Translation |
 
-Pronunciation comes from NetEase's `romalrc` track; this plugin does not generate readings locally. Cantonese pronunciation replaces the translation extra when enabled. For Japanese/Korean triple-line output, a missing or safely unalignable extra is omitted while the other is retained. If both extras are missing, the original is retained. Pronunciation-only does not substitute translation when pronunciation is unavailable. Translation-only also falls back to the original when no usable translation exists.
+**Follow default** uses the default extras for that language. A specific choice replaces them, even when both default extras are off. Layout remains common to all languages. Cantonese offers pronunciation, while English offers translation.
 
-The plugin uses NetEase's song-language label, with conservative kana/Hangul detection when that label is unavailable. Han characters alone cannot distinguish Cantonese from Mandarin. Unsupported, multilingual or unresolved language labels retain the general translation behavior. Pronunciation availability varies by song; no pronunciation setting is offered for other languages.
+Pronunciation comes from NetEase's `romalrc` track; the plugin does not generate readings locally. For triple-line output, missing or safely unalignable extras are omitted independently. If neither is available, the original is retained. Pronunciation-only does not substitute translation when pronunciation is unavailable.
 
-Saved preferences carry over between recent versions. The defaults in the table apply when no choice has been saved; upgrading does not turn off a pronunciation mode you previously selected. Back up settings before rolling back: older builds may discard newer choices when saving, and pre.10/pre.11 fall back to translation for the new language-specific Lyrics choice.
+The plugin uses NetEase's song-language label, with conservative kana/Hangul detection when needed. Han characters alone cannot identify Cantonese, and Latin letters alone do not identify English. An English translation override therefore does not turn off translations for French and other languages. Unsupported, multilingual or unresolved labels retain the default translation preference.
+
+Saved preferences carry over when upgrading. The former global Translation-only choice becomes original + translation; original-only keeps extras off. Older Cantonese translation choices become Lyrics or Lyrics + Pronunciation. Before the first save of an older configuration, the plugin retains `netease_config.pre-display.bak` beside `netease_config` in MusicBee's persistent plugin storage. Older builds cannot represent every new override combination: close MusicBee and restore that backup if exact previous preferences are needed after rollback.
+
+### English and Simplified Chinese interface
+
+**Interface language / 界面语言** offers **Automatic / 自动**, **English**, and **简体中文**. Automatic follows the Windows UI culture available to the plugin; Chinese cultures use Simplified Chinese text. Changing interface language preserves unsaved choices and does not change the lyric language.
 
 ### Two-line examples
 
@@ -106,7 +114,7 @@ Desktop and phone-share song links are supported. Album, playlist, artist and un
 
 ### Matching and network options
 
-**Customize spelling matching** exposes **Allow small spelling differences**. With customization off, small spelling differences are allowed by default; the readable hint explains that state. Number, artist and recording checks still apply in either mode.
+**Allow small spelling differences** is a single checkbox, enabled by default. Turning it off requires stricter spelling agreement. Existing effective spelling preferences are retained when upgrading. Number, artist and recording checks still apply.
 
 **Allow HTTP fallback (unencrypted metadata)** is enabled by default. HTTPS is tried first. Plain HTTP is used only after a transport failure on the legacy HTTPS interface; a secure HTTP/API refusal prevents that downgrade for the lookup. Turn this option off to require HTTPS. Optional language metadata always uses HTTPS.
 
@@ -114,14 +122,14 @@ No login or account cookie is required. Anonymous server cookies are not stored 
 
 ## Download and install
 
-Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll` and the license/attribution files; runtime dependencies are embedded. Source packages and checksums are available with each release. Older development releases are retained for reference; use the latest stable release for normal installation.
+Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll`, the license/attribution files, and bilingual installation instructions; runtime dependencies are embedded. Source packages and checksums are available with each release. Older development releases are retained for reference; use the latest stable release for normal installation.
 
 The plugin targets Windows and .NET Framework 4.8.
 
 1. Close MusicBee and back up the previous plugin DLL and settings if upgrading.
 2. Open MusicBee's **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**. Alternatively, replace the existing DLL while MusicBee is closed.
 3. In **Tags (2)**, set the lyrics provider priority to use **Netease Cloud Music**.
-4. Open the plugin settings to choose the display format and language preferences.
+4. Open the plugin settings to choose default extras, layout, language overrides and interface language.
 5. Re-fetch lyrics for tracks whose display or matching you want to change.
 
 MusicBee can keep lyrics it has already downloaded or embedded. Installing an update or restarting playback does not replace that stored text. Clear or replace incorrect lyrics and search again to evaluate a new lookup.
@@ -130,7 +138,7 @@ MusicBee can keep lyrics it has already downloaded or embedded. Installing an up
 
 See [BUILDING.md](BUILDING.md) for the Windows/.NET build instructions and validation details, and [CHANGELOG.md](CHANGELOG.md) for the step-by-step changes. Run `build.ps1` from the repository root to build, test and package the plugin.
 
-The latest build passes **246 regression checks in both 64-bit and 32-bit test processes**, using the packaged DLL with embedded dependencies. Fixtures cover the MusicBee callback, matching, timing, configuration and controlled network failures; they do not replace native MusicBee testing or guarantee NetEase availability in every region.
+The latest build passes **313 regression checks in both 64-bit and 32-bit test processes**, using the packaged DLL with embedded dependencies. Fixtures cover the MusicBee callback, matching, timing, configuration and controlled network failures; they do not replace native MusicBee testing or guarantee NetEase availability in every region.
 
 The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases) includes the historical development milestones and LyricBee releases. Each release uses its original build packages; smaller updates are included in the next milestone. Padded prerelease tags keep the listing in numeric order. Tags identify archived source snapshots, and release dates reflect their publication. Source packages include the documentation from their respective builds.
 
@@ -144,6 +152,7 @@ The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/release
 | [1.9.1-pre.11](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre11) | pre.11 | Soundtrack attribution matching |
 | [1.9.2](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.2) | pre.12, 1.9.2 | Language choices and translation defaults |
 | [1.9.3](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.3) | 1.9.3 | Standalone LyricBee project and display name |
+| [1.9.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.4) | 1.9.4-test.1, test.2, 1.9.4 | Bilingual settings, independent extras, language overrides and simpler spelling controls |
 
 ## Bug fixes, maintenance and other improvements over upstream v1.9.0-pre
 
@@ -165,6 +174,6 @@ The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/release
 - Emit concise MusicBee trace diagnostics in Release builds for failures, matching rules and compatible-listing retries, without logging downloaded lyric bodies or local file paths.
 - Use an SDK-style project, pinned SDK, locked dependencies, an isolated build/package script and Windows CI. Remove unused Harmony and embed only required runtime dependencies, reducing the DLL from roughly 4 MB upstream to roughly 1.1 MB.
 - Add permanent recorded-metadata and synthetic lyric fixtures, both process architectures, real loopback transport probes, settings compatibility checks and reproducible packaging checksums. Byte-identical rebuilds in different folders are not claimed.
-- Shorten clipped settings descriptions, retain explicit saved preferences, improve the disabled spelling option's readability, and offer the four independent Japanese/Korean content choices.
+- Shorten clipped settings descriptions, retain saved preferences, simplify spelling matching to one checkbox, and separate default extras, common layout and language overrides. Add English/Simplified Chinese settings and a rollback backup for the new display preferences.
 
 The project remains under [Apache 2.0](LICENSE), with the retained [Zony MIT notice](LICENSE-Zony) for adopted API code. Credit for the original plugin and its upstream history belongs to Charlie Jiang and the upstream contributors. LyricBee is maintained by [Tony Y](https://github.com/tonyzehs). See [NOTICE](NOTICE) for attribution.
