@@ -7,9 +7,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
-$buildVersion = [regex]::Match((Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Properties\AssemblyInfo.cs') -Raw), 'AssemblyInformationalVersion\("([^\"]+)"\)').Groups[1].Value
-if ($DevelopmentDiagnostics -and $buildVersion -notmatch '-(?:test\.|pre)') {
-    throw 'Development diagnostics are permitted only for test/prerelease versions; stable packaging is refused.'
+$buildVersion = [regex]::Match((Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Properties\AssemblyInfo.cs') -Raw), '(?m)^\s*\[assembly:\s*AssemblyInformationalVersion\s*\(\s*"([^"]+)"\s*\)\s*\]').Groups[1].Value
+if ($DevelopmentDiagnostics -and $buildVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+-(?:test\.[0-9]+|pre(?:\.?[0-9]+)?)$') {
+    throw 'Development diagnostics are permitted only for recognized test/prerelease versions; stable packaging is refused.'
 }
 $diagnosticsProperty = '-p:DevelopmentDiagnostics=' + $DevelopmentDiagnostics.IsPresent.ToString().ToLowerInvariant()
 

@@ -22,7 +22,7 @@ jobs:
       - name: Build, test and package
         shell: pwsh
         run: ./build.ps1
-      - name: Verify stable diagnostics packaging guard
+      - name: Verify diagnostics version guards
         shell: pwsh
         run: ./tests/BuildGuardTests.ps1
       - name: Verify development diagnostics

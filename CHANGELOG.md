@@ -1,3 +1,8 @@
+# Pending 1.9.5 build safeguard
+
+- Reject diagnostics-enabled builds with stable, missing or unrecognized version labels in the project itself, covering direct SDK builds as well as the packaging script. Check the DLL's declared informational version rather than overridable SDK version properties.
+- Add project-guard checks for stable builds, both architecture/configuration paths, recognized development labels, invalid labels and SDK version overrides. Runtime code and the audited test.3 installer are unchanged.
+
 # 1.9.5-test.3 — matching safeguards and development diagnostics (local testing build)
 
 - Keep malformed text after the earliest occurrence of a compressed repeat-tag line; discard whitespace-only continuations after malformed rows. Valid pronunciation and translation remain aligned independently.
