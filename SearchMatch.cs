@@ -48,25 +48,25 @@ namespace MusicBeePlugin
         internal static long[] SearchCandidates(string title, string artist, string album, long? duration,
             LookupSession session, bool allowTypos = true, string trackNumber = null)
         {
-            var taggedTitle = RemoveTaggedTrackNumber(title, trackNumber);
-            if (taggedTitle != title) session.Report("Matching: removed leading title number confirmed by TrackNo");
-            title = taggedTitle;
             var split = SplitTitleArtist(title, artist);
             var request = new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos);
+            var alternate = TrackPrefixIdentity(title, artist, album, duration, allowTypos, trackNumber);
             if (request.Title.Length == 0) return new long[0];
             var songs = new List<SearchResultSong>();
-            foreach (var query in BuildQueries(split.Item1, request.Artists, album))
+            var queries = BuildQueries(split.Item1, request.Artists, album).ToArray();
+            var alternateQueries = alternate == null ? new string[0] : BuildQueries(alternate.RawTitle, alternate.Artists, album).ToArray();
+            foreach (var query in queries.SelectMany((q, i) => i < alternateQueries.Length ? new[] { q, alternateQueries[i] } : new[] { q }).Distinct())
             {
                 if (!session.CanSearch) break;
                 var found = NeteaseApi.Search(query, session).ToArray();
                 songs.AddRange(found);
                 // A code=200 payload can still contain unrelated songs. Try the other search interface.
-                if (!found.Any(song => Evaluate(song, request) != null))
+                if (!found.Any(song => Evaluate(song, request) != null || (alternate != null && Evaluate(song, alternate) != null)))
                     songs.AddRange(NeteaseApi.SearchLegacy(query, session));
-                var best = Choose(songs, request);
+                var best = Choose(songs, request, alternate);
                 if (best.Length > 0 && best[0].Strong) return ReportSelection(best, session);
             }
-            var final = Choose(songs, request);
+            var final = Choose(songs, request, alternate);
             if (final.Length == 0)
                 session.Report("Matching: no sufficiently supported, unambiguous candidate");
             return ReportSelection(final, session);
@@ -76,9 +76,9 @@ namespace MusicBeePlugin
         internal static long SelectCandidate(IEnumerable<SearchResultSong> songs, string title, string artist,
             string album, long? duration, bool allowTypos = true, string trackNumber = null)
         {
-            title = RemoveTaggedTrackNumber(title, trackNumber);
             var split = SplitTitleArtist(title, artist);
-            return Choose(songs, new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos))
+            return Choose(songs, new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos),
+                TrackPrefixIdentity(title, artist, album, duration, allowTypos, trackNumber))
                 .Select(m => m.Song.id).FirstOrDefault();
         }
 
@@ -105,9 +105,17 @@ namespace MusicBeePlugin
             return queries.Select(q => Regex.Replace(q, @"\s+", " ").Trim()).Where(q => q.Length > 0).Distinct(StringComparer.Ordinal);
         }
 
-        private static Match[] Choose(IEnumerable<SearchResultSong> songs, TrackIdentity request)
+        private static Match[] Choose(IEnumerable<SearchResultSong> songs, TrackIdentity request, TrackIdentity alternate = null)
         {
-            var matches = songs.Where(s => s != null && s.id > 0).Select(s => Evaluate(s, request))
+            var candidates = songs.Where(s => s != null && s.id > 0).ToArray();
+            var supported = candidates.Select(s => Evaluate(s, request)).Where(m => m != null).ToArray();
+            // A corroborated prefix is a fallback: never erase a supported title such as "7 Rings".
+            if (supported.Length == 0 && alternate != null)
+            {
+                supported = candidates.Select(s => Evaluate(s, alternate)).Where(m => m != null).ToArray();
+                foreach (var match in supported) match.Notes = string.Join("/", new[] { match.Notes, "TrackNo-confirmed title prefix" }.Where(n => n.Length > 0));
+            }
+            var matches = supported
                 .Where(m => m != null).GroupBy(m => m.Song.id).Select(g => g.OrderByDescending(m => m.Score).First())
                 .OrderBy(m => m.Song.duration).ThenBy(m => m.Song.id).ToArray();
             var groups = new List<List<Match>>();
@@ -164,7 +172,8 @@ namespace MusicBeePlugin
             var expectedTitle = Canonical(expected);
             var editions = Editions(actualRaw);
             if (expectedTitle.Length == 0 || title.Length == 0 ||
-                Editions(expectedRaw) != editions || Numbers(expected) != Numbers(actual)) return null;
+                Editions(expectedRaw) != editions ||
+                Numbers(expectedTitle == title ? expected.ToUpperInvariant() : expected) != Numbers(expectedTitle == title ? actual.ToUpperInvariant() : actual)) return null;
             var titleScore = Similarity(expectedTitle, title);
             var titleExact = expectedTitle == title;
             if (soundtrackNote && !titleExact) return null;
@@ -260,8 +269,7 @@ namespace MusicBeePlugin
                 var number = match.Groups["number"].Value;
                 if (int.TryParse(number, NumberStyles.None, CultureInfo.InvariantCulture, out var decimalNumber))
                     return "part " + decimalNumber.ToString(CultureInfo.InvariantCulture);
-                // Conventional uppercase numerals avoid treating a word such as "mix" as 1009.
-                if (number != number.ToUpperInvariant()) return match.Value;
+                // An explicit part label provides number context even for lowercase numerals.
                 var roman = RomanNumber(number);
                 return roman > 0 ? "part " + roman.ToString(CultureInfo.InvariantCulture) : match.Value;
             });
@@ -291,9 +299,11 @@ namespace MusicBeePlugin
                 .Cast<System.Text.RegularExpressions.Match>().Select(m =>
                 {
                     if (char.IsDigit(m.Value[0])) return "D:" + m.Value;
+                    var numberedContext = Regex.IsMatch(title.Substring(0, m.Index), @"\b(?:part|pt\.?|vol\.?|no\.?)\s*$", RegexOptions.IgnoreCase);
+                    if (m.Value != m.Value.ToUpperInvariant() && !numberedContext) return "";
                     if (m.Value.Equals("I", StringComparison.OrdinalIgnoreCase) &&
                         m.Index + m.Length < title.TrimEnd().Length &&
-                        !Regex.IsMatch(title.Substring(0, m.Index), @"\b(?:part|pt\.?|vol\.?|no\.?)\s*$", RegexOptions.IgnoreCase)) return "";
+                        !numberedContext) return "";
                     return RomanNumber(m.Value) > 0 ? "R:" + m.Value.ToUpperInvariant() : "";
                 }).Where(n => n.Length > 0));
         }
@@ -301,9 +311,17 @@ namespace MusicBeePlugin
         internal static string RemoveTaggedTrackNumber(string title, string trackNumber)
         {
             if (!int.TryParse((trackNumber ?? "").Split('/')[0].Trim(), out var tagged) || tagged <= 0) return title;
-            var prefix = Regex.Match(NormalizeText(title), @"^(?<number>[0-9]+)(?:\.(?![0-9])\s*|\s+-\s+)(?<title>.+)$");
+            var prefix = Regex.Match(NormalizeText(title), @"^(?<number>[0-9]+)(?:\.(?![0-9])\s*|\s+-\s+|\s+)(?<title>.+)$");
             return prefix.Success && int.TryParse(prefix.Groups["number"].Value, out var number) && number == tagged ?
                 prefix.Groups["title"].Value.Trim() : title;
+        }
+
+        private static TrackIdentity TrackPrefixIdentity(string title, string artist, string album, long? duration, bool allowTypos, string trackNumber)
+        {
+            var clean = RemoveTaggedTrackNumber(title, trackNumber);
+            if (clean == title) return null;
+            var split = SplitTitleArtist(clean, artist);
+            return new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos);
         }
 
         private static double ArtistSimilarity(string[] expected, string[] actual, bool allowTypos)

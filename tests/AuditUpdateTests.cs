@@ -198,13 +198,15 @@ internal static partial class Program
             Equal(0L, SearchMatch.SelectCandidate(new[] { song }, "Let It Go (From \"Frozen\")", "Other Singer", "Frozen OST", 224000));
             Equal(0L, SearchMatch.SelectCandidate(new[] { song }, "Let It Go (From \"Frozen\")", "Idina Menzel", "Frozen OST", null));
         });
-        Test("Broken original timestamps preserve the original order in both layouts", () =>
+        Test("Broken original timestamps remain untimed while valid cues keep their translation", () =>
         {
             const string original = "[00:01]one\n[00:02.1x]two\n[00:03]three";
             foreach (var separate in new[] { true, false })
             {
-                Equal(original, LyricProcessor.MergePronunciation(original, null, "[00:01]1\n[00:03]3", separate, null, out var tracks));
-                Equal(0, tracks);
+                var separator = separate ? "\n" : " / ";
+                Equal("[00:01.000]one" + separator + "1\ntwo\n[00:03.000]three" + separator + "3",
+                    LyricProcessor.MergePronunciation(original, null, "[00:01]1\n[00:03]3", separate, null, out var tracks));
+                Equal(1, tracks);
             }
         });
         Test("Uninstall removes only plugin-owned backups and GUID temporary files", () =>

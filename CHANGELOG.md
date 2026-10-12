@@ -1,3 +1,14 @@
+# 1.9.5-test.2 — isolate malformed cues (local testing build)
+
+- Retain a malformed original line as untimed text after its preceding valid cue, including its untimed continuations. Valid cues still receive independently aligned pronunciation/translation; broken original or auxiliary stamps never supply alignment times. Repeated tags do not duplicate an isolated line. Entirely unusable original clocks or unpaired extras retain the untouched original.
+- Give consistent rollback advice in both READMEs, INSTALL, settings documentation and BUILDING: keep the repaired current settings; historical backups can restore unsafe flags.
+- Restrict non-contextual Roman-numeral classification to uppercase tokens, with case-only equivalent titles still accepted and decimal-number boundaries preserved. Explicit lowercase part labels normalize as numbers. Mixed-case words no longer introduce numeral conflicts; short-title similarity limits remain unchanged (the seven-letter Mix It Up / Mixx It Up example still fails the existing .9 threshold).
+- Support a plain-space leading track number when it agrees with the file's TrackNo tag. Treat removal as a fallback: supported unmodified titles such as 7 Rings retain priority. Existing title, artist, edition, ambiguity and request-count safeguards remain in force.
+- Include the packaged DLL hash in SHA256SUMS.txt as well as the installer hash. The source checksum is added when preparing the source package.
+- Missing-extra retries under fresh defaults are capped at two compatible listings. The Mandarin shortcut is opportunistic only when a service label is already available; it makes no additional metadata requests and is not counted as a default saving.
+- Product version: `1.9.5-test.2`; assembly/file version: `1.9.5.2`. No release has been published. Real MusicBee verification remains required.
+- All 343 checks pass in isolated x64 and x86 processes with no build warnings/errors. Replaying the auditor's unchanged offline probes against this DLL confirms retained valid translations around malformed stamps, plain-space track prefixes, two lyric attempts for missing extras and Custom10's final instrumental response.
+
 # 1.9.5-test.1 — audit follow-up (local testing build)
 
 - Store spelling allowance separately from legacy matching flags. Repair existing settings on load without requiring Save; write Fuzzy=false and UseLegacyMatch=false for older readers, preserve the effective current choice and HTTP opt-out, and keep a byte-preserving pre-spelling backup. Failed repairs retain the loaded preferences and original file.

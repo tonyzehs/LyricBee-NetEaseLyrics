@@ -40,13 +40,15 @@ namespace MusicBeePlugin
             if (!HasLyricText(translationLrc) || string.IsNullOrWhiteSpace(originalLrc)) return originalLrc;
             var original = ReadTimedDocument(originalLrc);
             var translation = ReadTimedDocument(translationLrc);
-            if (original.InvalidTimes > 0) return originalLrc;
+            if (original.InvalidTimes > 0 && original.Entries.Count == 0) return originalLrc;
             if (original.Entries.Count == 0) return FormatUntimedTranslation(originalLrc, translationLrc);
             if (translation.Entries.Count == 0) return originalLrc;
             var originals = Cues(original);
             var translations = Cues(translation).Where(c => HasLyricText(c.Text)).ToArray();
             var alignment = ChooseAlignment(original, originals, translation, translations, trace);
             var lines = new List<string>(original.Headers);
+            var loose = original.LooseLines.ToLookup(l => l.AfterTime);
+            AppendLooseText(loose, null, lines);
             for (var index = 0; index < originals.Length; index++)
             {
                 var cue = originals[index];
@@ -55,6 +57,7 @@ namespace MusicBeePlugin
                     content += (twoLines ? "\n" : "/") + translations[pair.Translation].Text;
                 // A single timestamp owns the original and its continuation in MusicBee.
                 lines.Add(FormatTimestamp(cue.Time) + content);
+                AppendLooseText(loose, cue.Time, lines);
             }
             return string.Join("\n", lines);
         }
@@ -98,7 +101,7 @@ namespace MusicBeePlugin
             if (string.IsNullOrWhiteSpace(originalLrc)) return originalLrc;
             var extraTexts = new[] { pronunciationLrc, translationLrc };
             var original = ReadTimedDocument(originalLrc);
-            if (original.InvalidTimes > 0)
+            if (original.InvalidTimes > 0 && original.Entries.Count == 0)
             {
                 trace?.Invoke("Lyrics: retained original with invalid timing; no invented alignment");
                 return originalLrc;
@@ -120,6 +123,8 @@ namespace MusicBeePlugin
             }
             if (tracks.All(t => t.Alignment.Pairs.Count == 0)) return originalLrc;
             var lines = new List<string>(original.Headers);
+            var loose = original.LooseLines.ToLookup(l => l.AfterTime);
+            AppendLooseText(loose, null, lines);
             for (var index = 0; index < originals.Length; index++)
             {
                 var cue = originals[index];
@@ -132,6 +137,7 @@ namespace MusicBeePlugin
                         parts.Add(extra); track.Used = true;
                     }
                 lines.Add(FormatTimestamp(cue.Time) + string.Join(separateLines ? "\n" : " / ", parts));
+                AppendLooseText(loose, cue.Time, lines);
             }
             usableTracks = tracks.Count(t => t.Used);
             trace?.Invoke("Lyrics: retained " + usableTracks + " requested auxiliary tracks; unavailable or unaligned lines omitted");
@@ -331,7 +337,14 @@ namespace MusicBeePlugin
         {
             internal readonly List<string> Headers = new List<string>();
             internal readonly List<TimedText> Entries = new List<TimedText>();
+            // Malformed cues are not alignment candidates or original/translation continuations.
+            internal readonly List<LooseText> LooseLines = new List<LooseText>();
             internal int Offset, InvalidTimes;
+        }
+        private sealed class LooseText { internal long? AfterTime; internal string Text; }
+        private static void AppendLooseText(ILookup<long?, LooseText> looseLines, long? afterTime, List<string> lines)
+        {
+            foreach (var loose in looseLines[afterTime]) lines.Add(loose.Text);
         }
         private sealed class TimedText { internal long Time; internal string Text; }
         private static TimedText[] Cues(TimedDocument document) => document.Entries.OrderBy(c => c.Time).GroupBy(c => c.Time)
@@ -341,14 +354,26 @@ namespace MusicBeePlugin
         {
             var document = new TimedDocument();
             var previous = new List<TimedText>();
+            long? lastTime = null;
+            LooseText lastLoose = null;
+            Action<string> isolate = line =>
+            {
+                var text = Regex.Replace(line, @"^(?:\[[^\]]*\])+", "");
+                lastLoose = new LooseText { AfterTime = lastTime, Text = text };
+                document.LooseLines.Add(lastLoose);
+                document.InvalidTimes++; previous.Clear();
+            };
             foreach (var rawLine in NormalizeLines(lrc).Split('\n'))
             {
                 var trimmed = rawLine.TrimStart();
                 var line = LeadingTimes.IsMatch(trimmed) || IsHeader(trimmed) || Regex.IsMatch(trimmed, @"^\[[0-9]+:") ? trimmed : rawLine;
                 var match = LeadingTimes.Match(line);
+                // A valid tag followed by a broken repeat tag does not establish an unambiguous cue.
+                if (match.Success && Regex.IsMatch(line.Substring(match.Length), @"^\[[0-9]+:"))
+                { isolate(line); continue; }
                 if (match.Success)
                 {
-                    previous.Clear();
+                    previous.Clear(); lastLoose = null;
                     foreach (Capture capture in match.Groups["time"].Captures)
                     {
                         var time = LeadingTimes.Match(capture.Value);
@@ -359,25 +384,25 @@ namespace MusicBeePlugin
                             Text = line.Substring(match.Length) };
                         document.Entries.Add(entry); previous.Add(entry);
                     }
-                    if (previous.Count == 0) { document.Headers.Add(line); document.InvalidTimes++; }
+                    if (previous.Count == 0) isolate(line);
+                    else lastTime = previous.Max(c => c.Time);
                 }
                 else if (IsHeader(line))
                 {
                     document.Headers.Add(line);
                     var offset = Regex.Match(line, @"^\[offset:\s*([+-]?[0-9]+)\s*\]$", RegexOptions.IgnoreCase);
                     if (offset.Success && int.TryParse(offset.Groups[1].Value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value)) document.Offset = value;
-                    previous.Clear();
+                    previous.Clear(); lastLoose = null;
                 }
                 else if (Regex.IsMatch(line, @"^\[[0-9]+:"))
                 {
-                    var text = Regex.Replace(line, @"^(?:\[[^\]]*\])+", "");
-                    if (!string.IsNullOrWhiteSpace(text)) document.Headers.Add(text);
-                    document.InvalidTimes++; previous.Clear();
+                    isolate(line);
                 }
                 else if (previous.Count > 0)
                 {
                     if (line.Length > 0) foreach (var entry in previous) entry.Text += "\n" + line;
                 }
+                else if (lastLoose != null) lastLoose.Text += "\n" + line;
                 else if (!string.IsNullOrWhiteSpace(line)) document.Headers.Add(line);
             }
             return document;

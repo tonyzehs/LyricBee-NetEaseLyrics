@@ -56,7 +56,7 @@ Pronunciation comes from NetEase's `romalrc` track; the plugin does not generate
 
 The plugin uses NetEase's song-language label, with conservative kana/Hangul detection when needed. Han characters alone cannot identify Cantonese, and Latin letters alone do not identify English. An English translation override therefore does not turn off translations for French and other languages. Unsupported, multilingual or unresolved labels retain the default translation preference.
 
-Saved preferences carry over when upgrading. The former global Translation-only choice becomes original + translation; original-only keeps extras off. Older Cantonese translation choices become Lyrics or Lyrics + Pronunciation. Before the first save of an older configuration, the plugin retains `netease_config.pre-display.bak` beside `netease_config` in MusicBee's persistent plugin storage. Older builds cannot represent every new override combination: close MusicBee and restore that backup if exact previous preferences are needed after rollback.
+Saved preferences carry over when upgrading. The former global Translation-only choice becomes original + translation; original-only keeps extras off. Older Cantonese translation choices become Lyrics or Lyrics + Pronunciation. Loading older settings repairs the legacy matching flags and retains the original file as `netease_config.pre-spelling.bak` in MusicBee's persistent plugin storage. Keep the repaired current settings when rolling back: restoring a historical backup also restores its old flags. Older builds cannot represent every new override combination, and upstream v1.8.1 retains its weaker matching behavior.
 
 ### English and Simplified Chinese interface
 

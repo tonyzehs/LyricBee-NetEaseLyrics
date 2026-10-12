@@ -38,7 +38,9 @@ try {
     $packageFiles = @($plugin) + @('LICENSE', 'LICENSE-Zony', 'NOTICE', 'INSTALL.md' | ForEach-Object { Join-Path $PSScriptRoot $_ })
     Compress-Archive -LiteralPath $packageFiles -DestinationPath $package -Force
     $hash = (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant()
+    $dllHash = (Get-FileHash -LiteralPath $plugin -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([IO.Path]::GetFileName($package))" | Set-Content -LiteralPath ($package + '.sha256') -Encoding ascii
+    @("$hash  $([IO.Path]::GetFileName($package))", "$dllHash  mb_NeteaseLyrics.dll") | Set-Content -LiteralPath (Join-Path $OutputDirectory 'SHA256SUMS.txt') -Encoding ascii
     Write-Output "Package: $package"
 } finally {
     Pop-Location
