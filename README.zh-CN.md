@@ -126,12 +126,19 @@ netease=29126914
 
 插件适用于 Windows 和 .NET Framework 4.8。
 
-**升级时可选：**先备份设置。旧版插件可从[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)下载，无需另存一份旧 DLL。
-
 1. 打开 MusicBee 的**首选项 → 插件**，使用“添加插件”选择 ZIP，并启用 **LyricBee — NetEase Lyrics**。
 2. 在**标签 (2)** 中调整歌词提供者优先级，使用 **Netease Cloud Music**。
 3. 打开插件设置，选择默认附加内容、排列方式、语言覆盖设置及界面语言。
 4. 对需要更改显示或匹配结果的歌曲，重新获取歌词。
+
+### 升级
+
+（可选）先备份设置。旧版插件可从[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)下载，无需另存一份旧 DLL。
+
+1. 下载最新安装 ZIP。
+2. 打开 MusicBee 的**首选项 → 插件**，使用“添加插件”选择新的 ZIP，以更新 LyricBee。
+3. 点击出现的 **Restart（重启）**按钮。MusicBee 将重启并加载更新后的插件。
+4. 重新搜索歌词，以将显示或匹配变化应用于之前保存的文本。
 
 MusicBee 会保留已经下载或写入文件的歌词。安装更新或重新播放不会自动替换这些文本。评估新的检索结果时，请先清除或替换错误歌词，再重新搜索。
 
