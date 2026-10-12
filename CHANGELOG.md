@@ -1,3 +1,17 @@
+# 1.9.5-test.1 — audit follow-up (local testing build)
+
+- Store spelling allowance separately from legacy matching flags. Repair existing settings on load without requiring Save; write Fuzzy=false and UseLegacyMatch=false for older readers, preserve the effective current choice and HTTP opt-out, and keep a byte-preserving pre-spelling backup. Failed repairs retain the loaded preferences and original file.
+- Edit preferences in a separate draft. Switching interface language retains unsaved controls without affecting live lookups or disk; Save applies the draft, and closing the panel without saving discards it.
+- Limit missing-extra recovery to one additional compatible listing. Missing originals still allow three listings. Reuse already available Mandarin language metadata to avoid unnecessary translation-only retries, without requesting language metadata just for this purpose or guessing from Han text.
+- Continue past an instrumental listing during equivalent-listing recovery. Explicit Custom10 IDs and single listings remain final.
+- Treat HTTP/API 5xx responses as temporary interface failures. Retain HTTP opt-out, refusal blocking for 4xx/anti-bot answers, disabled automatic redirects and existing request/time caps.
+- Normalize contractions and dotted abbreviations before numeral checks, retain meaningful standalone Roman numerals, and recognize additional remaster-note spellings. Strip a leading track-number prefix only when it agrees with the requested file's TrackNo tag.
+- Permit soundtrack album aliases when both albums contain the attributed work; retain full artist agreement, known durations within two seconds, exact base title and meaningful version/conflicting-work guards. Different credits and wider-duration duplicate groups remain rejected.
+- Preserve malformed original timing in its original order by falling back to the unchanged original, rather than moving lyric text into the header. Uninstall removes plugin-owned backups and GUID temporary files.
+- Replace short real-time deadline fixtures with controlled cancellation tokens. Add permanent audit counterexamples and an optional standalone runner for published rollback DLLs. Older v1.8.1 matching remains inherently weaker: disabling its unchecked fuzzy mode cannot prevent every same-title cover mismatch.
+- Product version: `1.9.5-test.1`; assembly/file version: `1.9.5.1`. No GitHub release or tag has been published.
+- All 331 checks pass in isolated x64 and x86 processes against the packaged DLL. Published-DLL rollback probes cover v1.8.1, v1.9.0, pre.7 and 1.9.3; see BUILDING.md for the remaining upstream v1.8.1 matching limitation.
+
 # 1.9.4 — bilingual settings and language overrides
 
 - Always include original lyrics. Separate the Translation and Pronunciation checkboxes from the common layout setting; use spaced ` / ` separators in same-line output and retain two-/three-line timed cues.

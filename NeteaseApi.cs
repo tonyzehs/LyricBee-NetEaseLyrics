@@ -139,19 +139,24 @@ namespace MusicBeePlugin
         private readonly Stopwatch _elapsed = Stopwatch.StartNew();
         private readonly HashSet<RequestInterface> _unavailable = new HashSet<RequestInterface>();
         private readonly Action<string> _trace;
+        private readonly Func<CancellationToken> _requestCancellation;
         private readonly Dictionary<string, SearchResultSong[]> _searches = new Dictionary<string, SearchResultSong[]>();
 
         internal LookupSession(Action<string> trace = null, HttpMessageHandler handler = null,
-            TimeSpan? requestTimeout = null, TimeSpan? lookupTimeout = null, TimeSpan? lyricReserve = null)
+            TimeSpan? requestTimeout = null, TimeSpan? lookupTimeout = null, TimeSpan? lyricReserve = null,
+            CancellationToken lookupCancellation = default(CancellationToken), CancellationToken searchCancellation = default(CancellationToken),
+            Func<CancellationToken> requestCancellation = null)
         {
             _trace = trace;
+            _requestCancellation = requestCancellation;
             _requestTimeout = requestTimeout ?? TimeSpan.FromSeconds(8);
             _lookupTimeout = lookupTimeout ?? TimeSpan.FromSeconds(30);
             var reserve = lyricReserve ?? TimeSpan.FromTicks(_lookupTimeout.Ticks * 2 / 5);
             if (reserve <= TimeSpan.Zero || reserve >= _lookupTimeout) throw new ArgumentOutOfRangeException(nameof(lyricReserve));
             _searchTimeout = _lookupTimeout - reserve;
-            _deadline = new CancellationTokenSource(_lookupTimeout);
-            _searchDeadline = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token);
+            _deadline = CancellationTokenSource.CreateLinkedTokenSource(lookupCancellation);
+            _deadline.CancelAfter(_lookupTimeout);
+            _searchDeadline = CancellationTokenSource.CreateLinkedTokenSource(_deadline.Token, searchCancellation);
             _searchDeadline.CancelAfter(_searchTimeout);
             // These are anonymous lookups. Server-set cookies can turn subsequent searches
             // into unrelated code=200 answers; keep each request's public context unchanged.
@@ -214,7 +219,8 @@ namespace MusicBeePlugin
             if (maximumTimeout.HasValue && maximumTimeout.Value < requestBudget) requestBudget = maximumTimeout.Value;
             try
             {
-                using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(search ? _searchDeadline.Token : _deadline.Token))
+                using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(search ? _searchDeadline.Token : _deadline.Token,
+                    _requestCancellation?.Invoke() ?? CancellationToken.None))
                 using (var request = new HttpRequestMessage(method, url) { Content = content })
                 {
                     if (api == RequestInterface.LegacyHttps || api == RequestInterface.LegacyHttp)
@@ -226,15 +232,20 @@ namespace MusicBeePlugin
                     {
                         if (!response.IsSuccessStatusCode)
                         {
-                            _outcomes[api] = RequestOutcome.Rejected;
-                            if (request.RequestUri.Scheme == "https" && api != RequestInterface.LanguageHttps) _secureRefusal = true;
+                            var temporary = (int)response.StatusCode >= 500 && (int)response.StatusCode <= 599;
+                            _outcomes[api] = temporary ? RequestOutcome.TransportFailure : RequestOutcome.Rejected;
+                            if (temporary) _unavailable.Add(api);
+                            else if (request.RequestUri.Scheme == "https" && api != RequestInterface.LanguageHttps) _secureRefusal = true;
                             Trace(label + ": HTTP " + (int)response.StatusCode);
                             return null;
                         }
                         var result = JsonConvert.DeserializeObject<T>(response.Content.ReadAsStringAsync().GetAwaiter().GetResult());
                         if (validate(result)) { _outcomes[api] = RequestOutcome.Success; return result; }
                         var code = (result as ApiResponse)?.code;
-                        _outcomes[api] = code.HasValue && code.Value != 200 ? RequestOutcome.Rejected : RequestOutcome.InvalidResponse;
+                        var serverError = code >= 500 && code <= 599;
+                        _outcomes[api] = serverError ? RequestOutcome.TransportFailure :
+                            code.HasValue && code.Value != 200 ? RequestOutcome.Rejected : RequestOutcome.InvalidResponse;
+                        if (serverError) _unavailable.Add(api);
                         if (_outcomes[api] == RequestOutcome.Rejected && request.RequestUri.Scheme == "https" &&
                             api != RequestInterface.LanguageHttps) _secureRefusal = true;
                         Trace(label + ": rejected or incomplete response" +

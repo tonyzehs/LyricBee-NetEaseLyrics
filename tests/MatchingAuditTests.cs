@@ -157,12 +157,12 @@ internal static partial class Program
             Equal("[00:01.00]Hello", Lookup(CreatePlugin(handler), "Singer", "Song", "Album"));
             True(handler.Calls.Count <= 5);
         });
-        Test("Instrumental and Custom10 responses do not switch to another song", () =>
+        Test("Instrumental listings can be retried while Custom10 stays with its ID", () =>
         {
             var handler = new Fixture((request, _) => Json(request.RequestUri.AbsolutePath.Contains("search")
                 ? SearchJson(TwoListings()) : "{\"code\":200,\"nolyric\":true}"));
             Equal(null, Lookup(CreatePlugin(handler), "Singer", "Song", "Album"));
-            Equal(2, handler.Calls.Count);
+            Equal(3, handler.Calls.Count);
             var overrideHandler = new Fixture((_, __) => Json("{\"code\":200}"));
             Equal(null, Lookup(CreatePlugin(overrideHandler, (_, tag) => tag == Plugin.MetaDataType.Custom10 ? "netease=101" : null)));
             Equal(2, overrideHandler.Calls.Count);

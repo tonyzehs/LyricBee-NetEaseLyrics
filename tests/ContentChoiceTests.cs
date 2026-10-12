@@ -178,7 +178,8 @@ internal static partial class Program
                     plugin.SaveSettings();
                 }
                 var saved = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
-                Equal(true, (bool)saved["UseLegacyMatch"]); Equal(!legacy || fuzzy, (bool)saved["Fuzzy"]);
+                Equal(false, (bool)saved["UseLegacyMatch"]); Equal(false, (bool)saved["Fuzzy"]);
+                Equal(!legacy || fuzzy, (bool)saved["AllowSmallSpellingDifferences"]);
             }
         });
     }

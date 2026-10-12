@@ -43,10 +43,12 @@ internal static partial class Program
                 " (from Arcane)", "（From the series Arcane League of Legends）", " (From the original soundtrack of Arcane League of Legends)" })
                 Equal(1L, Select(new[] { Song(1, SourceTitle + suffix, "Singer", SourceAlbum, 200000) }, SourceTitle, album: SourceAlbum));
         });
-        Test("Attribution removal requires a matching nonempty album", () =>
+        Test("Attribution removal requires the named work in a nonempty album", () =>
         {
-            foreach (var album in new[] { null, "", "Other Album", "Arcane League of Legends Extended Soundtrack" })
+            foreach (var album in new[] { null, "", "Other Album" })
                 Equal(0L, Select(new[] { Song(1, SourceTitle + Attribution, "Singer", SourceAlbum, 200000) }, SourceTitle, album: album));
+            Equal(1L, Select(new[] { Song(1, SourceTitle + Attribution, "Singer", SourceAlbum, 200000) }, SourceTitle,
+                album: "Arcane League of Legends Extended Soundtrack"));
         });
         Test("Attribution removal requires all supplied artist credits exactly", () =>
         {

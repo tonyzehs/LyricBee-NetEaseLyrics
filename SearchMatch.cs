@@ -24,7 +24,7 @@ namespace MusicBeePlugin
             @"\s+(?<label>live|remix|instrumental|karaoke|acoustic|extended|cover|radio\s+edit|tv(?:\s*(?:size|ver(?:sion)?))?)\s*$",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         private static readonly Regex RemasterNote = new Regex(
-            @"^(?:[0-9]{4}\s+)?(?:digitally\s+)?re-?master(?:ed)?(?:\s+(?:in\s+)?[0-9]{4})?$",
+            @"^(?:[0-9]{4}\s*(?:[-–—]\s*)?)?(?:(?:digital|digitally)\s+)?re-?master(?:ed)?(?:\s+version)?(?:\s+(?:in\s+)?[0-9]{4})?$",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         private static readonly Regex DurationNote = new Regex(@"^(?:mono|stereo|album\s+version)$",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
@@ -46,8 +46,11 @@ namespace MusicBeePlugin
             => SearchCandidates(title, artist, album, duration, session, allowTypos).FirstOrDefault();
 
         internal static long[] SearchCandidates(string title, string artist, string album, long? duration,
-            LookupSession session, bool allowTypos = true)
+            LookupSession session, bool allowTypos = true, string trackNumber = null)
         {
+            var taggedTitle = RemoveTaggedTrackNumber(title, trackNumber);
+            if (taggedTitle != title) session.Report("Matching: removed leading title number confirmed by TrackNo");
+            title = taggedTitle;
             var split = SplitTitleArtist(title, artist);
             var request = new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos);
             if (request.Title.Length == 0) return new long[0];
@@ -71,8 +74,9 @@ namespace MusicBeePlugin
 
         // Kept independent of transport so recorded search responses can be replayed in tests.
         internal static long SelectCandidate(IEnumerable<SearchResultSong> songs, string title, string artist,
-            string album, long? duration, bool allowTypos = true)
+            string album, long? duration, bool allowTypos = true, string trackNumber = null)
         {
+            title = RemoveTaggedTrackNumber(title, trackNumber);
             var split = SplitTitleArtist(title, artist);
             return Choose(songs, new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos))
                 .Select(m => m.Song.id).FirstOrDefault();
@@ -144,10 +148,11 @@ namespace MusicBeePlugin
             var actualRaw = candidate.Item1;
             string soundtrackSource = null;
             var conflictingSource = false;
-            var soundtrackNote = durationClose && request.Album.Length > 0 && request.Album == album &&
+            var soundtrackNote = durationClose && request.Album.Length > 0 && album.Length > 0 &&
                 request.Artists.Length > 0 && request.Artists.Select(Canonical).Distinct().OrderBy(a => a, StringComparer.Ordinal)
                     .SequenceEqual(artists.Distinct().OrderBy(a => a, StringComparer.Ordinal)) &&
-                RemoveSoundtrackAttribution(ref expectedRaw, ref actualRaw, album, song.album?.name, out soundtrackSource, out conflictingSource);
+                RemoveSoundtrackAttribution(ref expectedRaw, ref actualRaw, request.Album, request.RawAlbum,
+                    album, song.album?.name, out soundtrackSource, out conflictingSource);
             if (conflictingSource) return null;
             // Without corroboration, attributed titles require their complete text to agree;
             // spelling allowance must not substitute a different named work.
@@ -207,18 +212,20 @@ namespace MusicBeePlugin
             };
         }
 
-        private static bool RemoveSoundtrackAttribution(ref string expected, ref string actual, string album, string rawAlbum,
+        private static bool RemoveSoundtrackAttribution(ref string expected, ref string actual, string expectedAlbum, string expectedRawAlbum,
+            string album, string rawAlbum,
             out string source, out bool conflicting)
         {
             source = null; conflicting = false;
             var expectedMatch = SoundtrackSuffix.Match(NormalizeText(expected));
             var actualMatch = SoundtrackSuffix.Match(NormalizeText(actual));
             if (!expectedMatch.Success && !actualMatch.Success) return false;
-            var expectedSource = AttributionSource(expectedMatch, album, rawAlbum);
+            var expectedSource = AttributionSource(expectedMatch, expectedAlbum, expectedRawAlbum);
             var actualSource = AttributionSource(actualMatch, album, rawAlbum);
             if ((expectedMatch.Success && expectedSource == null) || (actualMatch.Success && actualSource == null)) return false;
             if (expectedMatch.Success && actualMatch.Success && expectedSource != actualSource) { conflicting = true; return false; }
             source = actualSource ?? expectedSource;
+            if (!expectedAlbum.Contains(source) || !album.Contains(source)) return false;
             // Only the terminal attribution is removable. Other annotations and title numbers survive.
             if (expectedMatch.Success) expected = NormalizeText(expected).Substring(0, expectedMatch.Index).Trim();
             if (actualMatch.Success) actual = NormalizeText(actual).Substring(0, actualMatch.Index).Trim();
@@ -275,10 +282,29 @@ namespace MusicBeePlugin
             return total;
         }
 
-        private static string Numbers(string title) => string.Join("|", Regex.Matches(title, @"\p{Nd}+|\b[IVXLCDM]+\b",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)
-            .Cast<System.Text.RegularExpressions.Match>().Select(m => char.IsDigit(m.Value[0]) ? "D:" + m.Value :
-                RomanNumber(m.Value) > 0 ? "R:" + m.Value.ToUpperInvariant() : "").Where(n => n.Length > 0));
+        private static string Numbers(string title)
+        {
+            title = Regex.Replace(title, @"(?<=\p{L})['’‘](?=\p{L})", "");
+            // D.C. is an abbreviation, not two Roman numerals. Preserve II/V/etc. in titles.
+            title = Regex.Replace(title, @"\b(?:[a-zA-Z]\.){2,}(?:[a-zA-Z]\b)?", m => m.Value.Replace(".", ""));
+            return string.Join("|", Regex.Matches(title, @"\p{Nd}+|\b[IVXLCDM]+\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)
+                .Cast<System.Text.RegularExpressions.Match>().Select(m =>
+                {
+                    if (char.IsDigit(m.Value[0])) return "D:" + m.Value;
+                    if (m.Value.Equals("I", StringComparison.OrdinalIgnoreCase) &&
+                        m.Index + m.Length < title.TrimEnd().Length &&
+                        !Regex.IsMatch(title.Substring(0, m.Index), @"\b(?:part|pt\.?|vol\.?|no\.?)\s*$", RegexOptions.IgnoreCase)) return "";
+                    return RomanNumber(m.Value) > 0 ? "R:" + m.Value.ToUpperInvariant() : "";
+                }).Where(n => n.Length > 0));
+        }
+
+        internal static string RemoveTaggedTrackNumber(string title, string trackNumber)
+        {
+            if (!int.TryParse((trackNumber ?? "").Split('/')[0].Trim(), out var tagged) || tagged <= 0) return title;
+            var prefix = Regex.Match(NormalizeText(title), @"^(?<number>[0-9]+)(?:\.(?![0-9])\s*|\s+-\s+)(?<title>.+)$");
+            return prefix.Success && int.TryParse(prefix.Groups["number"].Value, out var number) && number == tagged ?
+                prefix.Groups["title"].Value.Trim() : title;
+        }
 
         private static double ArtistSimilarity(string[] expected, string[] actual, bool allowTypos)
         {
@@ -364,14 +390,14 @@ namespace MusicBeePlugin
 
         private sealed class TrackIdentity
         {
-            internal readonly string RawTitle, Title, Album;
+            internal readonly string RawTitle, Title, Album, RawAlbum;
             internal readonly string[] Artists;
             internal readonly long? Duration;
             internal readonly bool AllowTypos;
             internal TrackIdentity(string title, string[] artists, string album, long? duration, bool allowTypos)
             {
                 RawTitle = title; Title = Canonical(title); Artists = artists;
-                Album = Canonical(album); Duration = duration; AllowTypos = allowTypos;
+                Album = Canonical(album); RawAlbum = album; Duration = duration; AllowTypos = allowTypos;
             }
         }
 

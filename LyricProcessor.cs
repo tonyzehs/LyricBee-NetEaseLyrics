@@ -40,6 +40,7 @@ namespace MusicBeePlugin
             if (!HasLyricText(translationLrc) || string.IsNullOrWhiteSpace(originalLrc)) return originalLrc;
             var original = ReadTimedDocument(originalLrc);
             var translation = ReadTimedDocument(translationLrc);
+            if (original.InvalidTimes > 0) return originalLrc;
             if (original.Entries.Count == 0) return FormatUntimedTranslation(originalLrc, translationLrc);
             if (translation.Entries.Count == 0) return originalLrc;
             var originals = Cues(original);
@@ -97,6 +98,11 @@ namespace MusicBeePlugin
             if (string.IsNullOrWhiteSpace(originalLrc)) return originalLrc;
             var extraTexts = new[] { pronunciationLrc, translationLrc };
             var original = ReadTimedDocument(originalLrc);
+            if (original.InvalidTimes > 0)
+            {
+                trace?.Invoke("Lyrics: retained original with invalid timing; no invented alignment");
+                return originalLrc;
+            }
             if (original.Entries.Count == 0) return FormatUntimedTracks(originalLrc, extraTexts, out usableTracks);
             var originals = Cues(original);
             var tracks = new List<AuxiliaryTrack>();

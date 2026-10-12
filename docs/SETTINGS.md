@@ -9,14 +9,14 @@
 - **Language overrides:** Japanese and Korean each offer Follow default, Lyrics, Lyrics + Translation, Lyrics + Pronunciation, and Lyrics + Pronunciation + Translation. Cantonese offers Follow default, Lyrics, and Lyrics + Pronunciation; it appears below Japanese and Korean. English offers Follow default, Lyrics, and Lyrics + Translation. An override replaces the default content selection for that language; it remains active even when default extras are off.
 - Pronunciation is supplied by NetEase for supported songs. Missing or unalignable extras are omitted independently; original lyrics remain available.
 - English identification uses NetEase's language metadata. French and other languages are not classified as English merely because they use Latin letters. Unresolved or mixed-language labels retain the default translation preference. Existing conservative Japanese/Korean script fallback remains.
-- **Spelling matching:** one Allow small spelling differences checkbox, enabled by default. Existing effective spelling preferences are retained.
+- **Spelling matching:** one Allow small spelling differences checkbox, enabled by default. Existing effective spelling preferences are retained in a separate field; legacy flags are repaired automatically on load for rollback. A settings draft affects lookups only after Save, including when switching interface language.
 - **Interface language / 界面语言:** Automatic / English / 简体中文. Automatic follows the process's Windows UI culture; all Chinese UI cultures select Simplified Chinese text. Changing it preserves unsaved choices and does not change the lyrics' language.
 
 ## Existing settings and rollback
 
 Existing saved Japanese/Korean and Cantonese pronunciation choices are migrated. A previous global Lyrics-only setting keeps extras off. Translation-only becomes original + translation. Existing HTTP opt-out and spelling choices are retained.
 
-The first save of an older settings file preserves `netease_config.pre-display.bak` beside `netease_config` in MusicBee's persistent plugin storage. Backups are not overwritten. Older builds receive valid legacy format values, but cannot represent every new default/override combination. Close MusicBee and restore the backup as `netease_config` if you need the exact previous preferences after rolling back.
+Loading older settings repairs legacy matching flags and preserves `netease_config.pre-spelling.bak` beside `netease_config`. Existing backups are not overwritten. Keep the repaired current file when rolling back: historical backups retain their original flags. Older builds receive valid legacy format values, but cannot represent every new default/override combination. Upstream v1.8.1 still has its own weaker first-title-segment matching.
 
 ## Download and install
 
@@ -56,4 +56,4 @@ Try Japanese triple-line output, Cantonese pronunciation, Korean output, English
 
 请测试日语三行显示、粤语发音、韩语、英语翻译开关，以及关闭英语翻译后法语歌曲是否仍能显示翻译。另请测试排列方式切换、默认选项与语言覆盖设置的关系，以及重启后的设置保存。
 
-首次保存旧版设置时，插件会在 MusicBee 的插件持久化存储目录中保留 `netease_config.pre-display.bak`，且不会覆盖已有备份。需要恢复旧版的完整设置时，请关闭 MusicBee，再将该备份恢复为 `netease_config`。旧版仅翻译模式会迁移为原文加翻译；旧版仅原文模式仍保持附加内容关闭。
+加载旧设置时会自动修复用于回退的旧匹配标志，并保留 `netease_config.pre-spelling.bak`，不会覆盖已有备份。回退时请保留修复后的设置；恢复历史备份也会恢复旧匹配标志。修改界面语言只会更新设置草稿，点击保存后才应用于歌词检索。旧版仅翻译模式会迁移为原文加翻译；旧版仅原文模式仍保持附加内容关闭。

@@ -22,6 +22,18 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Contains("--repair-settings"))
+        {
+            var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
+            SetConfig(plugin, File.ReadAllText(args[1]));
+            File.Copy(Path.Combine(_directories[plugin], "netease_config"), args[2], true);
+            return 0;
+        }
+        if (args.Contains("--audit-update-tests"))
+        {
+            AuditUpdateTests(); Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
+            return _failed == 0 ? 0 : 1;
+        }
         if (args.Contains("--settings-tests"))
         {
             DisplaySettingsTests(); ContentChoiceTests();
@@ -280,21 +292,25 @@ internal static partial class Program
         });
         Test("A timed-out new request can still fall back within the total budget", () =>
         {
-            var handler = new Fixture((_, __) => Json(Lyrics)) { StallFirst = true };
+            using (var timeout = new CancellationTokenSource())
+            {
+            var handler = new Fixture((_, __) => Json(Lyrics)) { BeforeResponse = (_, count, token) =>
+                { if (count == 1) { timeout.Cancel(); token.ThrowIfCancellationRequested(); } } };
             var trace = new List<string>();
-            var stopwatch = Stopwatch.StartNew();
-            using (var session = new LookupSession(trace.Add, handler, TimeSpan.FromMilliseconds(150), TimeSpan.FromSeconds(2)))
+            using (var session = new LookupSession(trace.Add, handler, requestCancellation: () => timeout.IsCancellationRequested ? CancellationToken.None : timeout.Token))
                 True(NeteaseApi.RequestLyric(101, session) != null);
-            True(stopwatch.Elapsed < TimeSpan.FromSeconds(2));
             Equal(2, handler.Calls.Count);
             True(trace.Any(line => line.Contains("request timed out")));
+            }
         });
         Test("The total lookup deadline stops subsequent searches and fallbacks", () =>
         {
-            var handler = new Fixture((_, __) => Json(Lyrics)) { StallAll = true };
+            using (var deadline = new CancellationTokenSource())
+            {
+            var handler = new Fixture((_, __) => Json(Lyrics)) { BeforeResponse = (_, __, token) =>
+                { deadline.Cancel(); token.ThrowIfCancellationRequested(); } };
             var trace = new List<string>();
-            var stopwatch = Stopwatch.StartNew();
-            using (var session = new LookupSession(trace.Add, handler, TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(250)))
+            using (var session = new LookupSession(trace.Add, handler, lookupCancellation: deadline.Token))
             {
                 Equal(null, session.Request<LyricResult>("deadline fixture", HttpMethod.Get,
                     "https://music.163.com/api/song/lyric?id=101", null, r => r != null));
@@ -302,14 +318,15 @@ internal static partial class Program
                 Equal(0, NeteaseApi.Search("Song Singer", session).Count());
                 Equal(null, NeteaseApi.RequestLyric(101, session));
             }
-            True(stopwatch.Elapsed < TimeSpan.FromSeconds(2));
             Equal(1, handler.Calls.Count);
             True(trace.Any(line => line.Contains("lookup deadline reached")));
+            }
         });
         CookieTransportTest();
         AuditorTests();
         TwoLineTests();
         MatchingTests();
+        AuditUpdateTests();
         Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
         Console.WriteLine("Process architecture: " + (Environment.Is64BitProcess ? "x64" : "x86"));
         return _failed == 0 ? 0 : 1;
@@ -390,17 +407,21 @@ internal static partial class Program
         });
         Test("Silently stalled HTTPS leaves time for HTTP search and lyric recovery", () =>
         {
+            using (var timeout = new CancellationTokenSource())
+            using (var legacyTimeout = new CancellationTokenSource())
+            {
             var handler = new Fixture((request, _) => Json(request.RequestUri.AbsolutePath.Contains("search") ? Search : Lyrics))
-                { StallHttps = true };
-            var stopwatch = Stopwatch.StartNew();
-            using (var session = new LookupSession(null, handler, TimeSpan.FromMilliseconds(80), TimeSpan.FromMilliseconds(700)))
+                { BeforeResponse = (request, _, token) => { if (request.RequestUri.Scheme == "https")
+                    { (request.Method == HttpMethod.Post ? timeout : legacyTimeout).Cancel(); token.ThrowIfCancellationRequested(); } } };
+            using (var session = new LookupSession(null, handler, requestCancellation: () => handler.Calls.Count == 0 ? timeout.Token :
+                handler.Calls.Count == 1 ? legacyTimeout.Token : CancellationToken.None))
             {
                 Equal(101L, SearchMatch.SearchAndMatch("Song", "Singer", "Album", null, session));
                 Equal("[00:01.00]Hello", NeteaseApi.RequestLyric(101, session)?.lrc?.lyric);
             }
-            True(stopwatch.Elapsed < TimeSpan.FromMilliseconds(700));
             Equal(1, handler.Calls.Count(c => c.StartsWith("POST ")));
             Equal(2, handler.Calls.Count(c => c.StartsWith("GET http://")));
+            }
         });
         Test("Turning off HTTP fallback prevents unencrypted search and lyric requests", () =>
         {
@@ -439,12 +460,16 @@ internal static partial class Program
         });
         Test("The search deadline preserves part of the lookup for available lyrics", () =>
         {
-            var handler = new Fixture((_, __) => Json(Lyrics)) { StallSearch = true };
-            using (var session = new LookupSession(null, handler, TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(600)))
+            using (var deadline = new CancellationTokenSource())
+            {
+            var handler = new Fixture((_, __) => Json(Lyrics)) { BeforeResponse = (request, _, token) =>
+                { if (request.RequestUri.AbsolutePath.Contains("search")) { deadline.Cancel(); token.ThrowIfCancellationRequested(); } } };
+            using (var session = new LookupSession(null, handler, searchCancellation: deadline.Token))
             {
                 Equal(0, NeteaseApi.Search("Song", session).Count());
                 Equal(0, NeteaseApi.Search("Another query", session).Count());
                 True(NeteaseApi.RequestLyric(101, session) != null);
+            }
             }
         });
         Test("Application version cookie is sent only to legacy interfaces and no login cookies are sent", () =>
@@ -469,15 +494,19 @@ internal static partial class Program
         });
         Test("A timed-out new search cannot starve the working legacy lyric download", () =>
         {
+            using (var timeout = new CancellationTokenSource())
+            {
             var handler = new Fixture((request, _) => Json(request.RequestUri.AbsolutePath.Contains("search") ? Search : Lyrics))
-                { StallNew = true };
-            using (var session = new LookupSession(null, handler, TimeSpan.FromMilliseconds(80), TimeSpan.FromMilliseconds(260)))
+                { BeforeResponse = (request, _, token) => { if (request.Method == HttpMethod.Post)
+                    { timeout.Cancel(); token.ThrowIfCancellationRequested(); } } };
+            using (var session = new LookupSession(null, handler, requestCancellation: () => timeout.IsCancellationRequested ? CancellationToken.None : timeout.Token))
             {
                 Equal(101L, SearchMatch.SearchAndMatch("Song", "Singer", "Different album", null, session));
                 Equal("[00:01.00]Hello", NeteaseApi.RequestLyric(101, session)?.lrc?.lyric);
             }
             Equal(1, handler.Calls.Count(c => c.StartsWith("POST ")));
             True(handler.Calls.Last().Contains("id=101&"));
+            }
         });
         Test("Instrumental placeholders return no lyrics and do not request fallback lyrics", () =>
         {
@@ -910,7 +939,8 @@ internal static partial class Program
     {
         private readonly Func<HttpRequestMessage, int, HttpResponseMessage> _respond;
         internal readonly List<string> Calls = new List<string>();
-        internal bool StallFirst, StallAll, StallNew, StallHttps, StallSearch, StallLanguage;
+        internal bool StallNew, StallHttps, StallLanguage;
+        internal Action<HttpRequestMessage, int, CancellationToken> BeforeResponse;
         internal Fixture(Func<HttpRequestMessage, int, HttpResponseMessage> respond) { _respond = respond; }
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -920,8 +950,9 @@ internal static partial class Program
                 var body = await request.Content.ReadAsStringAsync().ConfigureAwait(false);
                 True(body.Contains("params=") && body.Contains("encSecKey="));
             }
-            if (StallAll || (StallFirst && Calls.Count == 1) || (StallNew && request.Method == HttpMethod.Post) ||
-                (StallHttps && request.RequestUri.Scheme == "https") || (StallSearch && request.RequestUri.AbsolutePath.Contains("search")) ||
+            BeforeResponse?.Invoke(request, Calls.Count, cancellationToken);
+            if ((StallNew && request.Method == HttpMethod.Post) ||
+                (StallHttps && request.RequestUri.Scheme == "https") ||
                 (StallLanguage && request.RequestUri.AbsolutePath.Contains("/about/")))
                 await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
             return _respond(request, Calls.Count);

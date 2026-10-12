@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace MusicBeePlugin
 {
-    internal enum SongLanguage { Unknown, Cantonese, Japanese, Korean, Other, English }
+    internal enum SongLanguage { Unknown, Cantonese, Japanese, Korean, Other, English, Mandarin }
 
     internal sealed class LanguagePreferences
     {
@@ -14,6 +14,17 @@ namespace MusicBeePlugin
         private readonly Dictionary<long, CachedLanguage> _cache = new Dictionary<long, CachedLanguage>();
         private readonly object _gate = new object();
         internal const int MaximumCachedLanguages = 512;
+
+        internal bool TryGetKnownLanguage(long id, out SongLanguage language)
+        {
+            lock (_gate)
+            {
+                if (_cache.TryGetValue(id, out var cached) && cached.Expires > DateTime.UtcNow)
+                { language = cached.Language; return true; }
+            }
+            language = SongLanguage.Unknown;
+            return false;
+        }
 
         internal SongLanguage Resolve(long id, LyricResult lyrics, LookupSession session, bool requireServiceLabel = false)
         {
@@ -73,6 +84,7 @@ namespace MusicBeePlugin
                             case "粤语": case "粵語": case "cantonese": case "yue": labels.Add(SongLanguage.Cantonese); break;
                             case "日语": case "日語": case "japanese": case "ja": labels.Add(SongLanguage.Japanese); break;
                             case "英语": case "英語": case "english": case "en": labels.Add(SongLanguage.English); break;
+                            case "国语": case "國語": case "普通话": case "普通話": case "mandarin": case "cmn": labels.Add(SongLanguage.Mandarin); break;
                             case "韩语": case "韓語": case "korean": case "ko": labels.Add(SongLanguage.Korean); break;
                             default: labels.Add(SongLanguage.Other); break;
                         }

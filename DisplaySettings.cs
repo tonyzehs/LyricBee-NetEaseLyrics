@@ -12,12 +12,16 @@ namespace MusicBeePlugin
         public bool? ShowPronunciation { get; set; }
         public bool? SeparateLines { get; set; }
         public UiLanguage InterfaceLanguage { get; set; }
+        public bool? AllowSmallSpellingDifferences { get; set; }
         public AccompanyingText? CantoneseOverride { get; set; }
         public AccompanyingText? JapaneseOverride { get; set; }
         public AccompanyingText? KoreanOverride { get; set; }
         public AccompanyingText? EnglishOverride { get; set; }
 
         [JsonIgnore] internal bool UseSeparateLines => SeparateLines ?? Format != OutputFormat.Both;
+        [JsonIgnore] internal bool AllowSpelling => AllowSmallSpellingDifferences ?? (!UseLegacyMatch || Fuzzy);
+
+        internal NeteaseConfig Copy() => JsonConvert.DeserializeObject<NeteaseConfig>(JsonConvert.SerializeObject(this));
         [JsonIgnore] internal AccompanyingText DefaultContent => FromExtras(
             ShowTranslation ?? Format != OutputFormat.Original, ShowPronunciation ?? false);
         [JsonIgnore] internal bool NeedsLanguageChoice => HasPronunciation(DefaultContent) ||
@@ -39,6 +43,7 @@ namespace MusicBeePlugin
             ShowPronunciation = ReadBoolean(stored["ShowPronunciation"]) ?? false;
             SeparateLines = ReadBoolean(stored["SeparateLines"]) ?? Format != OutputFormat.Both;
             InterfaceLanguage = ReadEnum<UiLanguage>(stored["InterfaceLanguage"]) ?? UiLanguage.Automatic;
+            AllowSmallSpellingDifferences = ReadBoolean(stored["AllowSmallSpellingDifferences"]) ?? (!UseLegacyMatch || Fuzzy);
             if (modern)
             {
                 var cantonese = ReadEnum<AccompanyingText>(stored["CantoneseOverride"]);
@@ -65,6 +70,10 @@ namespace MusicBeePlugin
         {
             var stored = JObject.FromObject(this);
             stored["DisplaySettingsVersion"] = 1;
+            stored["AllowSmallSpellingDifferences"] = AllowSpelling;
+            // Upstream interprets fuzzy legacy matching as accepting the first search result.
+            stored["Fuzzy"] = false;
+            stored["UseLegacyMatch"] = false;
             // Older builds still receive valid format/content values; newer preferences remain separate.
             var choices = new[] { DefaultContent, CantoneseOverride ?? DefaultContent,
                 JapaneseOverride ?? DefaultContent, KoreanOverride ?? DefaultContent, EnglishOverride ?? DefaultContent };

@@ -50,6 +50,7 @@ namespace MusicBeePlugin
         private const string ConfigFilename = "netease_config";
         private const string NoTranslateFilename = "netease_notranslate";
         private NeteaseConfig _config = new NeteaseConfig();
+        private NeteaseConfig _settingsDraft;
         private ComboBox _formatComboBox;
         private CheckBox _fuzzyCheckBox;
         private CheckBox _allowHttpCheckBox;
@@ -108,6 +109,12 @@ namespace MusicBeePlugin
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public bool Configure(IntPtr panelHandle)
         {
+            _settingsDraft = _config.Copy();
+            return RenderSettings(panelHandle);
+        }
+
+        private bool RenderSettings(IntPtr panelHandle)
+        {
             if (panelHandle == IntPtr.Zero) return false;
             var configPanel = (Panel)Control.FromHandle(panelHandle);
             if (configPanel == null) return false;
@@ -115,7 +122,8 @@ namespace MusicBeePlugin
             foreach (Control control in configPanel.Controls.Cast<Control>().ToArray()) control.Dispose();
             configPanel.Controls.Clear();
 
-            string T(SettingsLabel label) => SettingsText.Get(label, _config.InterfaceLanguage);
+            var config = _settingsDraft;
+            string T(SettingsLabel label) => SettingsText.Get(label, config.InterfaceLanguage);
             void Label(string name, SettingsLabel caption, int y, bool heading = false)
             {
                 var label = new Label { Name = name, Text = T(caption), Location = new Point(0, y),
@@ -132,38 +140,38 @@ namespace MusicBeePlugin
             _interfaceLanguageComboBox = new ComboBox { Name = "InterfaceLanguage", DropDownStyle = ComboBoxStyle.DropDownList,
                 Location = new Point(configPanel.Controls["InterfaceLanguageLabel"].Right + 12, 0), Width = 260 };
             _interfaceLanguageComboBox.Items.AddRange(new object[] { "Automatic / 自动", "English", "简体中文" });
-            _interfaceLanguageComboBox.SelectedIndex = (int)_config.InterfaceLanguage;
+            _interfaceLanguageComboBox.SelectedIndex = (int)config.InterfaceLanguage;
             configPanel.Controls.Add(_interfaceLanguageComboBox);
 
             Label("DefaultDisplayHeading", SettingsLabel.Defaults, 36, true);
             Label("OriginalAlways", SettingsLabel.OriginalAlways, 58);
             _translationCheckBox = new CheckBox { Name = "ShowTranslation", Text = T(SettingsLabel.Translation),
-                Location = new Point(0, 80), AutoSize = true, Checked = NeteaseConfig.HasTranslation(_config.DefaultContent), ForeColor = configPanel.ForeColor };
+                Location = new Point(0, 80), AutoSize = true, Checked = NeteaseConfig.HasTranslation(config.DefaultContent), ForeColor = configPanel.ForeColor };
             _pronunciationCheckBox = new CheckBox { Name = "ShowPronunciation", Text = T(SettingsLabel.Pronunciation),
-                Location = new Point(160, 80), AutoSize = true, Checked = NeteaseConfig.HasPronunciation(_config.DefaultContent), ForeColor = configPanel.ForeColor };
+                Location = new Point(160, 80), AutoSize = true, Checked = NeteaseConfig.HasPronunciation(config.DefaultContent), ForeColor = configPanel.ForeColor };
             configPanel.Controls.Add(_translationCheckBox); configPanel.Controls.Add(_pronunciationCheckBox);
             Label("LayoutLabel", SettingsLabel.Layout, 111);
             _formatComboBox = new ComboBox { Name = "OutputLayout", DropDownStyle = ComboBoxStyle.DropDownList,
                 Location = new Point(130, 108), Width = 260 };
             _formatComboBox.Items.AddRange(new object[] { T(SettingsLabel.SeparateLines), T(SettingsLabel.SameLine) });
-            _formatComboBox.SelectedIndex = _config.UseSeparateLines ? 0 : 1;
+            _formatComboBox.SelectedIndex = config.UseSeparateLines ? 0 : 1;
             configPanel.Controls.Add(_formatComboBox);
 
             Label("LanguageOverridesHeading", SettingsLabel.Overrides, 146, true);
-            _japaneseComboBox = AddLanguageChoice(configPanel, SettingsLabel.Japanese, "JapaneseContent", 170, _config.JapaneseOverride);
-            _koreanComboBox = AddLanguageChoice(configPanel, SettingsLabel.Korean, "KoreanContent", 200, _config.KoreanOverride);
-            _cantoneseComboBox = AddLanguageChoice(configPanel, SettingsLabel.Cantonese, "CantoneseContent", 230, _config.CantoneseOverride, cantonese: true);
-            _englishComboBox = AddLanguageChoice(configPanel, SettingsLabel.English, "EnglishContent", 260, _config.EnglishOverride, true);
+            _japaneseComboBox = AddLanguageChoice(configPanel, SettingsLabel.Japanese, "JapaneseContent", 170, config.JapaneseOverride);
+            _koreanComboBox = AddLanguageChoice(configPanel, SettingsLabel.Korean, "KoreanContent", 200, config.KoreanOverride);
+            _cantoneseComboBox = AddLanguageChoice(configPanel, SettingsLabel.Cantonese, "CantoneseContent", 230, config.CantoneseOverride, cantonese: true);
+            _englishComboBox = AddLanguageChoice(configPanel, SettingsLabel.English, "EnglishContent", 260, config.EnglishOverride, true);
             var note = new Label { Name = "RefetchHint", Text = T(SettingsLabel.Refetch), Location = new Point(0, 296),
                 Size = new Size(430, 38), ForeColor = configPanel.ForeColor, AutoSize = false };
             configPanel.Controls.Add(note);
             Label("MatchingNetworkHeading", SettingsLabel.MatchingNetwork, 342, true);
             _fuzzyCheckBox = new CheckBox { Name = "SmallSpellingDifferences", Text = T(SettingsLabel.SmallDifferences),
-                Location = new Point(0, 366), Checked = !_config.UseLegacyMatch || _config.Fuzzy,
+                Location = new Point(0, 366), Checked = config.AllowSpelling,
                 AutoSize = true, ForeColor = configPanel.ForeColor };
             configPanel.Controls.Add(_fuzzyCheckBox);
             _allowHttpCheckBox = new CheckBox { Name = "AllowHttpFallback", Text = T(SettingsLabel.HttpFallback),
-                Location = new Point(0, 396), Checked = _config.AllowInsecureHttp, AutoSize = true, ForeColor = configPanel.ForeColor };
+                Location = new Point(0, 396), Checked = config.AllowInsecureHttp, AutoSize = true, ForeColor = configPanel.ForeColor };
             configPanel.Controls.Add(_allowHttpCheckBox);
 
             Action resize = () =>
@@ -181,7 +189,7 @@ namespace MusicBeePlugin
             {
                 CaptureSettings();
                 foreach (Control control in configPanel.Controls.Cast<Control>().ToArray()) control.Dispose();
-                Configure(panelHandle);
+                RenderSettings(panelHandle);
             };
             return false;
         }
@@ -193,20 +201,20 @@ namespace MusicBeePlugin
         private ComboBox AddLanguageChoice(Panel panel, SettingsLabel caption, string name, int y,
             NeteaseConfig.AccompanyingText? value, bool english = false, bool cantonese = false)
         {
-            panel.Controls.Add(new Label { Text = SettingsText.Get(caption, _config.InterfaceLanguage),
+            panel.Controls.Add(new Label { Text = SettingsText.Get(caption, _settingsDraft.InterfaceLanguage),
                 Location = new Point(0, y + 3), AutoSize = true, ForeColor = panel.ForeColor });
             var choice = new ComboBox { Name = name, DropDownStyle = ComboBoxStyle.DropDownList,
                 Location = new Point(130, y), Width = 300 };
             var values = cantonese ? new[] { NeteaseConfig.AccompanyingText.Original, NeteaseConfig.AccompanyingText.Pronunciation } :
                 english ? ContentChoices.Take(2).ToArray() : ContentChoices;
             choice.Tag = values;
-            choice.Items.Add(SettingsText.Get(SettingsLabel.FollowDefault, _config.InterfaceLanguage));
+            choice.Items.Add(SettingsText.Get(SettingsLabel.FollowDefault, _settingsDraft.InterfaceLanguage));
             foreach (var content in values)
             {
                 var label = content == NeteaseConfig.AccompanyingText.Original ? SettingsLabel.Original :
                     content == NeteaseConfig.AccompanyingText.Translation ? SettingsLabel.OriginalTranslation :
                     content == NeteaseConfig.AccompanyingText.Pronunciation ? SettingsLabel.OriginalPronunciation : SettingsLabel.AllThree;
-                choice.Items.Add(SettingsText.Get(label, _config.InterfaceLanguage));
+                choice.Items.Add(SettingsText.Get(label, _settingsDraft.InterfaceLanguage));
             }
             choice.SelectedIndex = value.HasValue ? Array.IndexOf(values, value.Value) + 1 : 0;
             choice.DropDownWidth = Math.Max(choice.Width, choice.Items.Cast<string>()
@@ -219,6 +227,7 @@ namespace MusicBeePlugin
         public void SaveSettings()
         {
             if (!CaptureSettings()) return;
+            _config = _settingsDraft.Copy();
             SaveSettingsInternal();
         }
 
@@ -228,19 +237,20 @@ namespace MusicBeePlugin
                 _translationCheckBox == null || _translationCheckBox.IsDisposed ||
                 _pronunciationCheckBox == null || _pronunciationCheckBox.IsDisposed ||
                 _fuzzyCheckBox == null || _fuzzyCheckBox.IsDisposed) return false;
-            _config.ShowTranslation = _translationCheckBox.Checked;
-            _config.ShowPronunciation = _pronunciationCheckBox.Checked;
-            _config.SeparateLines = _formatComboBox.SelectedIndex != 1;
-            _config.DisplaySettingsVersion = 1;
-            _config.InterfaceLanguage = _interfaceLanguageComboBox.SelectedIndex >= 0 ?
+            var config = _settingsDraft;
+            config.ShowTranslation = _translationCheckBox.Checked;
+            config.ShowPronunciation = _pronunciationCheckBox.Checked;
+            config.SeparateLines = _formatComboBox.SelectedIndex != 1;
+            config.DisplaySettingsVersion = 1;
+            config.InterfaceLanguage = _interfaceLanguageComboBox.SelectedIndex >= 0 ?
                 (NeteaseConfig.UiLanguage)_interfaceLanguageComboBox.SelectedIndex : NeteaseConfig.UiLanguage.Automatic;
-            _config.CantoneseOverride = SelectedContent(_cantoneseComboBox);
-            _config.JapaneseOverride = SelectedContent(_japaneseComboBox);
-            _config.KoreanOverride = SelectedContent(_koreanComboBox);
-            _config.EnglishOverride = SelectedContent(_englishComboBox);
-            _config.Fuzzy = _fuzzyCheckBox.Checked;
-            _config.UseLegacyMatch = true; // Preserve the legacy storage contract for an explicit spelling choice.
-            _config.AllowInsecureHttp = _allowHttpCheckBox.Checked;
+            config.CantoneseOverride = SelectedContent(_cantoneseComboBox);
+            config.JapaneseOverride = SelectedContent(_japaneseComboBox);
+            config.KoreanOverride = SelectedContent(_koreanComboBox);
+            config.EnglishOverride = SelectedContent(_englishComboBox);
+            config.AllowSmallSpellingDifferences = _fuzzyCheckBox.Checked;
+            config.Fuzzy = config.UseLegacyMatch = false;
+            config.AllowInsecureHttp = _allowHttpCheckBox.Checked;
             return true;
         }
 
@@ -302,6 +312,10 @@ namespace MusicBeePlugin
             if (File.Exists(p)) File.Delete(p);
             var configPath = Path.Combine(_mbApiInterface.Setting_GetPersistentStoragePath(), ConfigFilename);
             if (File.Exists(configPath)) File.Delete(configPath);
+            foreach (var suffix in new[] { ".pre9.bak", ".pre-display.bak", ".pre-spelling.bak" })
+                if (File.Exists(configPath + suffix)) File.Delete(configPath + suffix);
+            foreach (var temporary in Directory.EnumerateFiles(dataPath, ConfigFilename + ".*.tmp"))
+                if (Regex.IsMatch(Path.GetFileName(temporary), @"^netease_config\.[a-fA-F0-9]{32}\.tmp$")) File.Delete(temporary);
         }
 
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
@@ -313,6 +327,7 @@ namespace MusicBeePlugin
             if (provider != ProviderName) return null;
             try
             {
+                var config = _config;
                 // Only the requested file owns this override, even during background library scans.
                 var id = TryParseNeteaseUrl(ReadTag(sourceFileUrl, MetaDataType.Custom10));
                 var realTitle = FirstNonBlank(ReadTag(sourceFileUrl, MetaDataType.TrackTitle), trackTitle);
@@ -323,7 +338,7 @@ namespace MusicBeePlugin
                 }
                 using (var session = _sessionFactory())
                 {
-                    session.AllowInsecureHttp = _config.AllowInsecureHttp;
+                    session.AllowInsecureHttp = config.AllowInsecureHttp;
                     var candidates = id > 0 ? new[] { id } : new long[0];
                     if (id == 0)
                     {
@@ -333,27 +348,48 @@ namespace MusicBeePlugin
                         try { durationStr = _mbApiInterface.Library_GetFileProperty?.Invoke(sourceFileUrl, FilePropertyType.Duration); }
                         catch (Exception ex) { Trace("Failed to read duration: " + ex.GetType().Name); }
                         candidates = SearchMatch.SearchCandidates(realTitle, realArtist, realAlbum,
-                            ParseDurationString(durationStr), session, !_config.UseLegacyMatch || _config.Fuzzy);
+                            ParseDurationString(durationStr), session, config.AllowSpelling,
+                            ReadTag(sourceFileUrl, MetaDataType.TrackNo));
                     }
                     string result = null;
                     var bestExtras = -1;
+                    var extraAttempts = 0;
                     foreach (var candidate in candidates)
                     {
+                        // Missing originals get all three candidates; missing extras get one more listing.
+                        if (result != null)
+                        {
+                            if (extraAttempts >= 1)
+                            {
+                                session.Report("Lyrics: extra-content retry limit reached; retained available text");
+                                break;
+                            }
+                            extraAttempts++;
+                        }
                         if (candidate != candidates[0]) session.Report("Lyrics: trying compatible song ID " + candidate);
                         var attempt = NeteaseApi.RequestLyric(candidate, session);
-                        // An explicit instrumental is authoritative; do not replace it with another listing's words.
-                        if (NeteaseApi.IsInstrumental(attempt)) return result;
+                        if (NeteaseApi.IsInstrumental(attempt))
+                        {
+                            if (id > 0 || candidates.Length == 1) return result;
+                            continue;
+                        }
                         if (!LyricProcessor.HasLyricText(attempt?.lrc?.lyric)) continue;
-                        var choice = _config.DefaultContent;
-                        if (_config.NeedsLanguageChoice)
-                            choice = LanguagePreferences.Choice(_config, _languagePreferences.Resolve(candidate, attempt, session,
+                        var choice = config.DefaultContent;
+                        if (config.NeedsLanguageChoice)
+                            choice = LanguagePreferences.Choice(config, _languagePreferences.Resolve(candidate, attempt, session,
                                 // Changed content overrides also apply to songs without a pronunciation track.
-                                new[] { _config.CantoneseOverride, _config.JapaneseOverride, _config.KoreanOverride, _config.EnglishOverride }
-                                    .AnyDifferent(_config.DefaultContent)));
-                        var formatted = FormatLyrics(attempt, choice, session.Report, out var usableExtras);
+                                new[] { config.CantoneseOverride, config.JapaneseOverride, config.KoreanOverride, config.EnglishOverride }
+                                    .AnyDifferent(config.DefaultContent)));
+                        var formatted = FormatLyrics(attempt, choice, config.UseSeparateLines, session.Report, out var usableExtras);
                         if (usableExtras > bestExtras) { result = formatted; bestExtras = usableExtras; }
                         var wanted = choice == NeteaseConfig.AccompanyingText.Original ? 0 :
                             choice == NeteaseConfig.AccompanyingText.PronunciationAndTranslation ? 2 : 1;
+                        if (NeteaseConfig.HasTranslation(choice) && !LyricProcessor.HasLyricText(attempt.tlyric?.lyric) &&
+                            _languagePreferences.TryGetKnownLanguage(candidate, out var knownLanguage) && knownLanguage == SongLanguage.Mandarin)
+                        {
+                            session.Report("Lyrics: known Mandarin label; skipped missing-translation retries");
+                            wanted = NeteaseConfig.HasPronunciation(choice) ? 1 : 0;
+                        }
                         if (usableExtras >= wanted) break;
                     }
                     return result;
@@ -366,7 +402,7 @@ namespace MusicBeePlugin
             }
         }
 
-        private string FormatLyrics(LyricResult result, NeteaseConfig.AccompanyingText choice, Action<string> trace, out int usableExtras)
+        private string FormatLyrics(LyricResult result, NeteaseConfig.AccompanyingText choice, bool separateLines, Action<string> trace, out int usableExtras)
         {
             usableExtras = 0;
             var original = result?.lrc?.lyric;
@@ -375,7 +411,7 @@ namespace MusicBeePlugin
             return LyricProcessor.MergePronunciation(original,
                 NeteaseConfig.HasPronunciation(choice) ? result.romalrc?.lyric : null,
                 NeteaseConfig.HasTranslation(choice) ? result.tlyric?.lyric : null,
-                _config.UseSeparateLines, trace, out usableExtras);
+                separateLines, trace, out usableExtras);
         }
 
         private string ReadTag(string source, MetaDataType tag)
@@ -400,7 +436,7 @@ namespace MusicBeePlugin
                 var storedConfig = JObject.Parse(configText);
                 var displayConfig = (JObject)storedConfig.DeepClone();
                 foreach (var key in new[] { "DisplaySettingsVersion", "ShowTranslation", "ShowPronunciation", "SeparateLines", "InterfaceLanguage",
-                    "CantoneseOverride", "JapaneseOverride", "KoreanOverride", "EnglishOverride" }) storedConfig.Remove(key);
+                    "CantoneseOverride", "JapaneseOverride", "KoreanOverride", "EnglishOverride", "AllowSmallSpellingDifferences" }) storedConfig.Remove(key);
                 var japanese = storedConfig["JapaneseText"];
                 var korean = storedConfig["KoreanText"];
                 var cantonese = storedConfig["EnableCantonesePronunciation"];
@@ -415,16 +451,18 @@ namespace MusicBeePlugin
                     (cantonese.Type == JTokenType.Boolean || cantonese.Type == JTokenType.String) &&
                     bool.TryParse(cantonese.ToString(), out var enabled) && enabled;
                 _config.LoadDisplaySettings(displayConfig);
-                if (storedConfig["Format"]?.ToString() == "3")
+                var repairSpelling = displayConfig["AllowSmallSpellingDifferences"] == null || _config.Fuzzy || _config.UseLegacyMatch;
+                var repairFormat = storedConfig["Format"]?.ToString() == "3";
+                if (repairSpelling || repairFormat)
                 {
                     try
                     {
-                        // Migration failures must not discard valid loaded preferences, including HTTP opt-out.
-                        var backup = configPath + ".pre9.bak";
-                        if (!File.Exists(backup)) File.Copy(configPath, backup);
-                        if (SaveSettingsInternal()) Trace("Settings: migrated two-line preference to rollback-safe storage; backup retained");
+                        // Make all required backups before the first write; failure retains loaded preferences.
+                        foreach (var suffix in new[] { repairSpelling ? ".pre-spelling.bak" : null, repairFormat ? ".pre9.bak" : null }.Where(s => s != null))
+                            if (!File.Exists(configPath + suffix)) File.Copy(configPath, configPath + suffix);
+                        if (SaveSettingsInternal()) Trace("Settings: repaired rollback storage; backups retained");
                     }
-                    catch (Exception ex) { Trace("Settings migration deferred: " + ex.GetType().Name); }
+                    catch (Exception ex) { Trace("Settings rollback repair deferred: " + ex.GetType().Name); }
                 }
             }
             catch (Exception ex)

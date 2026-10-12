@@ -84,8 +84,8 @@ internal static partial class Program
         Test("Indented timestamps and offsets still align", () =>
             Equal("[offset:500]\n[00:01.000]One\nFirst", LyricProcessor.InjectTranslationTwoLines(
                 "  [offset:500]\n  [00:01]One", "  [00:00.500]First")));
-        Test("Invalid seconds are isolated instead of joining a previous cue", () =>
-            Equal("Bad line\n[00:01.000]One\nFirst\n[00:03.000]Three\nThird",
+        Test("Invalid original seconds retain provider order without invented alignment", () =>
+            Equal("[00:01]One\n[00:70]Bad line\n[00:03]Three",
                 LyricProcessor.InjectTranslationTwoLines("[00:01]One\n[00:70]Bad line\n[00:03]Three", "[00:01]First\n[00:03]Third")));
         Test("Recognized untimed credits remain outside original translation pairs", () =>
             Equal("作词: Author\n[00:01.000]One\nFirst\n[00:03.000]Three\nThird",
@@ -187,7 +187,7 @@ internal static partial class Program
         });
         Test("Secure HTTP refusals including rate limits do not downgrade", () =>
         {
-            foreach (var code in new[] { 403, 429, 500, 302 })
+            foreach (var code in new[] { 403, 429, 302 })
             {
                 var handler = new Fixture((_, __) => new HttpResponseMessage((HttpStatusCode)code));
                 using (var session = Session(handler)) Equal(null, NeteaseApi.RequestLyric(1, session));

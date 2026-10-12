@@ -16,7 +16,7 @@ Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https:
 3. Click the **Restart** button that appears. MusicBee will restart with the updated plugin.
 4. Re-fetch lyrics to apply display or matching changes to previously saved text.
 
-Before the first save of older settings, it preserves `netease_config.pre-display.bak` beside `netease_config` in persistent plugin storage. To restore exact previous preferences after rollback, close MusicBee and restore that backup as `netease_config`.
+Older settings are repaired automatically when the plugin loads, with the previous file retained as `netease_config.pre-spelling.bak`. Keep the repaired settings when rolling back; restoring a historical backup also restores its old matching flags. Upstream v1.8.1 retains its own weaker matching behavior.
 
 # 下载与安装
 
@@ -36,4 +36,4 @@ Before the first save of older settings, it preserves `netease_config.pre-displa
 3. 点击出现的 **Restart（重启）**按钮。MusicBee 将重启并加载更新后的插件。
 4. 重新搜索歌词，以将显示或匹配变化应用于之前保存的文本。
 
-首次保存旧设置前，会在插件持久化存储目录中的 `netease_config` 旁保留 `netease_config.pre-display.bak`。回退后如需恢复原有完整设置，请关闭 MusicBee，再将该备份恢复为 `netease_config`。
+插件加载时会自动修复旧设置，并将原文件保留为 `netease_config.pre-spelling.bak`。回退时请保留修复后的设置；恢复历史备份也会恢复其中的旧匹配选项。上游 v1.8.1 本身仍采用较弱的匹配规则。

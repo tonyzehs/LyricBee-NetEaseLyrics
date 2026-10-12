@@ -1,5 +1,11 @@
 # Build and test
 
+The current local test build is **1.9.5-test.1** (assembly/file version 1.9.5.1). Its packaged DLL passes 331 checks in each isolated x64/x86 process. It has not been published. `tests/AuditUpdateTests.cs` covers load-time rollback repair, failed repair, Cancel/Save after interface switching, bounded extra retries, per-listing instrumental recovery, cached Mandarin labels, 5xx recovery, guarded title normalization and uninstall cleanup. Deadline fixtures control linked cancellation tokens instead of relying on tiny timed waits.
+
+For independent rollback probes, compile `tests/RollbackProbe.cs` as a standalone .NET Framework console executable and run `RollbackProbe.exe plugin.dll repaired-settings.json http://127.0.0.1:PORT`. Each invocation loads one shipped DLL and exercises its lookup through a local fixture proxy; the proxy must serve all NetEase HTTP/HTTPS responses locally. `NeteaseLyricsTest.exe --repair-settings old.json repaired.json` exports the actual load-time repair for these probes. Tests against published v1.8.1, v1.9.0, pre.7 and 1.9.3 confirm conservative legacy flags. All four reject an unrelated first listing; v1.8.1 still accepts a same-title cover because its own matcher checks only the first title segment. The other three select the correct recording in that fixture. This limit is separate from the repaired settings regression.
+
+Keep the repaired settings during rollback. The pre-spelling/pre-display/pre9 backups are historical snapshots and can restore unsafe legacy flags. Old builds saving settings can still discard preferences they do not support.
+
 Use Windows with .NET Framework 4.8 installed to run the plugin/tests and the .NET SDK selected by `global.json` to build. The framework reference-assembly package restores automatically; Visual Studio or a developer pack is not required.
 
 From the repository root, run:
@@ -26,7 +32,7 @@ An optional live smoke test makes a public search and known-ID lyric requests, i
 
 An additional optional `--live-recording` check sends the public metadata in the embedded "By Your Side" fixture to NetEase. It compares automatic selection and lyrics with the known recording after an earlier broad search, then checks both matching modes through the MusicBee callback with Custom10 absent. It prints IDs/status only; downloaded lyrics are not saved.
 
-Before a release, install the ZIP in MusicBee, check default extras, both layouts, language overrides, interface language and the spelling checkbox, change/reopen settings, perform a background lookup for a different track while another song plays, and retry lyrics with desktop and phone-share Custom10 song URLs. Confirm the plugin description says `NetEase lyrics. Build 1.9.4`; The plugin name should be `LyricBee — NetEase Lyrics`. Native TLS must be tested inside MusicBee, since a test executable can inherit different runtime/network defaults. Record the MusicBee version, expected NetEase ID, observed lyric identity, translation behavior and outcome for each case below.
+Before a release, install the ZIP in MusicBee, check default extras, both layouts, language overrides, interface language and the spelling checkbox, change/reopen settings, perform a background lookup for a different track while another song plays, and retry lyrics with desktop and phone-share Custom10 song URLs. Confirm the plugin description shows the installed build number; the plugin name should be `LyricBee — NetEase Lyrics`. Native TLS must be tested inside MusicBee, since a test executable can inherit different runtime/network defaults. Record the MusicBee version, expected NetEase ID, observed lyric identity, translation behavior and outcome for each case below. Change the interface language after editing controls, then Cancel; check both unchanged live lookups and unchanged settings on disk before reopening the panel and saving.
 
 MusicBee verification checklist (the automated suite does not cover these checks):
 
