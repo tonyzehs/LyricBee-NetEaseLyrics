@@ -62,3 +62,5 @@ try {
     }
     Remove-Item -LiteralPath $resolvedFixture -Recurse -Force
 }
+# Expected build rejections leave a native exit code of 1. Successful checks must report success to CI callers.
+$global:LASTEXITCODE = 0
