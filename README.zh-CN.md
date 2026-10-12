@@ -4,11 +4,11 @@
 
 为 [MusicBee](https://getmusicbee.com/) 获取网易云音乐的同步歌词，并可显示翻译和发音。
 
-LyricBee 是 [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics) 的独立维护版本，原作者为 Charlie Jiang。项目延续 **1.9.1-pre.1–pre.12** 期间的可靠性、歌曲匹配和显示改进，并保留原许可证和上游 Git 历史。后续开发及问题反馈在本仓库的 **master** 分支进行。[此前的分支仓库](https://github.com/tonyzehs/MusicBee-NeteaseLyrics)保留历史下载链接。
+LyricBee 是 [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics) 的独立维护版本，原作者为 Charlie Jiang。项目延续 **1.9.1-pre.1–pre.12** 期间的可靠性、歌曲匹配和显示改进，并保留原许可证和上游 Git 历史。开发在本仓库的 **dev** 分支进行，稳定更新保留在 **master**，问题反馈也在本仓库处理。[此前的分支仓库](https://github.com/tonyzehs/MusicBee-NeteaseLyrics)保留历史下载链接。
 
 ## 新增功能
 
-[![MusicBee“正在播放”面板同时高亮日语歌词、发音和中文翻译](docs/screenshots/japanese-three-line.png)](docs/screenshots/japanese-three-line.png)
+[![MusicBee“正在播放”面板同时高亮日语歌词、发音和中文翻译](docs/screenshots/japanese-three-line.webp)](docs/screenshots/japanese-three-line.webp)
 
 ### 原文、翻译和发音显示
 
@@ -68,7 +68,7 @@ LyricBee 是 [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBe
 
 | 日语：原文 + 中文翻译 | 粤语：原文 + 发音 |
 | :---: | :---: |
-| [<img src="docs/screenshots/japanese-two-line.png" alt="MusicBee 同时高亮日语原文和中文翻译" width="400">](docs/screenshots/japanese-two-line.png) | [<img src="docs/screenshots/cantonese-two-line.png" alt="MusicBee 同时高亮粤语原文和罗马字发音" width="400">](docs/screenshots/cantonese-two-line.png) |
+| [<img src="docs/screenshots/japanese-two-line.webp" alt="MusicBee 同时高亮日语原文和中文翻译" width="400">](docs/screenshots/japanese-two-line.webp) | [<img src="docs/screenshots/cantonese-two-line.webp" alt="MusicBee 同时高亮粤语原文和罗马字发音" width="400">](docs/screenshots/cantonese-two-line.webp) |
 
 ### 无时间戳歌词
 
@@ -112,19 +112,20 @@ netease=29126914
 
 支持桌面及手机分享的歌曲链接；专辑、歌单、艺人及无关域名的链接会被拒绝。手动指定值只属于正在检索的文件，包括另一首歌正在播放时进行的后台检索。
 
-### 拼写匹配与网络选项
+### 匹配、网络与隐私
 
 **允许少量拼写差异**采用单个复选框，默认开启。关闭后要求更严格的拼写一致性。升级会保留此前实际生效的拼写偏好，编号、艺人及录音版本检查仍然有效。
 
 **Allow HTTP fallback (unencrypted metadata)** 默认启用。插件先尝试 HTTPS；只有旧版 HTTPS 接口发生传输故障后，才允许使用明文 HTTP。安全接口的 HTTP/API 拒绝响应会阻止本次检索降级。关闭此选项即可要求只用 HTTPS。可选的歌曲语言信息请求始终使用 HTTPS。
 
-无需登录或导入账号 Cookie。匿名服务端 Cookie 不会在请求间保存和回放。插件向 MusicBee 返回歌词文本，显示和保存由 MusicBee 完成。
+搜索会向网易云发送歌曲标题、艺人及专辑，歌词请求会发送网易云歌曲 ID。无需登录，不使用账号。
+使用 HTTP 回退时，这些元数据以未加密形式发送。匿名服务端 Cookie 不会在请求间保存和回放。插件向 MusicBee 返回歌词文本，显示和保存由 MusicBee 完成。
 
 ## 下载与安装
 
 从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。安装包包含 `mb_NeteaseLyrics.dll`、许可证、署名文件及双语安装说明，运行依赖已嵌入 DLL。每次发布同时提供源码包和校验值。历史开发版本保留供参考，正常安装请使用最新稳定版本。
 
-插件适用于 Windows 和 .NET Framework 4.8。
+需要 Windows 上的 MusicBee 3.x 和 .NET Framework 4.8。已在 MusicBee 3.6.9668（Microsoft Store 版）中测试。
 
 1. 打开 MusicBee 的**首选项 → 插件**，使用“添加插件”选择 ZIP，并启用 **LyricBee — NetEase Lyrics**。
 2. 在**标签 (2)** 中调整歌词提供者优先级，使用 **Netease Cloud Music**。
@@ -142,11 +143,18 @@ netease=29126914
 
 MusicBee 会保留已经下载或写入文件的歌词。安装更新或重新播放不会自动替换这些文本。评估新的检索结果时，请先清除或替换错误歌词，再重新搜索。
 
+## 常见问题
+
+- **找不到歌词：**检查**标签 (2)**中的提供者优先级，重新搜索，并尝试在 **Custom10** 中填入正确的网易云歌曲链接。若 HTTPS 被阻断，请检查 HTTP 回退设置。
+- **匹配到错误歌曲：**将 **Custom10** 设为正确的歌曲链接或 `netease=ID`，再次搜索。
+- **仍显示旧歌词：**MusicBee 会保留已下载或嵌入的歌词。请清除旧文本后重新获取。
+- **反馈问题：**提供网易云歌曲链接、MusicBee 版本、LyricBee 版本及插件的 MusicBee 跟踪日志。
+
 ## 构建与开发历史
 
 Windows/.NET 构建及验证说明见 [BUILDING.md](BUILDING.md)，各阶段的详细变更见 [CHANGELOG.md](CHANGELOG.md)。在仓库根目录运行 `build.ps1` 即可构建、测试并打包插件。
 
-当前构建使用包含嵌入依赖的发布 DLL，在 **64 位和 32 位测试进程中均通过 313 项回归检查**。测试覆盖 MusicBee 回调、匹配、时间戳、配置和受控网络故障，不能替代实际 MusicBee 测试，也不保证网易云在所有地区均可访问。
+离线测试覆盖 MusicBee 回调、匹配、时间戳、配置和受控网络故障，不能替代实际 MusicBee 测试，也不保证网易云在所有地区均可访问。
 
 [发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)包含此前的开发里程碑及 LyricBee 版本。各发布保留对应构建的安装包，较小的开发步骤合并到下一里程碑中。预发布标签补零，以便按编号排列。标签指向相应源码快照；历史构建的发布日期反映其公开发布的时间。源码包保留各自构建时的文档。
 
@@ -162,26 +170,15 @@ Windows/.NET 构建及验证说明见 [BUILDING.md](BUILDING.md)，各阶段的�
 | [1.9.3](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.3) | 1.9.3 | 独立 LyricBee 项目及显示名称 |
 | [1.9.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.4) | 1.9.4-test.1、test.2、1.9.4 | 双语设置、独立附加内容、语言覆盖设置及简化拼写选项 |
 
-## 相对上游 v1.9.0-pre 的修复、维护与其他改进
+## 相对上游 v1.9.0 的修复
 
-### 问题修复
+- 安全处理失败、不完整的网络响应及缺失标签，避免崩溃。
+- 核对标题、艺人、专辑、时长和录音版本，减少错配；可兼容的重复条目可补充缺失歌词。
+- 翻译和发音逐行对齐，保留可用原文、时间信息及 offset。
+- 限制检索等待时间；HTTPS 故障时可尝试其他接口，也可关闭明文 HTTP 回退。
+- 英语与简体中文设置将歌词内容、排列方式和语言覆盖设置分开，并保留已有偏好。
+- 移除未使用的依赖，DLL 约 1.1 MB；采用锁定依赖、离线回归样本和 Windows CI。
 
-- 安全处理拒绝访问、格式错误、不完整或缺失的网络响应，避免崩溃；新版接口成功响应却没有可用歌词时，尝试旧版歌词接口。
-- 安全处理缺失标签及带小数的时长；文件标签不可用时使用 MusicBee 回调信息。未知时长不再使最短候选占优。
-- 以有界评分、录音信息核对及歧义拒绝取代平方时长惩罚和未经核对的首条结果，减少错误歌曲配对。
-- 保留 AC/DC、Simon & Garfunkel、Tyler, The Creator 等真实艺人名；识别实际的合作艺人标记，避免损坏 “feather”“featuring” 等文字。
-- 后台检索不会借用正在播放歌曲的 Custom10；核验手动指定值，并支持手机歌曲分享链接。
-- 按数值规范化和排序时间戳，保留元数据与 offset，处理重复及同时出现的歌词段落。每条附加歌词最多匹配一次，误差上限为 50 毫秒，并谨慎比较原始时间与 offset 调整后的时间。
-- 保留无时间戳原文，忽略空白或仅斜杠组成的附加占位文本，避免多余分隔符。明确的纯音乐响应及网易云“纯音乐，请欣赏”占位文本视为无歌词。
-- 验证保存的设置，单独处理损坏的新字段，原子保存，并在迁移无法写入时保留有效选项。双行选项以兼容旧版本的方式保存。
-
-### 维护与其他改进
-
-- 单次检索限制为 30 秒，并为歌词获取预留时间。搜索及歌词阶段各最多发送 9 次请求，包含回退和可选语言信息请求；同次检索内跳过已超时的接口。
-- 复用网络客户端，但不回放匿名服务端 Cookie，禁用自动重定向，并提供关闭 HTTP 回退的选项。此前分支仓库 pre.1/pre.2 引入的 Cookie 回放问题已在 pre.3 修复。
-- Release 构建提供简洁的 MusicBee 跟踪日志，记录故障、匹配规则及兼容条目重试，不记录下载的歌词正文或本地文件路径。
-- 使用 SDK 风格项目、固定 SDK、锁定依赖、独立构建打包脚本和 Windows CI。移除未使用的 Harmony，只嵌入必要运行依赖，使 DLL 从上游约 4 MB 缩小到约 1.1 MB。
-- 增加录制的公共搜索元数据、合成歌词测试样本、两种进程架构测试、实际本地回环网络测试、设置兼容性检查及打包校验值。不同目录中重建的文件未保证逐字节一致。
-- 缩短被截断的设置说明，保留已有选择，将拼写匹配简化为单个复选框，并分离默认附加内容、通用排列方式和语言覆盖设置。增加英语/简体中文界面及显示设置迁移前的回退备份。
+完整列表见 [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md)（英语）。
 
 项目继续使用 [Apache 2.0](LICENSE)，所采用的 API 代码保留 [Zony 的 MIT 声明](LICENSE-Zony)。原插件及其上游历史归功于 Charlie Jiang 和上游贡献者。LyricBee 由 [Tony Y](https://github.com/tonyzehs) 维护，署名说明见 [NOTICE](NOTICE)。

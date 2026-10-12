@@ -4,11 +4,11 @@
 
 A lyrics retrieval plugin for [MusicBee](https://getmusicbee.com/) that downloads synchronized lyrics from NetEase Cloud Music (网易云音乐), with optional translation and pronunciation.
 
-LyricBee is an independently maintained continuation of [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics), originally written by Charlie Jiang. It includes the reliability, matching and display improvements developed through **1.9.1-pre.1–pre.12**. The original licenses and upstream Git history are retained. Ongoing development and issue tracking take place in this repository on **master**. The [previous fork](https://github.com/tonyzehs/MusicBee-NeteaseLyrics) preserves historical download links.
+LyricBee is an independently maintained continuation of [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics), originally written by Charlie Jiang. It includes the reliability, matching and display improvements developed through **1.9.1-pre.1–pre.12**. The original licenses and upstream Git history are retained. Development takes place on **dev**, with stable updates on **master** and issue tracking in this repository. The [previous fork](https://github.com/tonyzehs/MusicBee-NeteaseLyrics) preserves historical download links.
 
 ## Feature additions
 
-[![Japanese lyrics, pronunciation and Chinese translation highlighted together in MusicBee's Now Playing panel](docs/screenshots/japanese-three-line.png)](docs/screenshots/japanese-three-line.png)
+[![Japanese lyrics, pronunciation and Chinese translation highlighted together in MusicBee's Now Playing panel](docs/screenshots/japanese-three-line.webp)](docs/screenshots/japanese-three-line.webp)
 
 ### Original, translation and pronunciation displays
 
@@ -68,7 +68,7 @@ Click either preview to open the full-size screenshot.
 
 | Japanese: lyrics + Chinese translation | Cantonese: lyrics + pronunciation |
 | :---: | :---: |
-| [<img src="docs/screenshots/japanese-two-line.png" alt="Japanese lyrics and Chinese translation highlighted together in MusicBee" width="400">](docs/screenshots/japanese-two-line.png) | [<img src="docs/screenshots/cantonese-two-line.png" alt="Cantonese lyrics and romanized pronunciation highlighted together in MusicBee" width="400">](docs/screenshots/cantonese-two-line.png) |
+| [<img src="docs/screenshots/japanese-two-line.webp" alt="Japanese lyrics and Chinese translation highlighted together in MusicBee" width="400">](docs/screenshots/japanese-two-line.webp) | [<img src="docs/screenshots/cantonese-two-line.webp" alt="Cantonese lyrics and romanized pronunciation highlighted together in MusicBee" width="400">](docs/screenshots/cantonese-two-line.webp) |
 
 ### Untimed lyrics
 
@@ -112,19 +112,20 @@ netease=29126914
 
 Desktop and phone-share song links are supported. Album, playlist, artist and unrelated-domain links are rejected. The override belongs to the file being searched, including background lookups while a different song is playing.
 
-### Matching and network options
+### Matching, network and privacy
 
 **Allow small spelling differences** is a single checkbox, enabled by default. Turning it off requires stricter spelling agreement. Existing effective spelling preferences are retained when upgrading. Number, artist and recording checks still apply.
 
 **Allow HTTP fallback (unencrypted metadata)** is enabled by default. HTTPS is tried first. Plain HTTP is used only after a transport failure on the legacy HTTPS interface; a secure HTTP/API refusal prevents that downgrade for the lookup. Turn this option off to require HTTPS. Optional language metadata always uses HTTPS.
 
-No login or account cookie is required. Anonymous server cookies are not stored and replayed between requests. The plugin supplies lyric text to MusicBee; MusicBee handles display and storage.
+Searches send the song’s title, artist and album to NetEase; lyric requests send the NetEase song ID. No login or account is used.
+When HTTP fallback is used, that metadata is sent without encryption. Anonymous server cookies are not stored and replayed between requests. The plugin supplies lyric text to MusicBee; MusicBee handles display and storage.
 
 ## Download and install
 
 Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll`, the license/attribution files, and bilingual installation instructions; runtime dependencies are embedded. Source packages and checksums are available with each release. Older development releases are retained for reference; use the latest stable release for normal installation.
 
-The plugin targets Windows and .NET Framework 4.8.
+Requires MusicBee 3.x on Windows with .NET Framework 4.8. Tested with MusicBee 3.6.9668 (Microsoft Store edition).
 
 1. Open MusicBee’s **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**.
 2. In **Tags (2)**, set the lyrics provider priority to use **Netease Cloud Music**.
@@ -142,11 +143,18 @@ The plugin targets Windows and .NET Framework 4.8.
 
 MusicBee can keep lyrics it has already downloaded or embedded. Installing an update or restarting playback does not replace that stored text. Clear or replace incorrect lyrics and search again to evaluate a new lookup.
 
+## Troubleshooting
+
+- **No lyrics found:** check the provider priority under **Tags (2)**, re-fetch lyrics, and try the correct NetEase song link in **Custom10**. If HTTPS is blocked, check the HTTP fallback setting.
+- **Wrong song:** set **Custom10** to the correct NetEase song link or `netease=ID`, then search again.
+- **Old lyrics still shown:** MusicBee keeps downloaded or embedded lyrics. Clear the stored text and re-fetch it.
+- **Reporting a problem:** include the NetEase song link, MusicBee version, LyricBee version and the plugin’s MusicBee trace lines.
+
 ## Build and development history
 
 See [BUILDING.md](BUILDING.md) for the Windows/.NET build instructions and validation details, and [CHANGELOG.md](CHANGELOG.md) for the step-by-step changes. Run `build.ps1` from the repository root to build, test and package the plugin.
 
-The latest build passes **313 regression checks in both 64-bit and 32-bit test processes**, using the packaged DLL with embedded dependencies. Fixtures cover the MusicBee callback, matching, timing, configuration and controlled network failures; they do not replace native MusicBee testing or guarantee NetEase availability in every region.
+Offline fixtures cover the MusicBee callback, matching, timing, configuration and controlled network failures; they do not replace native MusicBee testing or guarantee NetEase availability in every region.
 
 The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases) includes the historical development milestones and LyricBee releases. Each release uses its original build packages; smaller updates are included in the next milestone. Padded prerelease tags keep the listing in numeric order. Tags identify archived source snapshots, and release dates reflect their publication. Source packages include the documentation from their respective builds.
 
@@ -162,26 +170,15 @@ The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/release
 | [1.9.3](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.3) | 1.9.3 | Standalone LyricBee project and display name |
 | [1.9.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.4) | 1.9.4-test.1, test.2, 1.9.4 | Bilingual settings, independent extras, language overrides and simpler spelling controls |
 
-## Bug fixes, maintenance and other improvements over upstream v1.9.0-pre
+## Fixes over upstream v1.9.0
 
-### Bug fixes
+- Failed or incomplete network answers and missing tags return safely instead of crashing.
+- Title, artist, album, duration and recording-version checks reduce wrong-song matches; compatible duplicate listings can supply missing lyrics.
+- Translation and pronunciation align line by line, retaining useful originals, timing metadata and offsets.
+- Bounded lookups recover through another interface when HTTPS fails, with an option to disable plain-HTTP fallback.
+- English and Simplified Chinese settings separate lyric content, layout and language overrides while preserving saved preferences.
+- Unused dependencies are removed: the DLL is about 1.1 MB, with locked builds, offline regression fixtures and Windows CI.
 
-- Handle refused, malformed, incomplete and missing network answers without crashing; try the legacy lyric interface when a successful newer response contains no usable lyrics.
-- Handle missing tags and fractional durations safely, and use MusicBee's callback metadata when file tags are unavailable. An unknown duration no longer favors the shortest candidate.
-- Replace the squared duration penalty and unchecked first-result selection with bounded scoring, identity checks and ambiguity rejection, reducing wrong-song pairing.
-- Preserve real artist names such as AC/DC, Simon & Garfunkel and Tyler, The Creator; parse actual featured-artist clauses without damaging words such as “feather” or “featuring.”
-- Prevent background lookups from borrowing Custom10 from the currently playing song; validate overrides and support mobile song links.
-- Normalize and sort lyric times numerically, retain metadata/offsets, handle repeated and simultaneous cues, and align each extra once within the firm 50 ms limit. Compare raw and adjusted clocks conservatively.
-- Preserve untimed originals, omit blank/slash-only auxiliary placeholders, and avoid trailing separators. Treat explicit instrumental responses and NetEase's pure-music placeholder as no lyrics.
-- Validate saved settings, isolate malformed newer preference fields, save atomically and preserve valid choices when migration cannot be written. Store the two-line preference in an older-compatible format.
-
-### Maintenance and other improvements
-
-- Bound each lookup to 30 seconds, reserving lyric-fetching time after search. Cap actual sends at nine search and nine lyric-phase requests, including fallback and optional language metadata; stop reusing timed-out interfaces within that lookup.
-- Reuse requests without replaying anonymous server cookies, disable automatic redirects, and provide an explicit HTTP fallback opt-out. The cookie replay problem introduced in this fork's pre.1/pre.2 builds was corrected in pre.3.
-- Emit concise MusicBee trace diagnostics in Release builds for failures, matching rules and compatible-listing retries, without logging downloaded lyric bodies or local file paths.
-- Use an SDK-style project, pinned SDK, locked dependencies, an isolated build/package script and Windows CI. Remove unused Harmony and embed only required runtime dependencies, reducing the DLL from roughly 4 MB upstream to roughly 1.1 MB.
-- Add permanent recorded-metadata and synthetic lyric fixtures, both process architectures, real loopback transport probes, settings compatibility checks and reproducible packaging checksums. Byte-identical rebuilds in different folders are not claimed.
-- Shorten clipped settings descriptions, retain saved preferences, simplify spelling matching to one checkbox, and separate default extras, common layout and language overrides. Add English/Simplified Chinese settings and a rollback backup for the new display preferences.
+See [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md) for the full list.
 
 The project remains under [Apache 2.0](LICENSE), with the retained [Zony MIT notice](LICENSE-Zony) for adopted API code. Credit for the original plugin and its upstream history belongs to Charlie Jiang and the upstream contributors. LyricBee is maintained by [Tony Y](https://github.com/tonyzehs). See [NOTICE](NOTICE) for attribution.

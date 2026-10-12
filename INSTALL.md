@@ -1,6 +1,6 @@
 # Download and install
 
-Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). Use the installation ZIP; the source ZIP is for development. Windows and .NET Framework 4.8 are required.
+Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). Use the installation ZIP; the source ZIP is for development. Requires MusicBee 3.x on Windows with .NET Framework 4.8. Tested with MusicBee 3.6.9668 (Microsoft Store edition).
 
 1. In MusicBee’s **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**.
 2. Set **Netease Cloud Music** in the lyric-provider priority under **Tags (2)**.
@@ -20,7 +20,7 @@ Older settings are repaired automatically when the plugin loads, with the previo
 
 # 下载与安装
 
-从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。请选择安装 ZIP，源码 ZIP 供开发使用。需要 Windows 和 .NET Framework 4.8。
+从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。请选择安装 ZIP，源码 ZIP 供开发使用。需要 Windows 上的 MusicBee 3.x 和 .NET Framework 4.8。已在 MusicBee 3.6.9668（Microsoft Store 版）中测试。
 
 1. 在 MusicBee 的**首选项 → 插件**中使用“添加插件”，选择 ZIP 并启用 **LyricBee — NetEase Lyrics**。
 2. 在**标签 (2)**的歌词提供者优先级中选择 **Netease Cloud Music**。
