@@ -150,6 +150,17 @@ MusicBee can keep lyrics it has already downloaded or embedded. Installing an up
 - **Old lyrics still shown:** MusicBee keeps downloaded or embedded lyrics. Clear the stored text and re-fetch it.
 - **Reporting a problem:** include the NetEase song link, MusicBee version, LyricBee version and the plugin’s MusicBee trace lines.
 
+## Fixes over upstream v1.9.0
+
+- Failed or incomplete network answers and missing tags return safely instead of crashing.
+- Title, artist, album, duration and recording-version checks reduce wrong-song matches; compatible duplicate listings can supply missing lyrics.
+- Translation and pronunciation align line by line, retaining useful originals, timing metadata and offsets.
+- Bounded lookups recover through another interface when HTTPS fails, with an option to disable plain-HTTP fallback.
+- English and Simplified Chinese settings separate lyric content, layout and language overrides while preserving saved preferences.
+- Unused dependencies are removed: the DLL is about 1.1 MB, with locked builds, offline regression fixtures and Windows CI.
+
+See [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md) for the full list.
+
 ## Build and development history
 
 See [BUILDING.md](BUILDING.md) for the Windows/.NET build instructions and validation details, and [CHANGELOG.md](CHANGELOG.md) for the step-by-step changes. Run `build.ps1` from the repository root to build, test and package the plugin.
@@ -169,16 +180,5 @@ The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/release
 | [1.9.2](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.2) | pre.12, 1.9.2 | Language choices and translation defaults |
 | [1.9.3](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.3) | 1.9.3 | Standalone LyricBee project and display name |
 | [1.9.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.4) | 1.9.4-test.1, test.2, 1.9.4 | Bilingual settings, independent extras, language overrides and simpler spelling controls |
-
-## Fixes over upstream v1.9.0
-
-- Failed or incomplete network answers and missing tags return safely instead of crashing.
-- Title, artist, album, duration and recording-version checks reduce wrong-song matches; compatible duplicate listings can supply missing lyrics.
-- Translation and pronunciation align line by line, retaining useful originals, timing metadata and offsets.
-- Bounded lookups recover through another interface when HTTPS fails, with an option to disable plain-HTTP fallback.
-- English and Simplified Chinese settings separate lyric content, layout and language overrides while preserving saved preferences.
-- Unused dependencies are removed: the DLL is about 1.1 MB, with locked builds, offline regression fixtures and Windows CI.
-
-See [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md) for the full list.
 
 The project remains under [Apache 2.0](LICENSE), with the retained [Zony MIT notice](LICENSE-Zony) for adopted API code. Credit for the original plugin and its upstream history belongs to Charlie Jiang and the upstream contributors. LyricBee is maintained by [Tony Y](https://github.com/tonyzehs). See [NOTICE](NOTICE) for attribution.

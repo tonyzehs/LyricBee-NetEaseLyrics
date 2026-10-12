@@ -150,6 +150,17 @@ MusicBee 会保留已经下载或写入文件的歌词。安装更新或重新�
 - **仍显示旧歌词：**MusicBee 会保留已下载或嵌入的歌词。请清除旧文本后重新获取。
 - **反馈问题：**提供网易云歌曲链接、MusicBee 版本、LyricBee 版本及插件的 MusicBee 跟踪日志。
 
+## 相对上游 v1.9.0 的修复
+
+- 安全处理失败、不完整的网络响应及缺失标签，避免崩溃。
+- 核对标题、艺人、专辑、时长和录音版本，减少错配；可兼容的重复条目可补充缺失歌词。
+- 翻译和发音逐行对齐，保留可用原文、时间信息及 offset。
+- 限制检索等待时间；HTTPS 故障时可尝试其他接口，也可关闭明文 HTTP 回退。
+- 英语与简体中文设置将歌词内容、排列方式和语言覆盖设置分开，并保留已有偏好。
+- 移除未使用的依赖，DLL 约 1.1 MB；采用锁定依赖、离线回归样本和 Windows CI。
+
+完整列表见 [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md)（英语）。
+
 ## 构建与开发历史
 
 Windows/.NET 构建及验证说明见 [BUILDING.md](BUILDING.md)，各阶段的详细变更见 [CHANGELOG.md](CHANGELOG.md)。在仓库根目录运行 `build.ps1` 即可构建、测试并打包插件。
@@ -169,16 +180,5 @@ Windows/.NET 构建及验证说明见 [BUILDING.md](BUILDING.md)，各阶段的�
 | [1.9.2](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.2) | pre.12、1.9.2 | 语言选项和翻译默认值 |
 | [1.9.3](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.3) | 1.9.3 | 独立 LyricBee 项目及显示名称 |
 | [1.9.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.4) | 1.9.4-test.1、test.2、1.9.4 | 双语设置、独立附加内容、语言覆盖设置及简化拼写选项 |
-
-## 相对上游 v1.9.0 的修复
-
-- 安全处理失败、不完整的网络响应及缺失标签，避免崩溃。
-- 核对标题、艺人、专辑、时长和录音版本，减少错配；可兼容的重复条目可补充缺失歌词。
-- 翻译和发音逐行对齐，保留可用原文、时间信息及 offset。
-- 限制检索等待时间；HTTPS 故障时可尝试其他接口，也可关闭明文 HTTP 回退。
-- 英语与简体中文设置将歌词内容、排列方式和语言覆盖设置分开，并保留已有偏好。
-- 移除未使用的依赖，DLL 约 1.1 MB；采用锁定依赖、离线回归样本和 Windows CI。
-
-完整列表见 [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md)（英语）。
 
 项目继续使用 [Apache 2.0](LICENSE)，所采用的 API 代码保留 [Zony 的 MIT 声明](LICENSE-Zony)。原插件及其上游历史归功于 Charlie Jiang 和上游贡献者。LyricBee 由 [Tony Y](https://github.com/tonyzehs) 维护，署名说明见 [NOTICE](NOTICE)。
