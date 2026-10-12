@@ -126,11 +126,12 @@ Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https:
 
 The plugin targets Windows and .NET Framework 4.8.
 
-1. Close MusicBee and back up the previous plugin DLL and settings if upgrading.
-2. Open MusicBee's **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**. Alternatively, replace the existing DLL while MusicBee is closed.
-3. In **Tags (2)**, set the lyrics provider priority to use **Netease Cloud Music**.
-4. Open the plugin settings to choose default extras, layout, language overrides and interface language.
-5. Re-fetch lyrics for tracks whose display or matching you want to change.
+**Optional when upgrading:** back up your settings first. Previous plugin versions remain available in the [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases), so keeping a copy of the old DLL is unnecessary.
+
+1. Open MusicBee’s **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**.
+2. In **Tags (2)**, set the lyrics provider priority to use **Netease Cloud Music**.
+3. Open the plugin settings to choose default extras, layout, language overrides and interface language.
+4. Re-fetch lyrics for tracks whose display or matching you want to change.
 
 MusicBee can keep lyrics it has already downloaded or embedded. Installing an update or restarting playback does not replace that stored text. Clear or replace incorrect lyrics and search again to evaluate a new lookup.
 

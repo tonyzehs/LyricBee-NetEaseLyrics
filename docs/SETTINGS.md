@@ -20,21 +20,23 @@ The first save of an older settings file preserves `netease_config.pre-display.b
 
 ## Download and install
 
+**Optional when upgrading:** back up settings. Older plugin versions remain available in the release history; keeping the old DLL is unnecessary.
+
 1. Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest).
-2. Close MusicBee and keep a copy of your existing `mb_NeteaseLyrics.dll` for rollback.
-3. Replace that DLL in MusicBee's Plugins directory with the DLL from the ZIP. Keep only one installed copy.
-4. Restart MusicBee, open LyricBee's settings and try both interface languages.
-5. Apply settings, then re-fetch lyrics. MusicBee keeps previously stored lyrics until you search again.
+2. Install the ZIP through MusicBee’s **Preferences → Plugins → Add plugin**.
+3. Open LyricBee’s settings and try both interface languages.
+4. Apply settings, then re-fetch lyrics. MusicBee keeps previously stored lyrics until you search again.
 
 Try Japanese triple-line output, Cantonese pronunciation, Korean output, English with and without translation, and French with the English override off. Also test switching layout, changing the default while an override is active, and reopening MusicBee to check saved settings.
 
 ## 下载与安装
 
+**升级时可选：**备份设置。旧版插件仍可从发布历史下载，无需保存旧 DLL。
+
 1. 从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。
-2. 关闭 MusicBee，并备份现有的 `mb_NeteaseLyrics.dll`，以便回退。
-3. 用 ZIP 中的 DLL 替换 MusicBee 的 Plugins 目录中的同名文件。只保留一份插件。
-4. 重启 MusicBee，打开 LyricBee 设置，测试 English 和简体中文界面。
-5. 应用设置后，重新搜索歌词。MusicBee 已保存的歌词不会自动替换。
+2. 通过 MusicBee 的**首选项 → 插件 → 添加插件**安装 ZIP。
+3. 打开 LyricBee 设置，测试 English 和简体中文界面。
+4. 应用设置后，重新搜索歌词。MusicBee 已保存的歌词不会自动替换。
 
 原文歌词始终显示。默认开启翻译、关闭发音，并采用分行显示。“语言覆盖设置”可为粤语、日语、韩语和英语指定独立选择；“使用默认设置”跟随上方的默认选项。首次安装时，所有语言均采用“使用默认设置”，升级时保留已有选择。英语不提供发音选项；粤语不提供翻译选项，并位于日语和韩语下方。拼写匹配采用单个“允许少量拼写差异”复选框。翻译和发音取决于网易云是否提供，无法安全配对的附加内容会被省略。
 
