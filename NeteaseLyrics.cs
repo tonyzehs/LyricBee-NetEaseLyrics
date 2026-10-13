@@ -62,21 +62,13 @@ namespace MusicBeePlugin
         private readonly PluginInfo _about = new PluginInfo();
         private readonly Func<LookupSession> _sessionFactory;
         internal static string BuildVersion => Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        internal static int SettingsPanelHeight =>
-#if LYRICBEE_DEV_DIAGNOSTICS
-            550;
-#else
-            430;
-#endif
-        internal static string BuildDescription => "NetEase lyrics. Build " + BuildVersion
-#if LYRICBEE_DEV_DIAGNOSTICS
-            + " (DEV BUILD)"
-#endif
-            ;
-#if LYRICBEE_DEV_DIAGNOSTICS
+        internal static int SettingsPanelHeight => 550;
+        internal static bool IsDevelopmentVersion(string version) => version != null &&
+            Regex.IsMatch(version, @"^[0-9]+\.[0-9]+\.[0-9]+-(?:test\.[0-9]+|pre(?:\.?[0-9]+)?)$");
+        internal static string BuildDescription => "NetEase lyrics. Build " + BuildVersion +
+            (IsDevelopmentVersion(BuildVersion) ? " (DEV BUILD)" : "");
         private readonly DevelopmentDiagnostics _diagnostics = new DevelopmentDiagnostics();
         internal Action<string> DiagnosticClipboardWriter { get; set; } = text => Clipboard.SetText(text);
-#endif
 
         public Plugin()
         {
@@ -188,13 +180,24 @@ namespace MusicBeePlugin
             _allowHttpCheckBox = new CheckBox { Name = "AllowHttpFallback", Text = T(SettingsLabel.HttpFallback),
                 Location = new Point(0, 396), Checked = config.AllowInsecureHttp, AutoSize = true, ForeColor = configPanel.ForeColor };
             configPanel.Controls.Add(_allowHttpCheckBox);
-#if LYRICBEE_DEV_DIAGNOSTICS
-            Label("DevelopmentHeading", SettingsLabel.Development, 430, true);
+            var advanced = new LinkLabel { Name = "AdvancedDiagnostics", Text = T(SettingsLabel.Advanced),
+                Location = new Point(0, 430), AutoSize = true,
+                LinkColor = configPanel.ForeColor, ActiveLinkColor = configPanel.ForeColor,
+                VisitedLinkColor = configPanel.ForeColor };
+            configPanel.Controls.Add(advanced);
             var copyDiagnostics = new Button { Name = "CopyDiagnosticReport", Text = T(SettingsLabel.CopyDiagnostics),
-                Location = new Point(0, 452), AutoSize = true, Enabled = _diagnostics.HasLookups };
+                Location = new Point(0, 452), AutoSize = true, Visible = false, Enabled = _diagnostics.HasLookups };
             var diagnosticNote = new Label { Name = "DiagnosticPrivacyNote", Text = T(SettingsLabel.DiagnosticPrivacy),
-                Location = new Point(0, 488), Size = new Size(430, 44), ForeColor = configPanel.ForeColor };
+                Location = new Point(0, 488), Size = new Size(430, 44), ForeColor = configPanel.ForeColor, Visible = false };
             configPanel.Controls.Add(copyDiagnostics); configPanel.Controls.Add(diagnosticNote);
+            var advancedOpen = false;
+            advanced.LinkClicked += (sender, e) =>
+            {
+                advancedOpen = !advancedOpen;
+                copyDiagnostics.Visible = advancedOpen;
+                diagnosticNote.Visible = advancedOpen;
+                advanced.Text = T(advancedOpen ? SettingsLabel.HideAdvanced : SettingsLabel.Advanced);
+            };
             copyDiagnostics.Click += (sender, e) =>
             {
                 try
@@ -211,16 +214,13 @@ namespace MusicBeePlugin
             diagnosticTimer.Tick += (sender, e) => { if (!copyDiagnostics.IsDisposed) copyDiagnostics.Enabled = _diagnostics.HasLookups; };
             copyDiagnostics.Disposed += (sender, e) => { diagnosticTimer.Stop(); diagnosticTimer.Dispose(); };
             diagnosticTimer.Start();
-#endif
 
             Action resize = () =>
             {
                 foreach (var combo in configPanel.Controls.OfType<ComboBox>())
                     combo.Width = Math.Max(140, Math.Min(360, configPanel.ClientSize.Width - combo.Left - 8));
                 note.Width = Math.Max(200, configPanel.ClientSize.Width - 8);
-#if LYRICBEE_DEV_DIAGNOSTICS
                 diagnosticNote.Width = note.Width;
-#endif
             };
             // The handler owns only this set of controls; remove it when rebuilding the language UI.
             EventHandler resized = (sender, e) => resize();
@@ -343,9 +343,7 @@ namespace MusicBeePlugin
         [SuppressMessage("ReSharper", "UnusedParameter.Global")]
         public void Close(PluginCloseReason reason)
         {
-#if LYRICBEE_DEV_DIAGNOSTICS
             _diagnostics.Clear();
-#endif
         }
 
         // uninstall this plugin - clean up any persisted files
@@ -371,10 +369,8 @@ namespace MusicBeePlugin
         {
             if (provider != ProviderName) return null;
             var config = _config;
-#if LYRICBEE_DEV_DIAGNOSTICS
             var diagnosticLookup = _diagnostics.Begin(config);
             var diagnosticStatus = DiagnosticLookupStatus.NoLyrics;
-#endif
             try
             {
                 // Only the requested file owns this override, even during background library scans.
@@ -383,17 +379,13 @@ namespace MusicBeePlugin
                 if (id == 0 && string.IsNullOrWhiteSpace(realTitle))
                 {
                     Trace("Lookup skipped: no title or song ID");
-#if LYRICBEE_DEV_DIAGNOSTICS
                     diagnosticLookup.Add(DiagnosticKind.NoTitle);
-#endif
                     return null;
                 }
                 using (var session = _sessionFactory())
                 {
-#if LYRICBEE_DEV_DIAGNOSTICS
                     session.DiagnosticLookup = diagnosticLookup;
                     if (id > 0) session.Diagnostic(DiagnosticKind.Custom10Override, songId: id);
-#endif
                     session.AllowInsecureHttp = config.AllowInsecureHttp;
                     var candidates = id > 0 ? new[] { id } : new long[0];
                     if (id == 0)
@@ -418,32 +410,24 @@ namespace MusicBeePlugin
                             if (extraAttempts >= 1)
                             {
                                 session.Report("Lyrics: extra-content retry limit reached; retained available text");
-#if LYRICBEE_DEV_DIAGNOSTICS
                                 session.Diagnostic(DiagnosticKind.ExtrasRetryLimit);
-#endif
                                 break;
                             }
                             extraAttempts++;
                         }
                         if (candidate != candidates[0]) session.Report("Lyrics: trying compatible song ID " + candidate);
-#if LYRICBEE_DEV_DIAGNOSTICS
                         if (candidate != candidates[0]) session.Diagnostic(DiagnosticKind.RetryCompatibleListing, songId: candidate);
-#endif
                         var attempt = NeteaseApi.RequestLyric(candidate, session);
                         if (NeteaseApi.IsInstrumental(attempt))
                         {
-#if LYRICBEE_DEV_DIAGNOSTICS
                             session.Diagnostic(DiagnosticKind.InstrumentalListing, songId: candidate);
                             if (id > 0 || candidates.Length == 1) diagnosticStatus = result == null ? DiagnosticLookupStatus.Instrumental : DiagnosticLookupStatus.Lyrics;
-#endif
                             if (id > 0 || candidates.Length == 1) return result;
                             continue;
                         }
                         if (!LyricProcessor.HasLyricText(attempt?.lrc?.lyric))
                         {
-#if LYRICBEE_DEV_DIAGNOSTICS
                             session.Diagnostic(DiagnosticKind.OriginalMissing, songId: candidate);
-#endif
                             continue;
                         }
                         var choice = config.DefaultContent;
@@ -453,9 +437,7 @@ namespace MusicBeePlugin
                                 new[] { config.CantoneseOverride, config.JapaneseOverride, config.KoreanOverride, config.EnglishOverride }
                                     .AnyDifferent(config.DefaultContent)));
                         var formatted = FormatLyrics(attempt, choice, config.UseSeparateLines, session.Report, out var usableExtras);
-#if LYRICBEE_DEV_DIAGNOSTICS
                         session.Diagnostic(DiagnosticKind.AuxiliaryOutput, songId: candidate, count: usableExtras);
-#endif
                         if (usableExtras > bestExtras) { result = formatted; bestExtras = usableExtras; }
                         var wanted = choice == NeteaseConfig.AccompanyingText.Original ? 0 :
                             choice == NeteaseConfig.AccompanyingText.PronunciationAndTranslation ? 2 : 1;
@@ -463,30 +445,22 @@ namespace MusicBeePlugin
                             _languagePreferences.TryGetKnownLanguage(candidate, out var knownLanguage) && knownLanguage == SongLanguage.Mandarin)
                         {
                             session.Report("Lyrics: known Mandarin label; skipped missing-translation retries");
-#if LYRICBEE_DEV_DIAGNOSTICS
                             session.Diagnostic(DiagnosticKind.CachedMandarin);
-#endif
                             wanted = NeteaseConfig.HasPronunciation(choice) ? 1 : 0;
                         }
                         if (usableExtras >= wanted) break;
                     }
-#if LYRICBEE_DEV_DIAGNOSTICS
                     diagnosticStatus = result == null ? DiagnosticLookupStatus.NoLyrics : DiagnosticLookupStatus.Lyrics;
-#endif
                     return result;
                 }
             }
             catch (Exception ex)
             {
                 Trace("Lookup failed: " + ex.GetType().Name);
-#if LYRICBEE_DEV_DIAGNOSTICS
                 diagnosticLookup.Add(DiagnosticKind.LookupException); diagnosticStatus = DiagnosticLookupStatus.Error;
-#endif
                 return null;
             }
-#if LYRICBEE_DEV_DIAGNOSTICS
             finally { diagnosticLookup.Complete(diagnosticStatus); }
-#endif
         }
 
         private string FormatLyrics(LyricResult result, NeteaseConfig.AccompanyingText choice, bool separateLines, Action<string> trace, out int usableExtras)

@@ -277,6 +277,7 @@ internal static partial class Program
                 using (var panel = new Panel { Size = new Size(width, Plugin.SettingsPanelHeight + 25), Font = font })
                 {
                     form.Controls.Add(panel); plugin.Configure(panel.Handle); form.Show(); Application.DoEvents();
+                    ToggleAdvanced(panel);
                     foreach (var control in panel.Controls.Cast<Control>().Where(c => c.Visible))
                     {
                         if (control.Right > panel.ClientSize.Width || control.Bottom > panel.ClientSize.Height)
@@ -305,7 +306,10 @@ internal static partial class Program
             {
                 form.ClientSize = panel.Size; form.Controls.Add(panel); plugin.Configure(panel.Handle);
                 form.Show(); Application.DoEvents(); panel.DrawToBitmap(bitmap, panel.ClientRectangle);
-                bitmap.Save(Path.Combine(directory, ui == 1 ? "settings-en.png" : "settings-zh-CN.png")); form.Close();
+                bitmap.Save(Path.Combine(directory, ui == 1 ? "settings-en.png" : "settings-zh-CN.png"));
+                ToggleAdvanced(panel); Application.DoEvents(); panel.DrawToBitmap(bitmap, panel.ClientRectangle);
+                bitmap.Save(Path.Combine(directory, ui == 1 ? "settings-en-advanced.png" : "settings-zh-CN-advanced.png"));
+                form.Close();
             }
         }
         return 0;

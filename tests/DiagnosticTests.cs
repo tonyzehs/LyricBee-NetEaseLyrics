@@ -9,12 +9,26 @@ using System.Windows.Forms;
 
 internal static partial class Program
 {
+    private static void ToggleAdvanced(Panel panel)
+    {
+        var link = (LinkLabel)panel.Controls["AdvancedDiagnostics"];
+        typeof(LinkLabel).GetMethod("OnLinkClicked", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(link, new object[] { new LinkLabelLinkClickedEventArgs(link.Links[0]) });
+    }
+
     private static void DiagnosticTests()
     {
-#if LYRICBEE_DEV_DIAGNOSTICS
-        Test("DEV BUILD is visible and bounded reports disclose song ID listening history", () =>
+        Test("Development labels depend on the declared version and stable builds keep diagnostics", () =>
         {
-            True(Plugin.BuildDescription.Contains("DEV BUILD"));
+            foreach (var version in new[] { "1.9.5-test.4", "1.9.5-pre", "1.9.5-pre.1", "1.9.5-pre01" })
+                True(Plugin.IsDevelopmentVersion(version));
+            foreach (var version in new[] { "1.9.5", "1.9.5-preview", "1.9.5-test.", "1.9.5-test.4-extra", "", null })
+                True(!Plugin.IsDevelopmentVersion(version));
+            Equal(Plugin.IsDevelopmentVersion(Plugin.BuildVersion), Plugin.BuildDescription.Contains("DEV BUILD"));
+            True(typeof(Plugin).Assembly.GetTypes().Any(t => t.Name == "DevelopmentDiagnostics"));
+        });
+        Test("Bounded reports disclose song ID listening history", () =>
+        {
             var recorder = new DevelopmentDiagnostics();
             var stale = recorder.Begin(new NeteaseConfig());
             for (var i = 0; i < 7; i++)
@@ -64,6 +78,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
+                ToggleAdvanced(panel);
                 ((CheckBox)panel.Controls["ShowTranslation"]).Checked = false;
                 var button = (Button)panel.Controls["CopyDiagnosticReport"];
                 True(button.Enabled); button.PerformClick();
@@ -82,7 +97,8 @@ internal static partial class Program
             Equal(null, Lookup(failing));
             using (var panel = new Panel())
             {
-                failing.Configure(panel.Handle); ((Button)panel.Controls["CopyDiagnosticReport"]).PerformClick();
+                failing.Configure(panel.Handle); ToggleAdvanced(panel);
+                ((Button)panel.Controls["CopyDiagnosticReport"]).PerformClick();
                 True(copied.Contains("TransportFailure")); True(!copied.Contains(canary));
             }
         });
@@ -97,10 +113,18 @@ internal static partial class Program
                 {
                     plugin.Configure(panel.Handle);
                     True(!panel.Controls["CopyDiagnosticReport"].Enabled);
-                    True(panel.Controls["DevelopmentHeading"].Text.Contains("DEV BUILD"));
+                    True(!panel.Controls["CopyDiagnosticReport"].Visible);
+                    True(!panel.Controls["DiagnosticPrivacyNote"].Visible);
+                    True(!panel.Controls["AdvancedDiagnostics"].Text.Contains("DEV BUILD"));
+                    ToggleAdvanced(panel);
+                    True(panel.Controls["CopyDiagnosticReport"].Visible);
                     True(panel.Controls["DiagnosticPrivacyNote"].Text.Contains(ui == 1 ? "listening history" : "听歌记录"));
+                    ToggleAdvanced(panel);
+                    True(!panel.Controls["CopyDiagnosticReport"].Visible);
                     Equal("[00:01.00]Hello", Lookup(plugin));
                     plugin.Configure(panel.Handle);
+                    True(!panel.Controls["CopyDiagnosticReport"].Visible);
+                    ToggleAdvanced(panel);
                     True(panel.Controls["CopyDiagnosticReport"].Enabled);
                     string copied = null; plugin.DiagnosticClipboardWriter = text => copied = text;
                     ((Button)panel.Controls["CopyDiagnosticReport"]).PerformClick();
@@ -119,32 +143,11 @@ internal static partial class Program
             string copied = null; plugin.DiagnosticClipboardWriter = report => copied = report;
             using (var panel = new Panel())
             {
-                plugin.Configure(panel.Handle); ((Button)panel.Controls["CopyDiagnosticReport"]).PerformClick();
+                plugin.Configure(panel.Handle); ToggleAdvanced(panel);
+                ((Button)panel.Controls["CopyDiagnosticReport"]).PerformClick();
                 True(copied.Contains("code=-460")); True(!copied.Contains("SECRET_RESPONSE"));
                 True(copied.Contains("lyric_phase_requests=2"));
             }
         });
-#else
-        Test("The non-diagnostic DLL contains no recorder clipboard hook labels or DEV BUILD marker", () =>
-        {
-            var assembly = typeof(Plugin).Assembly;
-            True(!assembly.GetTypes().Any(t => t.FullName.Contains("DevelopmentDiagnostics") || t.Name.StartsWith("Diagnostic")));
-            True(typeof(Plugin).GetProperty("DiagnosticClipboardWriter", BindingFlags.Instance | BindingFlags.NonPublic) == null);
-            True(!typeof(Plugin).GetFields(BindingFlags.Instance | BindingFlags.NonPublic).Any(f => f.Name == "_diagnostics"));
-            var binary = File.ReadAllBytes(assembly.Location);
-            foreach (var text in new[] { "Copy diagnostic report", "CopyDiagnosticReport", "DEV BUILD", "DiagnosticPrivacyNote", "DiagnosticClipboardWriter" })
-            {
-                True(!Encoding.ASCII.GetString(binary).Contains(text));
-                True(!Encoding.Unicode.GetString(binary).Contains(text));
-            }
-            True(!Plugin.BuildDescription.Contains("DEV BUILD"));
-            var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
-            using (var panel = new Panel())
-            {
-                plugin.Configure(panel.Handle);
-                True(panel.Controls["CopyDiagnosticReport"] == null && panel.Controls["DevelopmentHeading"] == null);
-            }
-        });
-#endif
     }
 }

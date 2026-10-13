@@ -1,4 +1,3 @@
-#if LYRICBEE_DEV_DIAGNOSTICS
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -51,7 +50,7 @@ namespace MusicBeePlugin
         {
             lock (_gate)
             {
-                var report = new StringBuilder("LyricBee DEV BUILD diagnostic report\n");
+                var report = new StringBuilder("LyricBee diagnostic report\n");
                 report.Append("Build: ").Append(Plugin.BuildVersion).Append("\nRuntime: ")
                     .Append(Environment.Version).Append(Environment.Is64BitProcess ? " x64\n" : " x86\n");
                 report.Append("NetEase song IDs can reveal listening history. No lyrics, tags, paths, URLs or account data included.\n");
@@ -138,4 +137,3 @@ namespace MusicBeePlugin
         }
     }
 }
-#endif

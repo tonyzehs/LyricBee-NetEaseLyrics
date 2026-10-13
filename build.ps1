@@ -1,17 +1,11 @@
 [CmdletBinding()]
 param(
     [string]$DotNetPath = 'dotnet',
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'artifacts\dist'),
-    [switch]$DevelopmentDiagnostics
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'artifacts\dist')
 )
 $ErrorActionPreference = 'Stop'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
-$buildVersion = [regex]::Match((Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Properties\AssemblyInfo.cs') -Raw), '(?m)^\s*\[assembly:\s*AssemblyInformationalVersion\s*\(\s*"([^"]+)"\s*\)\s*\]').Groups[1].Value
-if ($DevelopmentDiagnostics -and $buildVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+-(?:test\.[0-9]+|pre(?:\.?[0-9]+)?)$') {
-    throw 'Development diagnostics are permitted only for recognized test/prerelease versions; stable packaging is refused.'
-}
-$diagnosticsProperty = '-p:DevelopmentDiagnostics=' + $DevelopmentDiagnostics.IsPresent.ToString().ToLowerInvariant()
 
 function Invoke-DotNet([string[]]$Arguments) {
     & $DotNetPath @Arguments
@@ -23,8 +17,8 @@ try {
     $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
     New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
     foreach ($platform in @('AnyCPU', 'x86')) {
-        Invoke-DotNet @('restore', 'tests\NeteaseLyricsTest.csproj', '--locked-mode', "-p:Platform=$platform", $diagnosticsProperty)
-        Invoke-DotNet @('build', 'tests\NeteaseLyricsTest.csproj', '-c', 'Release', '--no-restore', "-p:Platform=$platform", $diagnosticsProperty, '--nologo')
+        Invoke-DotNet @('restore', 'tests\NeteaseLyricsTest.csproj', '--locked-mode', "-p:Platform=$platform")
+        Invoke-DotNet @('build', 'tests\NeteaseLyricsTest.csproj', '-c', 'Release', '--no-restore', "-p:Platform=$platform", '--nologo')
         $binaryDirectory = if ($platform -eq 'AnyCPU') { 'tests\bin\Release\net48' } else { 'tests\bin\x86\Release\net48' }
         # Only the plugin and the test executable are copied: embedded dependencies must load on their own.
         $isolated = Join-Path $PSScriptRoot ('artifacts\isolated-' + $platform + '-' + [Guid]::NewGuid().ToString('N'))

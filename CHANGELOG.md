@@ -1,4 +1,11 @@
-# Pending 1.9.5 build safeguard
+# 1.9.5-test.4 — diagnostic reports in all builds (local testing build)
+
+- Include Copy diagnostic report in stable and development builds, under a collapsed Advanced section in the English and Simplified Chinese settings. Reports remain bounded, memory-only and manually copied; no upload is made. The song-ID privacy note stays beside the button.
+- Remove the former development-only compilation flag, packaging/version guards and separate CI profiles. This supersedes the test.3 guard policy following Tony's decision to offer diagnostics to all users. Development markers now depend on the actual declared version; stable builds retain the button without a DEV BUILD label.
+- Explain where to find the report in both READMEs and shorten the DLL-size improvement wording. These README changes will reach master with the approved 1.9.5 release.
+- Product version: `1.9.5-test.4`; assembly/file version: `1.9.5.4`. Local testing only; publication still requires Tony's approval. Previous frozen builds and audit evidence are retained.
+
+# 1.9.5-test.3 build safeguard (superseded by test.4)
 
 - Reject diagnostics-enabled builds with stable, missing or unrecognized version labels in the project itself, covering direct SDK builds as well as the packaging script. Check the DLL's declared informational version rather than overridable SDK version properties.
 - Add project-guard checks for stable builds, both architecture/configuration paths, recognized development labels, invalid labels and SDK version overrides. Runtime code and the audited test.3 installer are unchanged.

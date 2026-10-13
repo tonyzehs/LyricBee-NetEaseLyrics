@@ -148,7 +148,7 @@ MusicBee can keep lyrics it has already downloaded or embedded. Installing an up
 - **No lyrics found:** check the provider priority under **Tags (2)**, re-fetch lyrics, and try the correct NetEase song link in **Custom10**. If HTTPS is blocked, check the HTTP fallback setting.
 - **Wrong song:** set **Custom10** to the correct NetEase song link or `netease=ID`, then search again.
 - **Old lyrics still shown:** MusicBee keeps downloaded or embedded lyrics. Clear the stored text and re-fetch it.
-- **Reporting a problem:** include the NetEase song link, MusicBee version, LyricBee version and the plugin’s MusicBee trace lines.
+- **Reporting a problem:** include the NetEase song link, MusicBee version and LyricBee version. After reproducing the problem, open the plugin settings → **Advanced… → Copy diagnostic report**. The report is copied locally; nothing is uploaded. It includes NetEase song IDs, which can reveal listening history, but excludes lyrics, tag values, file paths and account data.
 
 ## Fixes over upstream v1.9.0
 
@@ -157,7 +157,7 @@ MusicBee can keep lyrics it has already downloaded or embedded. Installing an up
 - Translation and pronunciation align line by line, retaining useful originals, timing metadata and offsets.
 - Bounded lookups recover through another interface when HTTPS fails, with an option to disable plain-HTTP fallback.
 - English and Simplified Chinese settings separate lyric content, layout and language overrides while preserving saved preferences.
-- Unused dependencies are removed: the DLL is about 1.1 MB, with locked builds, offline regression fixtures and Windows CI.
+- Smaller plugin: removing unused dependencies reduced the DLL from about 4 MB to 1.1 MB.
 
 See [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md) for the full list.
 

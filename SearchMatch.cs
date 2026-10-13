@@ -79,10 +79,8 @@ namespace MusicBeePlugin
             if (final.Length == 0)
             {
                 session.Report("Matching: no sufficiently supported, unambiguous candidate");
-#if LYRICBEE_DEV_DIAGNOSTICS
                 session.Diagnostic(songs.Any(s => Evaluate(s, request) != null || (alternate != null && Evaluate(s, alternate) != null)) ?
                     DiagnosticKind.MatchingAmbiguous : DiagnosticKind.MatchingNoEligible, count: songs.Count);
-#endif
             }
             return ReportSelection(final, session);
         }
@@ -100,14 +98,12 @@ namespace MusicBeePlugin
         private static long[] ReportSelection(Match[] matches, LookupSession session)
         {
             if (matches.Length == 0) return new long[0];
-#if LYRICBEE_DEV_DIAGNOSTICS
             session.Diagnostic(DiagnosticKind.MatchingSelected, songId: matches[0].Song.id, count: matches.Length);
             if (matches.Length > 1) session.Diagnostic(DiagnosticKind.CompatibleGroup, count: matches.Length);
             if (matches[0].Notes.Contains("remaster")) session.Diagnostic(DiagnosticKind.RemasterNote);
             if (matches[0].Notes.Contains("mono") || matches[0].Notes.Contains("stereo") || matches[0].Notes.Contains("album version")) session.Diagnostic(DiagnosticKind.VersionNote);
             if (matches[0].Notes.Contains("soundtrack")) session.Diagnostic(DiagnosticKind.SoundtrackNote);
             if (matches[0].Notes.Contains("TrackNo")) session.Diagnostic(DiagnosticKind.TrackPrefixNote);
-#endif
             if (matches.Length > 1)
                 session.Report("Matching: grouped " + matches.Length + " compatible listings; selected song ID " +
                     matches[0].Song.id + " by album similarity, then duration, then ID");

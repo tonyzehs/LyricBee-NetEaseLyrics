@@ -141,7 +141,6 @@ namespace MusicBeePlugin
         private readonly Action<string> _trace;
         private readonly Func<CancellationToken> _requestCancellation;
         private readonly Dictionary<string, SearchResultSong[]> _searches = new Dictionary<string, SearchResultSong[]>();
-#if LYRICBEE_DEV_DIAGNOSTICS
         internal DevelopmentDiagnostics.DiagnosticLookup DiagnosticLookup { get; set; }
         internal void Diagnostic(DiagnosticKind kind, RequestInterface api = RequestInterface.Other,
             RequestOutcome outcome = RequestOutcome.None, int code = 0, long songId = 0, int count = 0)
@@ -149,7 +148,6 @@ namespace MusicBeePlugin
             try { DiagnosticLookup?.Add(kind, api, outcome, code, songId, count, _searchRequests, _lyricRequests); }
             catch { /* Development reporting must not change lookup behavior. */ }
         }
-#endif
 
         internal LookupSession(Action<string> trace = null, HttpMessageHandler handler = null,
             TimeSpan? requestTimeout = null, TimeSpan? lookupTimeout = null, TimeSpan? lyricReserve = null,
@@ -215,18 +213,14 @@ namespace MusicBeePlugin
                 (!search && _lyricRequests >= MaxLyricRequests))
             {
                 Trace(search ? "Search request limit reached" : "Lyric request limit reached");
-#if LYRICBEE_DEV_DIAGNOSTICS
                 Diagnostic(DiagnosticKind.RequestLimit, api, count: search ? _searchRequests : _lyricRequests);
-#endif
                 return null;
             }
             var remaining = (search ? _searchTimeout : _lookupTimeout) - _elapsed.Elapsed;
             if (remaining <= TimeSpan.Zero || (search && !CanSearch))
             {
                 Trace(label + (search ? ": search budget exhausted" : ": lookup deadline reached"));
-#if LYRICBEE_DEV_DIAGNOSTICS
                 Diagnostic(search ? DiagnosticKind.SearchBudgetExhausted : DiagnosticKind.LookupBudgetExhausted, api);
-#endif
                 return null;
             }
             // Each pending fallback gets a share of the remaining phase, capped per request.
@@ -243,9 +237,7 @@ namespace MusicBeePlugin
                     timeout.CancelAfter(requestBudget);
                     if (search) _searchRequests++; else _lyricRequests++;
                     _outcomes[api] = RequestOutcome.None;
-#if LYRICBEE_DEV_DIAGNOSTICS
                     Diagnostic(DiagnosticKind.RequestStarted, api);
-#endif
                     using (var response = _client.SendAsync(request, timeout.Token).GetAwaiter().GetResult())
                     {
                         if (!response.IsSuccessStatusCode)
@@ -255,18 +247,14 @@ namespace MusicBeePlugin
                             if (temporary) _unavailable.Add(api);
                             else if (request.RequestUri.Scheme == "https" && api != RequestInterface.LanguageHttps) _secureRefusal = true;
                             Trace(label + ": HTTP " + (int)response.StatusCode);
-#if LYRICBEE_DEV_DIAGNOSTICS
                             Diagnostic(DiagnosticKind.RequestFailure, api, _outcomes[api], (int)response.StatusCode);
-#endif
                             return null;
                         }
                         var result = JsonConvert.DeserializeObject<T>(response.Content.ReadAsStringAsync().GetAwaiter().GetResult());
                         if (validate(result))
                         {
                             _outcomes[api] = RequestOutcome.Success;
-#if LYRICBEE_DEV_DIAGNOSTICS
                             Diagnostic(DiagnosticKind.RequestSuccess, api, RequestOutcome.Success);
-#endif
                             return result;
                         }
                         var code = (result as ApiResponse)?.code;
@@ -276,9 +264,7 @@ namespace MusicBeePlugin
                         if (serverError) _unavailable.Add(api);
                         if (_outcomes[api] == RequestOutcome.Rejected && request.RequestUri.Scheme == "https" &&
                             api != RequestInterface.LanguageHttps) _secureRefusal = true;
-#if LYRICBEE_DEV_DIAGNOSTICS
                         Diagnostic(DiagnosticKind.RequestFailure, api, _outcomes[api], code ?? 0);
-#endif
                         Trace(label + ": rejected or incomplete response" +
                             (code.HasValue ? " (code " + code.Value + ")" : ""));
                         return null;
@@ -288,9 +274,7 @@ namespace MusicBeePlugin
             catch (OperationCanceledException)
             {
                 _outcomes[api] = RequestOutcome.TransportFailure;
-#if LYRICBEE_DEV_DIAGNOSTICS
                 Diagnostic(DiagnosticKind.RequestCancelled, api, RequestOutcome.TransportFailure);
-#endif
                 var phaseExpired = search && (_searchDeadline.IsCancellationRequested || _elapsed.Elapsed >= _searchTimeout);
                 if (!_deadline.IsCancellationRequested && !phaseExpired && api != RequestInterface.Other)
                 {
@@ -304,18 +288,14 @@ namespace MusicBeePlugin
             catch (HttpRequestException ex)
             {
                 _outcomes[api] = RequestOutcome.TransportFailure;
-#if LYRICBEE_DEV_DIAGNOSTICS
                 Diagnostic(DiagnosticKind.RequestFailure, api, RequestOutcome.TransportFailure);
-#endif
                 if (api != RequestInterface.Other) _unavailable.Add(api);
                 Trace(label + ": " + ex.GetType().Name);
             }
             catch (Exception ex)
             {
                 _outcomes[api] = RequestOutcome.InvalidResponse;
-#if LYRICBEE_DEV_DIAGNOSTICS
                 Diagnostic(DiagnosticKind.RequestFailure, api, RequestOutcome.InvalidResponse);
-#endif
                 // Do not log response bodies, URLs, song tags or local file paths.
                 Trace(label + ": " + ex.GetType().Name);
             }

@@ -8,7 +8,6 @@
     <Platforms>AnyCPU;x86</Platforms>
     <Prefer32Bit>false</Prefer32Bit>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <DefineConstants Condition="'$(DevelopmentDiagnostics)' == 'true'">$(DefineConstants);LYRICBEE_DEV_DIAGNOSTICS</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="RollbackProbe.cs" />
