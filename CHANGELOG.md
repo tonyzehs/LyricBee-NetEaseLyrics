@@ -1,3 +1,12 @@
+# 1.9.6
+
+- Add **Check for LyricBee updates** in settings, with inline results and a separate **View update** button. Checks are manual; the plugin does not download or install updates.
+- Show English and Chinese GitHub rate-limit messages, contain unexpected button errors, and log failed checks without response or exception text. Share version rules and allow latest-release replies up to 256 KiB.
+- Use relative lookup times in diagnostic reports, retaining the first twenty and last twenty events with a count of omitted events.
+- Let settings rows resize for wrapped text and larger fonts, keeping the existing controls, order and defaults.
+- Include the post-1.9.5 source rearrangement into `src/` and corrected `DataStructures.cs` filename. Lyric matching and display rules are unchanged from 1.9.5.
+- Product version: `1.9.6`; assembly/file version: `1.9.6.0`.
+
 # 1.9.6-test.4 — automatic settings layout (local testing build)
 
 - Replace fixed control positions with automatically sized table and flow rows. Preserve controls, defaults, order, headings, bilingual labels, collapsed Advanced and the manual update flow.
