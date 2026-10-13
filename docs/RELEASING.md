@@ -6,6 +6,10 @@ Fill every placeholder from the actual release candidate and its verification re
 
 Preparing notes or a local build does not approve publication. Present the candidate, checksums and final notes to Tony before creating or publishing a release, uploading assets or pushing a release tag.
 
+## Update-check response budget
+
+The latest-release response must fit within 256 KiB, including metadata, release notes and asset records. Keep release notes concise and link longer documentation rather than embedding it. The checker keeps redirects disabled and makes no automatic download or installation.
+
 ## Follow-up when 1.9.5 ships
 
 Only after 1.9.5 is published, add this line to 1.9.4's published notes:

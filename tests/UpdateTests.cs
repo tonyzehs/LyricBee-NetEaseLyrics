@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Linq;
 
 internal static partial class Program
 {
@@ -86,7 +88,7 @@ internal static partial class Program
                 True(!new UpdateChecker(() => handler).CheckAsync("1.9.5", CancellationToken.None).GetAwaiter().GetResult().Succeeded);
                 Equal(1, handler.Calls);
             }
-            var oversized = UpdateResponse(ReleaseJson() + new string(' ', 65537));
+            var oversized = UpdateResponse(ReleaseJson() + new string(' ', UpdateChecker.MaximumResponseBytes + 1));
             True(!new UpdateChecker(() => oversized).CheckAsync("1.9.5", CancellationToken.None).GetAwaiter().GetResult().Succeeded);
             var failed = new UpdateFixture { Respond = _ => throw new HttpRequestException("private error") };
             True(!new UpdateChecker(() => failed).CheckAsync("1.9.5", CancellationToken.None).GetAwaiter().GetResult().Succeeded);
@@ -181,8 +183,89 @@ internal static partial class Program
                     plugin.Configure(panel.Handle); var check = (Button)panel.Controls["CheckForUpdates"];
                     check.PerformClick(); PumpUpdate(() => check.Enabled);
                     True(!panel.Controls["UpdateFound"].Visible);
-                    True(panel.Controls["UpdateStatus"].Text.Contains(response == "not JSON" ? "Could not check" : "Up to date"));
+                    True(panel.Controls["UpdateStatus"].Text.Contains(response == "not JSON" ? "Could not check" : "No newer stable release"));
                 }
+            }
+        });
+        Test("Version labels and update parsing use the same recognized grammar", () =>
+        {
+            foreach (var value in new[] { "1.9.6", "1.9.6-test.3", "1.9.6-pre", "1.9.6-pre.1", "1.9.6-pre01",
+                "1.9.6-preview", "1.9.6-test.", "1.9.6-test.3-extra", "99999999999999.0.0-test.1", "", null })
+            {
+                var valid = UpdateChecker.TryVersion(value, false, out _, out var development);
+                Equal(valid && development, Plugin.IsDevelopmentVersion(value));
+            }
+            True(UpdateChecker.TryVersion("v1.9.6", true, out _, out _));
+            True(!Plugin.IsDevelopmentVersion("v1.9.6-test.3"));
+        });
+        Test("The response budget accepts a 200 KiB valid reply and rejects more than 256 KiB", () =>
+        {
+            foreach (var bytes in new[] { 200 * 1024, UpdateChecker.MaximumResponseBytes, UpdateChecker.MaximumResponseBytes + 1 })
+            {
+                var reply = ReleaseJson();
+                var handler = UpdateResponse(reply + new string(' ', bytes - reply.Length));
+                var result = new UpdateChecker(() => handler).CheckAsync("1.9.5", CancellationToken.None).GetAwaiter().GetResult();
+                Equal(bytes <= UpdateChecker.MaximumResponseBytes, result.Succeeded); Equal(1, handler.Calls);
+            }
+        });
+        Test("Each failed update emits one categorized trace without private exception or response text", () =>
+        {
+            var cases = new[] {
+                Tuple.Create<UpdateFixture,string>(UpdateResponse("PRIVATE_REPLY"), "unreadable reply"),
+                Tuple.Create<UpdateFixture,string>(new UpdateFixture { Respond = _ => throw new HttpRequestException("PRIVATE_EXCEPTION") }, "connection failure"),
+                Tuple.Create<UpdateFixture,string>(new UpdateFixture { Respond = _ => throw new TaskCanceledException("PRIVATE_EXCEPTION") }, "timeout"),
+                Tuple.Create<UpdateFixture,string>(new UpdateFixture { Respond = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadGateway)) }, "HTTP 502") };
+            foreach (var item in cases)
+            {
+                var trace = new List<string>();
+                True(!new UpdateChecker(() => item.Item1, trace.Add).CheckAsync("1.9.5", CancellationToken.None).GetAwaiter().GetResult().Succeeded);
+                Equal("Update check failed: " + item.Item2, trace.Single());
+            }
+            var brokenLogger = new UpdateChecker(() => UpdateResponse("PRIVATE_REPLY"), _ => throw new Exception("PRIVATE_LOGGER"));
+            True(!brokenLogger.CheckAsync("1.9.5", CancellationToken.None).GetAwaiter().GetResult().Succeeded);
+            var successTrace = new List<string>();
+            True(new UpdateChecker(() => UpdateResponse(ReleaseJson()), successTrace.Add).CheckAsync("1.9.5", CancellationToken.None).GetAwaiter().GetResult().Succeeded);
+            Equal(0, successTrace.Count);
+        });
+        Test("Rate limiting is distinguished in both languages only for 429 or exhausted 403", () =>
+        {
+            foreach (var ui in new[] { 1, 2 })
+            foreach (var item in new[] { Tuple.Create(429, "1", true), Tuple.Create(403, "0", true), Tuple.Create(403, "1", false), Tuple.Create(502, "0", false) })
+            {
+                var handler = new UpdateFixture { Respond = _ =>
+                {
+                    var response = new HttpResponseMessage((HttpStatusCode)item.Item1);
+                    response.Headers.Add("X-RateLimit-Remaining", item.Item2); return Task.FromResult(response);
+                } };
+                var traces = new List<string>();
+                var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
+                SetConfig(plugin, ModernSettings(extra: "\"InterfaceLanguage\":" + ui));
+                plugin.UpdateChecker = new UpdateChecker(() => handler, traces.Add);
+                using (var panel = new Panel())
+                {
+                    plugin.Configure(panel.Handle);
+                    Equal((ui == 1 ? "Installed: LyricBee " : "已安装：LyricBee ") + Plugin.BuildVersion, panel.Controls["UpdateStatus"].Text);
+                    var check = (Button)panel.Controls["CheckForUpdates"]; check.PerformClick(); PumpUpdate(() => check.Enabled);
+                    Equal(SettingsText.Get(item.Item3 ? SettingsLabel.UpdateRateLimited : SettingsLabel.UpdateFailed, (NeteaseConfig.UiLanguage)ui), panel.Controls["UpdateStatus"].Text);
+                    True(!panel.Controls["UpdateFound"].Visible); Equal(1, handler.Calls); Equal(1, traces.Count);
+                }
+            }
+        });
+        Test("Unexpected update-button errors remain inline and reach the safe MusicBee trace", () =>
+        {
+            var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
+            SetConfig(plugin, ModernSettings(extra: "\"InterfaceLanguage\":1"));
+            var field = typeof(Plugin).GetField("_mbApiInterface", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var api = (Plugin.MusicBeeApiInterface)field.GetValue(plugin); var trace = new List<string>();
+            api.MB_Trace = message => trace.Add(message); field.SetValue(plugin, api);
+            plugin.UpdateChecker = null;
+            using (var panel = new Panel())
+            {
+                plugin.Configure(panel.Handle); var check = (Button)panel.Controls["CheckForUpdates"];
+                var windows = Application.OpenForms.Count; check.PerformClick(); PumpUpdate(() => check.Enabled);
+                Equal(windows, Application.OpenForms.Count); True(!panel.Controls["UpdateFound"].Visible);
+                Equal(SettingsText.Get(SettingsLabel.UpdateFailed, NeteaseConfig.UiLanguage.English), panel.Controls["UpdateStatus"].Text);
+                True(trace.Single().EndsWith("Update check failed: internal failure"));
             }
         });
     }

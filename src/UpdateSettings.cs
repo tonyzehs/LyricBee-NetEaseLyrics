@@ -8,7 +8,7 @@ namespace MusicBeePlugin
 {
     public partial class Plugin
     {
-        internal UpdateChecker UpdateChecker { get; set; } = new UpdateChecker();
+        internal UpdateChecker UpdateChecker { get; set; }
         internal Action<string> ReleasePageOpener { get; set; } = url =>
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 
@@ -23,27 +23,33 @@ namespace MusicBeePlugin
             panel.Controls.Add(check); panel.Controls.Add(found); panel.Controls.Add(status);
             CancellationTokenSource pending = null;
             UpdateResult result = null;
+            var failedText = text(SettingsLabel.UpdateFailed);
             check.Disposed += (sender, e) => pending?.Cancel();
             check.Click += async (sender, e) =>
             {
                 if (pending != null) return;
-                var cancellation = new CancellationTokenSource();
-                pending = cancellation;
-                check.Enabled = false; found.Visible = false; result = null;
-                status.Text = text(SettingsLabel.UpdateChecking);
+                CancellationTokenSource cancellation = null;
                 try
                 {
+                    cancellation = new CancellationTokenSource(); pending = cancellation;
+                    check.Enabled = false; found.Visible = false; result = null;
+                    status.Text = text(SettingsLabel.UpdateChecking);
                     var checkedResult = await UpdateChecker.CheckAsync(BuildVersion, cancellation.Token);
                     if (check.IsDisposed || cancellation.IsCancellationRequested) return;
                     result = checkedResult;
-                    status.Text = !result.Succeeded ? text(SettingsLabel.UpdateFailed) :
+                    status.Text = !result.Succeeded ? text(result.RateLimited ? SettingsLabel.UpdateRateLimited : SettingsLabel.UpdateFailed) :
                         string.Format(text(result.UpdateAvailable ? SettingsLabel.UpdateAvailable : SettingsLabel.UpdateCurrent), result.LatestVersion);
                     found.Visible = result.Succeeded && result.UpdateAvailable;
                 }
+                catch
+                {
+                    Trace("Update check failed: internal failure");
+                    try { if (!check.IsDisposed) { found.Visible = false; status.Text = failedText; } } catch { }
+                }
                 finally
                 {
-                    pending = null; cancellation.Dispose();
-                    if (!check.IsDisposed) check.Enabled = true;
+                    pending = null;
+                    try { cancellation?.Dispose(); if (!check.IsDisposed) check.Enabled = true; } catch { }
                 }
             };
             found.Click += (sender, e) =>

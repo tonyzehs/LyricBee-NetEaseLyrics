@@ -1,3 +1,11 @@
+# 1.9.6-test.3 — update-check and diagnostic follow-ups (local testing build)
+
+- Log one categorized update-check failure without response or exception text. Add the agreed English/Chinese GitHub rate-limit messages and a last-resort guard around the button handler.
+- Share version rules between development labels and update comparisons; raise the response limit to 256 KiB. Redirect and lyric matching policies are unchanged.
+- Apply the approved installed-version, available-version and no-newer-stable-release wording in both languages.
+- Replace absolute lookup timestamps with report-relative ages. Retain the first twenty and last twenty events, with a count of skipped middle events; keep elapsed event milliseconds and existing privacy/size bounds.
+- Product version: `1.9.6-test.3`; assembly/file version: `1.9.6.3`. Fixed settings positions are retained in this build so the automatic-layout change can be tested separately. Local only, not release approval.
+
 # 1.9.6-test.2 — clarify update-button scope (local testing build)
 
 - Label the check button Check for LyricBee updates / 检查 LyricBee 更新 so it cannot be confused with an update check for MusicBee or other extensions.

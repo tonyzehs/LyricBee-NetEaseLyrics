@@ -23,7 +23,11 @@ namespace MusicBeePlugin
         internal const int MaximumLookups = 5, MaximumEventsPerLookup = 40, MaximumReportBytes = 32768;
         private readonly object _gate = new object();
         private readonly Queue<DiagnosticLookup> _history = new Queue<DiagnosticLookup>();
+        private readonly Stopwatch _clock = Stopwatch.StartNew();
+        private readonly Func<long> _milliseconds;
         private long _sequence;
+        internal DevelopmentDiagnostics(Func<long> milliseconds = null) { _milliseconds = milliseconds ?? (() => _clock.ElapsedMilliseconds); }
+        private long Now => _milliseconds();
         internal bool HasLookups { get { lock (_gate) return _history.Count > 0; } }
 
         internal DiagnosticLookup Begin(NeteaseConfig config)
@@ -55,7 +59,8 @@ namespace MusicBeePlugin
                     .Append(Environment.Version).Append(Environment.Is64BitProcess ? " x64\n" : " x86\n");
                 report.Append("NetEase song IDs can reveal listening history. No lyrics, tags, paths, URLs or account data included.\n");
                 report.Append("History: ").Append(_history.Count).Append("/5 lookups; at most 40 events each.\n");
-                foreach (var lookup in _history) report.Append(lookup.Render());
+                var reportTime = Now;
+                foreach (var lookup in _history) report.Append(lookup.Render(reportTime));
                 // ASCII-only structured fields allow an exact byte cap without breaking Unicode text.
                 var text = report.ToString();
                 const string truncated = "\n[report truncated]\n";
@@ -68,10 +73,10 @@ namespace MusicBeePlugin
         {
             private readonly DevelopmentDiagnostics _owner;
             private readonly long _sequence;
-            private readonly DateTime _started = DateTime.UtcNow;
-            private readonly Stopwatch _elapsed = Stopwatch.StartNew();
+            private readonly long _started;
             private readonly string _settings;
-            private readonly Queue<DiagnosticEvent> _events = new Queue<DiagnosticEvent>();
+            private readonly List<DiagnosticEvent> _first = new List<DiagnosticEvent>(20);
+            private readonly Queue<DiagnosticEvent> _last = new Queue<DiagnosticEvent>(20);
             private DiagnosticLookupStatus _status;
             private bool _discarded;
             private int _dropped, _searches, _lyrics;
@@ -79,7 +84,7 @@ namespace MusicBeePlugin
 
             internal DiagnosticLookup(DevelopmentDiagnostics owner, long sequence, NeteaseConfig config)
             {
-                _owner = owner; _sequence = sequence;
+                _owner = owner; _sequence = sequence; _started = owner.Now;
                 _settings = "default=" + config.DefaultContent + "; separate=" + config.UseSeparateLines +
                     "; spelling=" + config.AllowSpelling + "; http=" + config.AllowInsecureHttp +
                     "; JP=" + Choice(config.JapaneseOverride) + "; KR=" + Choice(config.KoreanOverride) +
@@ -96,9 +101,14 @@ namespace MusicBeePlugin
                     if (_discarded) return;
                     if (searches >= 0) _searches = searches;
                     if (lyrics >= 0) _lyrics = lyrics;
-                    if (_events.Count >= MaximumEventsPerLookup) { _events.Dequeue(); _dropped++; }
-                    _events.Enqueue(new DiagnosticEvent { Kind = kind, Api = api, Outcome = outcome, Code = code,
-                        SongId = songId, Count = count, Milliseconds = _elapsed.ElapsedMilliseconds });
+                    var entry = new DiagnosticEvent { Kind = kind, Api = api, Outcome = outcome, Code = code,
+                        SongId = songId, Count = count, Milliseconds = Math.Max(0, _owner.Now - _started) };
+                    if (_first.Count < 20) _first.Add(entry);
+                    else
+                    {
+                        if (_last.Count >= 20) { _last.Dequeue(); _dropped++; }
+                        _last.Enqueue(entry);
+                    }
                 }
             }
 
@@ -107,19 +117,24 @@ namespace MusicBeePlugin
                 lock (_owner._gate)
                 {
                     if (_discarded) return;
-                    _status = status; _duration = _elapsed.ElapsedMilliseconds;
+                    _status = status; _duration = Math.Max(0, _owner.Now - _started);
                 }
             }
 
-            internal void Discard() { _discarded = true; _events.Clear(); }
-            internal string Render()
+            internal void Discard() { _discarded = true; _first.Clear(); _last.Clear(); }
+            internal string Render(long reportTime)
             {
-                var text = new StringBuilder("\nLookup ").Append(_sequence).Append(" ").Append(_started.ToString("o", CultureInfo.InvariantCulture))
+                var age = Math.Max(0, reportTime - _started);
+                var relative = age >= 60000 ? (age / 60000).ToString(CultureInfo.InvariantCulture) + " min" :
+                    (age / 1000).ToString(CultureInfo.InvariantCulture) + " sec";
+                var text = new StringBuilder("\nLookup ").Append(_sequence).Append(", ").Append(relative).Append(" before this report")
                     .Append(" status=").Append(_status).Append(" elapsed_ms=")
-                    .Append(_status == DiagnosticLookupStatus.Running ? _elapsed.ElapsedMilliseconds : _duration)
+                    .Append(_status == DiagnosticLookupStatus.Running ? Math.Max(0, reportTime - _started) : _duration)
                     .Append(" search_requests=").Append(_searches).Append(" lyric_phase_requests=").Append(_lyrics)
                     .Append(" dropped_events=").Append(_dropped).Append('\n').Append(_settings).Append('\n');
-                foreach (var entry in _events) text.Append(entry.Render()).Append('\n');
+                foreach (var entry in _first) text.Append(entry.Render()).Append('\n');
+                if (_dropped > 0) text.Append("[").Append(_dropped).Append(" events skipped between first 20 and last 20]\n");
+                foreach (var entry in _last) text.Append(entry.Render()).Append('\n');
                 return text.ToString();
             }
         }

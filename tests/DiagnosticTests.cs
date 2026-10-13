@@ -47,6 +47,36 @@ internal static partial class Program
             recorder.Clear(); stale.Add(DiagnosticKind.Custom10Override, songId: 999999);
             True(!recorder.HasLookups); True(!recorder.Report().Contains("Lookup "));
         });
+        Test("Diagnostic ages are relative to report time and event milliseconds remain intact", () =>
+        {
+            long now = 0;
+            var recorder = new DevelopmentDiagnostics(() => now);
+            var first = recorder.Begin(new NeteaseConfig());
+            now = 250; first.Add(DiagnosticKind.RequestStarted); first.Complete(DiagnosticLookupStatus.Lyrics);
+            now = 119000; recorder.Begin(new NeteaseConfig()).Add(DiagnosticKind.MatchingSelected);
+            now = 120000; var report = recorder.Report();
+            True(report.Contains("Lookup 1, 2 min before this report")); True(report.Contains("Lookup 2, 1 sec before this report"));
+            True(report.Contains("250ms RequestStarted") && report.Contains("elapsed_ms=250"));
+            True(!System.Text.RegularExpressions.Regex.IsMatch(report, @"\d{4}-\d{2}-\d{2}T"));
+            now = 180000; True(recorder.Report().Contains("Lookup 1, 3 min before this report"));
+        });
+        Test("Long diagnostics retain the first twenty and last twenty with one exact gap notice", () =>
+        {
+            foreach (var count in new[] { 0, 1, 20, 21, 39, 40, 41, 50, 200 })
+            {
+                var recorder = new DevelopmentDiagnostics(); var lookup = recorder.Begin(new NeteaseConfig());
+                for (var i = 0; i < count; i++) lookup.Add(DiagnosticKind.RequestStarted, count: i);
+                var report = recorder.Report();
+                var actual = report.Split('\n').Where(s => s.Contains("ms RequestStarted "))
+                    .Select(s => int.Parse(s.Substring(s.LastIndexOf("count=", StringComparison.Ordinal) + 6))).ToArray();
+                var expected = Enumerable.Range(0, Math.Min(20, count)).Concat(
+                    Enumerable.Range(Math.Max(20, count - 20), Math.Min(20, Math.Max(0, count - 20)))).ToArray();
+                True(actual.SequenceEqual(expected));
+                Equal(count > 40 ? 1 : 0, report.Split('\n').Count(s => s.Contains("events skipped between")));
+                if (count > 40) True(report.Contains("[" + (count - 40) + " events skipped between first 20 and last 20]"));
+                True(Encoding.UTF8.GetByteCount(report) <= DevelopmentDiagnostics.MaximumReportBytes);
+            }
+        });
         Test("Concurrent diagnostic scopes keep their request counts and song IDs separate", () =>
         {
             var recorder = new DevelopmentDiagnostics();

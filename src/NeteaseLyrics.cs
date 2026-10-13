@@ -63,8 +63,7 @@ namespace MusicBeePlugin
         private readonly Func<LookupSession> _sessionFactory;
         internal static string BuildVersion => Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         internal static int SettingsPanelHeight => 630;
-        internal static bool IsDevelopmentVersion(string version) => version != null &&
-            Regex.IsMatch(version, @"^[0-9]+\.[0-9]+\.[0-9]+-(?:test\.[0-9]+|pre(?:\.?[0-9]+)?)$");
+        internal static bool IsDevelopmentVersion(string version) => VersionRules.IsDevelopment(version);
         internal static string BuildDescription => "NetEase lyrics. Build " + BuildVersion +
             (IsDevelopmentVersion(BuildVersion) ? " (DEV BUILD)" : "");
         private readonly DevelopmentDiagnostics _diagnostics = new DevelopmentDiagnostics();
@@ -73,6 +72,7 @@ namespace MusicBeePlugin
         public Plugin()
         {
             _sessionFactory = () => new LookupSession(Trace);
+            UpdateChecker = new UpdateChecker(trace: Trace);
         }
 
         internal Plugin(MusicBeeApiInterface api, Func<LookupSession> sessionFactory) : this()
