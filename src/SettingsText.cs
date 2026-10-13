@@ -24,8 +24,8 @@ namespace MusicBeePlugin
             "Matching and network", "Allow small spelling differences", "Allow HTTP fallback (unencrypted metadata)"
             , "Advanced…", "Copy diagnostic report", "Includes NetEase song IDs, which can reveal listening history.",
             "Copied.", "Could not copy. Try again from the settings panel.", "Fetch lyrics first to capture a report.", "Hide advanced",
-            "Check for updates", "Update found", "Installed: {0}", "Checking for updates…",
-            "Could not check for updates. Try again.", "Version {0} is available. Click Update found to view the release.",
+            "Check for LyricBee updates", "View update", "LyricBee: {0}", "Checking for LyricBee updates…",
+            "Could not check for LyricBee updates. Try again.", "LyricBee {0} is available. Click View update to view the release.",
             "Up to date (latest stable: {0}).", "Could not open the release page. Try again."
         };
         private static readonly string[] Chinese = {
@@ -37,8 +37,8 @@ namespace MusicBeePlugin
             "允许 HTTP 回退（元数据不加密）"
             , "高级…", "复制诊断报告", "包含网易云歌曲 ID，可能透露听歌记录。",
             "已复制。", "复制失败，请在设置面板中重试。", "请先搜索歌词以生成报告。", "收起高级选项",
-            "检查更新", "发现更新", "已安装：{0}", "正在检查更新…",
-            "无法检查更新，请重试。", "版本 {0} 可用。点击“发现更新”查看发布页面。",
+            "检查 LyricBee 更新", "查看更新", "LyricBee：{0}", "正在检查 LyricBee 更新…",
+            "无法检查 LyricBee 更新，请重试。", "LyricBee {0} 可用。点击“查看更新”查看发布页面。",
             "已是最新版本（最新稳定版：{0}）。", "无法打开发布页面，请重试。"
         };
 

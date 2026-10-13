@@ -14,9 +14,9 @@
 
 ## Updates
 
-**Check for updates** makes a manual request to GitHub's latest stable release endpoint. Status stays in the settings panel. **Update found** appears only for a newer stable version and opens that release page only when clicked. No popup, automatic check, download or installation occurs during the check; no song metadata or account credentials are sent. Closing settings or switching interface language cancels an in-flight check. Updating still uses MusicBee's Add plugin and Restart buttons.
+**Check for LyricBee updates** makes a manual request to GitHub's latest stable release endpoint. Status stays in the settings panel. **View update** appears only for a newer stable version and opens that release page only when clicked. No popup, automatic check, download or installation occurs during the check; no song metadata or account credentials are sent. Closing settings or switching interface language cancels an in-flight check. Updating still uses MusicBee's Add plugin and Restart buttons.
 
-**检查更新**仅在手动点击时访问 GitHub 的最新稳定版接口，状态直接显示在设置面板中。有更新时才会出现**发现更新**按钮，只有点击它才会打开发布页面。检查不会弹窗、自动下载或安装，也不会发送歌曲标签或账户凭据。关闭设置或切换界面语言会取消正在进行的检查。安装更新仍使用 MusicBee 的“添加插件”和 Restart（重启）按钮。
+**检查 LyricBee 更新**仅在手动点击时访问 GitHub 的最新稳定版接口，状态直接显示在设置面板中。有更新时才会出现**查看更新**按钮，只有点击它才会打开发布页面。检查不会弹窗、自动下载或安装，也不会发送歌曲标签或账户凭据。关闭设置或切换界面语言会取消正在进行的检查。安装更新仍使用 MusicBee 的“添加插件”和 Restart（重启）按钮。
 
 ## Existing settings and rollback
 

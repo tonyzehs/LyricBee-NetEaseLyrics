@@ -104,7 +104,7 @@ internal static partial class Program
             True(!new UpdateChecker(() => handler).CheckAsync("broken", CancellationToken.None).GetAwaiter().GetResult().Succeeded);
             Equal(0, handler.Calls);
         });
-        Test("Bilingual inline update results only open a browser after Update found is clicked", () =>
+        Test("Bilingual LyricBee update results only open a browser after View update is clicked", () =>
         {
             foreach (var ui in new[] { 1, 2 })
             {
@@ -119,7 +119,8 @@ internal static partial class Program
                     Equal(0, handler.Calls); True(!panel.Controls["UpdateFound"].Visible);
                     True(panel.Controls["UpdateStatus"].Text.Contains(Plugin.BuildVersion));
                     var check = (Button)panel.Controls["CheckForUpdates"];
-                    True(check.Text == (ui == 1 ? "Check for updates" : "检查更新"));
+                    True(check.Text == (ui == 1 ? "Check for LyricBee updates" : "检查 LyricBee 更新"));
+                    Equal(ui == 1 ? "View update" : "查看更新", panel.Controls["UpdateFound"].Text);
                     var windows = Application.OpenForms.Count;
                     check.PerformClick(); PumpUpdate(() => check.Enabled);
                     Equal(windows, Application.OpenForms.Count);
@@ -167,7 +168,7 @@ internal static partial class Program
             True(closeHandler.Token.IsCancellationRequested); Application.DoEvents();
             Equal(saved, System.IO.File.ReadAllText(path)); True(!opened);
         });
-        Test("Failed and up-to-date UI checks keep Update found hidden", () =>
+        Test("Failed and up-to-date UI checks keep View update hidden", () =>
         {
             foreach (var response in new[] { "not JSON", ReleaseJson("v1.9.5") })
             {

@@ -121,9 +121,9 @@ Desktop and phone-share song links are supported. Album, playlist, artist and un
 Searches send the song’s title, artist and album to NetEase; lyric requests send the NetEase song ID. No login or account is used.
 When HTTP fallback is used, that metadata is sent without encryption. Anonymous server cookies are not stored and replayed between requests. The plugin supplies lyric text to MusicBee; MusicBee handles display and storage.
 
-### Check for updates
+### Check for LyricBee updates
 
-Click **Check for updates** in the plugin settings. The result appears in the panel; when a newer stable version is available, **Update found** opens its release page only when clicked. Checks are manual and send no song metadata to GitHub. Install the downloaded ZIP through **Add plugin → Restart**.
+Click **Check for LyricBee updates** in the plugin settings. The result appears in the panel; when a newer stable version is available, **View update** opens its release page only when clicked. Checks are manual and send no song metadata to GitHub. Install the downloaded ZIP through **Add plugin → Restart**.
 
 ## Download and install
 

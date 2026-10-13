@@ -1,3 +1,9 @@
+# 1.9.6-test.2 — clarify update-button scope (local testing build)
+
+- Label the check button Check for LyricBee updates / 检查 LyricBee 更新 so it cannot be confused with an update check for MusicBee or other extensions.
+- Label the release-page button View update / 查看更新. Identify LyricBee in the installed-version, checking, available-version and failure messages; keep results inline and browser opening a separate choice.
+- Update bilingual documentation. Product version: `1.9.6-test.2`; assembly/file version: `1.9.6.2`. Network, version-comparison and lyric behaviour are unchanged. Local testing only.
+
 # 1.9.6-test.1 — inline update checking (local testing build)
 
 - Add a manual Check for updates button in English and Simplified Chinese settings. Checking, current-version and failure messages stay inside the panel, without popups.
