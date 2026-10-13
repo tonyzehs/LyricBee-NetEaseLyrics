@@ -13,7 +13,7 @@
     <Compile Remove="RollbackProbe.cs" />
     <EmbeddedResource Include="Fixtures\*.json" />
     <Reference Include="System.Net.Http" />
-    <ProjectReference Include="..\NeteaseLyrics.csproj" />
+    <ProjectReference Include="..\src\NeteaseLyrics.csproj" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 </Project>

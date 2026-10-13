@@ -10,13 +10,19 @@ Keep the repaired settings during rollback. The pre-spelling/pre-display/pre9 ba
 
 Use Windows with .NET Framework 4.8 installed to run the plugin/tests and the .NET SDK selected by `global.json` to build. The framework reference-assembly package restores automatically; Visual Studio or a developer pack is not required.
 
+## Repository layout
+
+The plugin project and implementation live in `src/`, including `src/NeteaseLyrics.csproj`, `src/Properties/AssemblyInfo.cs`, the dependency lock and Fody configuration. Tests stay in `tests/`; the solution, build script and documentation stay at the repository root. `DataStructures.cs` replaces the former misspelled `DataStucture.cs` filename.
+
+The published v1.9.5 tag retains the pre-move layout. The file rearrangement is a separate maintenance commit on the current branches; it does not replace the published installer or change its hashes. Plugin identity, settings storage and runtime behaviour are retained.
+
 From the repository root, run:
 
 ```powershell
 .\build.ps1
 ```
 
-The script restores locked dependencies, builds Release configurations, and runs the regression executable in both 64-bit (AnyCPU on 64-bit Windows) and 32-bit processes. Both runs load the same AnyCPU plugin DLL that goes into the package. Each run uses an isolated folder containing only the test executable/config and the plugin DLL, checking that embedded dependencies load without loose dependency DLLs. It then produces a MusicBee ZIP containing `mb_NeteaseLyrics.dll`, `LICENSE`, `LICENSE-Zony`, `NOTICE` and bilingual `INSTALL.md`, a SHA-256 checksum and test reports in `artifacts/dist`. A failed build or regression test stops packaging.
+The script restores locked dependencies, builds Release configurations, and runs the regression executable in both 64-bit (AnyCPU on 64-bit Windows) and 32-bit processes. Both runs load the same AnyCPU plugin DLL from `src/bin/Release/net48/` that goes into the package. Each run uses an isolated folder containing only the test executable/config and the plugin DLL, checking that embedded dependencies load without loose dependency DLLs. It then produces a MusicBee ZIP containing `mb_NeteaseLyrics.dll`, `LICENSE`, `LICENSE-Zony`, `NOTICE` and bilingual `INSTALL.md`, a SHA-256 checksum and test reports in `artifacts/dist`. A failed build or regression test stops packaging.
 
 Diagnostic reports are included in all builds. Open the plugin settings, expand **Advanced…** and choose **Copy diagnostic report** after reproducing a problem. The controls are collapsed whenever settings are opened or the interface language changes. Recognized test/prerelease informational versions (`X.Y.Z-test.N`, `X.Y.Z-pre`, `X.Y.Z-pre.N` or `X.Y.Z-preN`) show DEV BUILD in the plugin description; stable versions do not. Branch names and SDK version overrides do not set this label. The previous development-only build flag, exclusion profiles and version guard were removed following Tony's decision to make reports available in stable releases.
 

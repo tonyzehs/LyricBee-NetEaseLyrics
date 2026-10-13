@@ -1,3 +1,8 @@
+# Unreleased maintenance
+
+- Move the plugin project, implementation, assembly metadata, locked dependencies and Fody configuration into `src/`. Keep the root solution/build entry point and tests folder; update project references and package paths.
+- Correct the source filename `DataStucture.cs` to `DataStructures.cs`. Plugin filename/provider/settings identities and runtime behaviour are retained. The published v1.9.5 tag and assets remain unchanged.
+
 # 1.9.5
 
 - Repair saved matching settings automatically for safer rollback from 1.9.4. Unsaved settings and interface-language edits no longer affect live lookups or disk until Save.

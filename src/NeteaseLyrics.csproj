@@ -12,7 +12,6 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="tests\**\*.cs" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Numerics" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />

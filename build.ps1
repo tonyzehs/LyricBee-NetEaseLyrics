@@ -23,7 +23,7 @@ try {
         # Only the plugin and the test executable are copied: embedded dependencies must load on their own.
         $isolated = Join-Path $PSScriptRoot ('artifacts\isolated-' + $platform + '-' + [Guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $isolated | Out-Null
-        Copy-Item -LiteralPath 'bin\Release\net48\mb_NeteaseLyrics.dll' -Destination $isolated
+        Copy-Item -LiteralPath 'src\bin\Release\net48\mb_NeteaseLyrics.dll' -Destination $isolated
         foreach ($file in @('NeteaseLyricsTest.exe', 'NeteaseLyricsTest.exe.config')) {
             Copy-Item -LiteralPath (Join-Path $binaryDirectory $file) -Destination $isolated
         }
@@ -32,7 +32,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Regression tests failed for $platform." }
     }
 
-    $plugin = Join-Path $PSScriptRoot 'bin\Release\net48\mb_NeteaseLyrics.dll'
+    $plugin = Join-Path $PSScriptRoot 'src\bin\Release\net48\mb_NeteaseLyrics.dll'
     $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($plugin).ProductVersion
     $package = Join-Path $OutputDirectory "LyricBee-NetEaseLyrics_$version.zip"
     $packageFiles = @($plugin) + @('LICENSE', 'LICENSE-Zony', 'NOTICE', 'INSTALL.md' | ForEach-Object { Join-Path $PSScriptRoot $_ })
