@@ -1,0 +1,28 @@
+name: Bug report / 问题反馈
+description: Wrong song, missing lyrics or another problem / 匹配错误、找不到歌词或其他问题
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened? / 发生了什么？
+      description: What you expected and what you saw. / 预期结果与实际结果。
+    validations:
+      required: true
+  - type: input
+    id: song
+    attributes:
+      label: NetEase song link / 网易云歌曲链接
+      placeholder: https://music.163.com/song?id=...
+  - type: input
+    id: versions
+    attributes:
+      label: MusicBee and LyricBee versions / MusicBee 与 LyricBee 版本
+      placeholder: MusicBee 3.6.9668, LyricBee 1.9.6
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Diagnostic report (optional) / 诊断报告（可选）
+      description: Settings → Advanced… → Copy diagnostic report. It includes NetEase song IDs, which can reveal listening history. / 设置 → 高级… → 复制诊断报告。报告包含可能透露听歌记录的网易云歌曲 ID。
+      render: text

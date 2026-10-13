@@ -127,7 +127,7 @@ Click **Check for LyricBee updates** in the plugin settings. The result appears 
 
 ## Download and install
 
-Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll`, the license/attribution files, and bilingual installation instructions; runtime dependencies are embedded. Source packages and checksums are available with each release. Older development releases are retained for reference; use the latest stable release for normal installation.
+Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll`, the license/attribution files, and bilingual installation instructions; runtime dependencies are embedded. Each release includes SHA256SUMS.txt. GitHub's Source code archives are for development. Older development releases are retained for reference; use the latest stable release for normal installation.
 
 Requires MusicBee 3.x on Windows with .NET Framework 4.8. Tested with MusicBee 3.6.9668 (Microsoft Store edition).
 
@@ -171,7 +171,7 @@ See [BUILDING.md](BUILDING.md) for the Windows/.NET build instructions and valid
 
 Offline fixtures cover the MusicBee callback, matching, timing, configuration and controlled network failures; they do not replace native MusicBee testing or guarantee NetEase availability in every region.
 
-The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases) includes the historical development milestones and LyricBee releases. Each release uses its original build packages; smaller updates are included in the next milestone. Padded prerelease tags keep the listing in numeric order. Tags identify archived source snapshots, and release dates reflect their publication. Source packages include the documentation from their respective builds.
+The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases) includes the historical development milestones and LyricBee releases. Each release uses its original build packages; smaller updates are included in the next milestone. Padded prerelease tags keep the listing in numeric order. Tags identify archived source snapshots, and release dates reflect their publication. Source code archives include the documentation from their respective tags.
 
 | Milestone | Included development steps | Main changes |
 |---|---|---|

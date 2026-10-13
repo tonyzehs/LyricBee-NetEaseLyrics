@@ -127,7 +127,7 @@ netease=29126914
 
 ## 下载与安装
 
-从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。安装包包含 `mb_NeteaseLyrics.dll`、许可证、署名文件及双语安装说明，运行依赖已嵌入 DLL。每次发布同时提供源码包和校验值。历史开发版本保留供参考，正常安装请使用最新稳定版本。
+从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。安装包包含 `mb_NeteaseLyrics.dll`、许可证、署名文件及双语安装说明，运行依赖已嵌入 DLL。每次发布附带 SHA256SUMS.txt。GitHub 自动生成的 Source code 压缩包供开发使用。历史开发版本保留供参考，正常安装请使用最新稳定版本。
 
 需要 Windows 上的 MusicBee 3.x 和 .NET Framework 4.8。已在 MusicBee 3.6.9668（Microsoft Store 版）中测试。
 
@@ -171,7 +171,7 @@ Windows/.NET 构建及验证说明见 [BUILDING.md](BUILDING.md)，各阶段的�
 
 离线测试覆盖 MusicBee 回调、匹配、时间戳、配置和受控网络故障，不能替代实际 MusicBee 测试，也不保证网易云在所有地区均可访问。
 
-[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)包含此前的开发里程碑及 LyricBee 版本。各发布保留对应构建的安装包，较小的开发步骤合并到下一里程碑中。预发布标签补零，以便按编号排列。标签指向相应源码快照；历史构建的发布日期反映其公开发布的时间。源码包保留各自构建时的文档。
+[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)包含此前的开发里程碑及 LyricBee 版本。各发布保留对应构建的安装包，较小的开发步骤合并到下一里程碑中。预发布标签补零，以便按编号排列。标签指向相应源码快照；历史构建的发布日期反映其公开发布的时间。Source code 压缩包保留对应标签中的文档。
 
 | 里程碑 | 包含的开发版本 | 主要变更 |
 | --- | --- | --- |

@@ -21,3 +21,37 @@ LyricBee continues [Charlie Jiang’s original plugin](https://github.com/cqjjjz
 - Use an SDK-style project, pinned SDK, locked dependencies, an isolated build/package script and Windows CI. Remove unused Harmony and embed only required runtime dependencies, reducing the DLL from roughly 4 MB upstream to roughly 1.1 MB.
 - Add permanent recorded-metadata and synthetic lyric fixtures, both process architectures, real loopback transport probes, settings compatibility checks and reproducible packaging checksums. Byte-identical rebuilds in different folders are not claimed.
 - Shorten clipped settings descriptions, retain saved preferences, simplify spelling matching to one checkbox, and separate default extras, common layout and language overrides. Add English/Simplified Chinese settings and a rollback backup for the new display preferences.
+
+## Current runtime rules
+
+### Matching and compatible listings
+
+Contradictory or ambiguous candidates return no new lyrics. The spelling checkbox permits only minor differences; number, artist and recording checks still apply. Track-prefix fallback requires the file's matching TrackNo, known durations within two seconds, full artist agreement and an exact normalized album when supplied. Plain-space prefixes also require zero padding: `01 Lemon` can normalize, while `7 Rings`, `99 Problems` and `1 2 Step` keep their numbers. Ordinary queries run first; at most one cleaned-title query follows when no eligible recording is found. Differing valid lowercase Roman tokens remain protected pairwise without treating title-case words such as Mc as numbers.
+
+Equivalent-listing recovery tries at most three IDs when original lyrics are missing. When only extras are missing, it tries at most one more listing. Skipping translation retries for known Mandarin labels is opportunistic; it does not obtain a language label just for that shortcut. Custom10 remains final. Soundtrack attribution is removed only when artist, album, duration and the named work corroborate it.
+
+### Requests and fallback
+
+A lookup has a 30-second limit, with search ending at 18 seconds to reserve at least 12 seconds for lyrics. Actual sends are capped at nine search requests and nine lyric-phase requests, including fallback and optional language metadata. Multi-artist searches can exhaust that budget before every query is tried. Pending interfaces share the remaining phase time; each request is capped at eight seconds. A timed-out interface is skipped for that lookup and can be used again on a new lookup.
+
+Plain HTTP fallback is enabled by default and can be disabled in settings. It sends unencrypted search metadata only after a legacy HTTPS transport failure or temporary server error. Secure HTTP/API refusals, including anti-bot responses, block insecure fallback for the lookup; malformed, incomplete or empty secure replies alone do not authorize it. Other secure interfaces may still be tried. No account cookies are used, server cookies are not retained, and redirects are not followed automatically. The fixed `appver` marker is sent only to legacy interfaces.
+
+Optional language metadata uses HTTPS only, with a two-second request limit inside the lookup budget. Its refusal does not change lyric transport fallback. Known labels use a bounded six-hour per-ID cache. Unknown or multilingual labels retain translation behavior; missing metadata permits conservative kana/Hangul inference. Lyrics-only overrides may request a language label even without pronunciation.
+
+### Settings, rollback and display
+
+Original lyrics are always included. Fresh settings use translation on, pronunciation off, separate lines and Follow default for every language. Unsaved changes, including interface switches, remain a draft until Save. Settings rows grow for wrapped text and large fonts; a small host can scroll.
+
+Two-line output is stored with the legacy-compatible Format=1 and TwoLineTranslation=true. Old Format=3 settings migrate with a `.pre9.bak` backup. Load-time repair also clears unsafe legacy matching flags, retaining the old file as `netease_config.pre-spelling.bak`. Keep the repaired settings during rollback; historical backups can restore unsafe flags. Resolve a reported migration/write failure before rollback. Older versions can discard newer preferences when saving, so reselect them after returning to LyricBee. Upstream v1.8.1 still has its own weaker matching behavior, including accepting a same-title cover in the rollback fixture.
+
+MusicBee can retain an existing wrong lyric when a new lookup returns nothing. Clear stored lyrics before judging a fresh search. Extra text is aligned independently within the firm 50 ms limit; missing or unusable tracks fall back to the remaining extra, then original only. Recorded fixtures retain public metadata/timing but replace lyric text with synthetic labels; the soundtrack fixture contains no audio or lyrics.
+
+### Diagnostic reports and update checks
+
+Copy diagnostic report is available under collapsed Advanced in both stable and development builds. It keeps five lookups in memory, the first twenty and last twenty structured events per lookup, and at most 32 KiB in the report. Lookup ages are relative to copying; event elapsed milliseconds remain, and a gap line counts omitted events. Closing the plugin clears the recorder.
+
+Reports include outcome/interface codes, request counts, selection/grouping/normalization decisions, NetEase IDs, build/runtime and whitelisted display settings. They exclude lyrics, tag values, paths, URLs, cookies, response bodies and exception messages; arbitrary trace text is not recorded. Copying is manual and sends nothing to a server. Song IDs can reveal listening history, as disclosed beside the button. Unsupported and ambiguous matching are distinguished, but not every rejected candidate is enumerated.
+
+Manual update checks use a separate anonymous HTTPS client, with an eight-second timeout and 256 KiB reply limit. They send no song metadata and never run automatically on startup or opening settings. Results and rate-limit messages stay inline; opening a release requires the separate View update click. No package is downloaded or installed automatically. Closing settings or changing interface language cancels a pending check. Redirects remain disabled and lyric HTTP preferences do not apply to GitHub.
+
+Recognized informational versions (`X.Y.Z-test.N`, `X.Y.Z-pre`, `X.Y.Z-pre.N`, `X.Y.Z-preN`) show DEV BUILD in the description; stable versions do not. Branch names and SDK version overrides do not determine that label. Failed update checks log a reason category, without response or exception text.
