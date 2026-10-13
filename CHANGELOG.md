@@ -1,3 +1,13 @@
+# 1.9.5
+
+- Repair saved matching settings automatically for safer rollback from 1.9.4. Unsaved settings and interface-language edits no longer affect live lookups or disk until Save.
+- Improve matching for contractions, dotted abbreviations, remaster and soundtrack notes; protect numbered titles and only remove strongly corroborated track-number prefixes.
+- Keep usable translation and pronunciation when an original line has a malformed timestamp; preserve the position of malformed text after repeated cues and discard blank continuations.
+- Recover from compatible listings with missing or instrumental lyrics, while limiting retries when only extra text is missing.
+- Recover from temporary server errors with the configured HTTP fallback; keep anti-bot refusals and unsafe redirects blocked.
+- Add Copy diagnostic report under a collapsed Advanced section in English and Simplified Chinese settings. Reports stay local until manually copied and exclude lyrics, tag values, paths and account data.
+- Refresh bilingual documentation and screenshots. Product version: `1.9.5`; assembly/file version: `1.9.5.0`.
+
 # 1.9.5-test.4 — diagnostic reports in all builds (local testing build)
 
 - Include Copy diagnostic report in stable and development builds, under a collapsed Advanced section in the English and Simplified Chinese settings. Reports remain bounded, memory-only and manually copied; no upload is made. The song-ID privacy note stays beside the button.
