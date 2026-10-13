@@ -277,6 +277,9 @@ internal static partial class Program
                 using (var panel = new Panel { Size = new Size(width, Plugin.SettingsPanelHeight + 25), Font = font })
                 {
                     form.Controls.Add(panel); plugin.Configure(panel.Handle); form.Show(); Application.DoEvents();
+                    plugin.UpdateChecker = new UpdateChecker(() => UpdateResponse(ReleaseJson()));
+                    ((Button)panel.Controls["CheckForUpdates"]).PerformClick();
+                    PumpUpdate(() => panel.Controls["CheckForUpdates"].Enabled);
                     ToggleAdvanced(panel);
                     foreach (var control in panel.Controls.Cast<Control>().Where(c => c.Visible))
                     {
@@ -309,6 +312,11 @@ internal static partial class Program
                 bitmap.Save(Path.Combine(directory, ui == 1 ? "settings-en.png" : "settings-zh-CN.png"));
                 ToggleAdvanced(panel); Application.DoEvents(); panel.DrawToBitmap(bitmap, panel.ClientRectangle);
                 bitmap.Save(Path.Combine(directory, ui == 1 ? "settings-en-advanced.png" : "settings-zh-CN-advanced.png"));
+                plugin.UpdateChecker = new UpdateChecker(() => UpdateResponse(ReleaseJson()));
+                ((Button)panel.Controls["CheckForUpdates"]).PerformClick();
+                PumpUpdate(() => panel.Controls["CheckForUpdates"].Enabled);
+                panel.DrawToBitmap(bitmap, panel.ClientRectangle);
+                bitmap.Save(Path.Combine(directory, ui == 1 ? "settings-en-update-found.png" : "settings-zh-CN-update-found.png"));
                 form.Close();
             }
         }

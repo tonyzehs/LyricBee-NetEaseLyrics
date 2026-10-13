@@ -31,7 +31,7 @@ internal static partial class Program
         }
         if (args.Contains("--audit-update-tests"))
         {
-            AuditUpdateTests(); AuditFollowupTests(); NextAuditTests(); DiagnosticTests(); Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
+            AuditUpdateTests(); AuditFollowupTests(); NextAuditTests(); DiagnosticTests(); UpdateTests(); Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
             return _failed == 0 ? 0 : 1;
         }
         if (args.Contains("--settings-tests"))
@@ -330,6 +330,7 @@ internal static partial class Program
         AuditFollowupTests();
         NextAuditTests();
         DiagnosticTests();
+        UpdateTests();
         Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
         Console.WriteLine("Process architecture: " + (Environment.Is64BitProcess ? "x64" : "x86"));
         return _failed == 0 ? 0 : 1;

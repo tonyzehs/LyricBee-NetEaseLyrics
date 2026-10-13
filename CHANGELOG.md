@@ -1,4 +1,11 @@
-# Unreleased maintenance
+# 1.9.6-test.1 — inline update checking (local testing build)
+
+- Add a manual Check for updates button in English and Simplified Chinese settings. Checking, current-version and failure messages stay inside the panel, without popups.
+- Reveal Update found only when a newer stable release exists. Opening the release page requires a separate click; checking never opens the browser, downloads or installs a package.
+- Check the public GitHub latest-release endpoint over HTTPS with a bounded response and timeout, without song metadata, cookies or credentials. Compare numeric versions and treat a same-number stable release as newer than its test build. Cancel pending checks when settings close or the interface language changes.
+- Keep lyric matching and display rules unchanged. Product version: `1.9.6-test.1`; assembly/file version: `1.9.6.1`. Local testing only; GitHub pushes and publication await a later approved batch.
+
+# Post-1.9.5 maintenance
 
 - Move the plugin project, implementation, assembly metadata, locked dependencies and Fody configuration into `src/`. Keep the root solution/build entry point and tests folder; update project references and package paths.
 - Correct the source filename `DataStucture.cs` to `DataStructures.cs`. Plugin filename/provider/settings identities and runtime behaviour are retained. The published v1.9.5 tag and assets remain unchanged.

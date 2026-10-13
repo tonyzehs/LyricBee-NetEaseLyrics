@@ -121,6 +121,10 @@ netease=29126914
 搜索会向网易云发送歌曲标题、艺人及专辑，歌词请求会发送网易云歌曲 ID。无需登录，不使用账号。
 使用 HTTP 回退时，这些元数据以未加密形式发送。匿名服务端 Cookie 不会在请求间保存和回放。插件向 MusicBee 返回歌词文本，显示和保存由 MusicBee 完成。
 
+### 检查更新
+
+在插件设置中点击**检查更新**，结果会直接显示在面板中。有新的稳定版时会出现**发现更新**按钮，只有点击它才会打开发布页面。检查仅在手动点击时进行，不会向 GitHub 发送歌曲标签。下载 ZIP 后，通过**添加插件 → Restart（重启）**安装更新。
+
 ## 下载与安装
 
 从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。安装包包含 `mb_NeteaseLyrics.dll`、许可证、署名文件及双语安装说明，运行依赖已嵌入 DLL。每次发布同时提供源码包和校验值。历史开发版本保留供参考，正常安装请使用最新稳定版本。

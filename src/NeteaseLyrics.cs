@@ -62,7 +62,7 @@ namespace MusicBeePlugin
         private readonly PluginInfo _about = new PluginInfo();
         private readonly Func<LookupSession> _sessionFactory;
         internal static string BuildVersion => Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        internal static int SettingsPanelHeight => 550;
+        internal static int SettingsPanelHeight => 630;
         internal static bool IsDevelopmentVersion(string version) => version != null &&
             Regex.IsMatch(version, @"^[0-9]+\.[0-9]+\.[0-9]+-(?:test\.[0-9]+|pre(?:\.?[0-9]+)?)$");
         internal static string BuildDescription => "NetEase lyrics. Build " + BuildVersion +
@@ -180,15 +180,16 @@ namespace MusicBeePlugin
             _allowHttpCheckBox = new CheckBox { Name = "AllowHttpFallback", Text = T(SettingsLabel.HttpFallback),
                 Location = new Point(0, 396), Checked = config.AllowInsecureHttp, AutoSize = true, ForeColor = configPanel.ForeColor };
             configPanel.Controls.Add(_allowHttpCheckBox);
+            var resizeUpdates = AddUpdateControls(configPanel, T);
             var advanced = new LinkLabel { Name = "AdvancedDiagnostics", Text = T(SettingsLabel.Advanced),
-                Location = new Point(0, 430), AutoSize = true,
+                Location = new Point(0, 508), AutoSize = true,
                 LinkColor = configPanel.ForeColor, ActiveLinkColor = configPanel.ForeColor,
                 VisitedLinkColor = configPanel.ForeColor };
             configPanel.Controls.Add(advanced);
             var copyDiagnostics = new Button { Name = "CopyDiagnosticReport", Text = T(SettingsLabel.CopyDiagnostics),
-                Location = new Point(0, 452), AutoSize = true, Visible = false, Enabled = _diagnostics.HasLookups };
+                Location = new Point(0, 530), AutoSize = true, Visible = false, Enabled = _diagnostics.HasLookups };
             var diagnosticNote = new Label { Name = "DiagnosticPrivacyNote", Text = T(SettingsLabel.DiagnosticPrivacy),
-                Location = new Point(0, 488), Size = new Size(430, 44), ForeColor = configPanel.ForeColor, Visible = false };
+                Location = new Point(0, 566), Size = new Size(430, 44), ForeColor = configPanel.ForeColor, Visible = false };
             configPanel.Controls.Add(copyDiagnostics); configPanel.Controls.Add(diagnosticNote);
             var advancedOpen = false;
             advanced.LinkClicked += (sender, e) =>
@@ -221,6 +222,7 @@ namespace MusicBeePlugin
                     combo.Width = Math.Max(140, Math.Min(360, configPanel.ClientSize.Width - combo.Left - 8));
                 note.Width = Math.Max(200, configPanel.ClientSize.Width - 8);
                 diagnosticNote.Width = note.Width;
+                resizeUpdates();
             };
             // The handler owns only this set of controls; remove it when rebuilding the language UI.
             EventHandler resized = (sender, e) => resize();
