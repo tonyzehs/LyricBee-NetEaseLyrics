@@ -1,3 +1,9 @@
+# 1.9.6-test.4 — automatic settings layout (local testing build)
+
+- Replace fixed control positions with automatically sized table and flow rows. Preserve controls, defaults, order, headings, bilingual labels, collapsed Advanced and the manual update flow.
+- Grow wrapped hints/status/privacy text without overlapping following controls. Allow scrolling in small/high-scale viewports and retain full selected dropdown text. Bold headings follow host font changes.
+- Isolate the layout refactor from test.3's update-check/diagnostic fixes. Product version: `1.9.6-test.4`; assembly/file version: `1.9.6.4`. Native MusicBee skin/DPI testing is still needed; publication is not approved.
+
 # 1.9.6-test.3 — update-check and diagnostic follow-ups (local testing build)
 
 - Log one categorized update-check failure without response or exception text. Add the agreed English/Chinese GitHub rate-limit messages and a last-resort guard around the button handler.

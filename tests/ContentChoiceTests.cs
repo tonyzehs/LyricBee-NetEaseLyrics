@@ -8,7 +8,7 @@ using System.Windows.Forms;
 internal static partial class Program
 {
     private static ComboBox LanguageControl(Panel panel, string language) =>
-        panel.Controls.OfType<ComboBox>().Single(c => c.Name == language + "Content");
+        SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == language + "Content");
 
     private static void ContentChoiceTests()
     {
@@ -172,9 +172,9 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    var check = panel.Controls.OfType<CheckBox>().Single(c => c.Name == "SmallSpellingDifferences");
+                    var check = SettingsControls(panel).OfType<CheckBox>().Single(c => c.Name == "SmallSpellingDifferences");
                     True(check.Enabled); Equal(!legacy || fuzzy, check.Checked);
-                    True(!panel.Controls.Cast<Control>().Any(c => c.Name == "SpellingDefault" || c.Name == "CustomizeSpelling"));
+                    True(!SettingsControls(panel).Any(c => c.Name == "SpellingDefault" || c.Name == "CustomizeSpelling"));
                     plugin.SaveSettings();
                 }
                 var saved = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));

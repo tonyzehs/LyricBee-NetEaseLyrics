@@ -11,7 +11,7 @@ internal static partial class Program
 {
     private static void ToggleAdvanced(Panel panel)
     {
-        var link = (LinkLabel)panel.Controls["AdvancedDiagnostics"];
+        var link = (LinkLabel)FindSetting(panel, "AdvancedDiagnostics");
         typeof(LinkLabel).GetMethod("OnLinkClicked", BindingFlags.Instance | BindingFlags.NonPublic)
             .Invoke(link, new object[] { new LinkLabelLinkClickedEventArgs(link.Links[0]) });
     }
@@ -109,8 +109,8 @@ internal static partial class Program
             {
                 plugin.Configure(panel.Handle);
                 ToggleAdvanced(panel);
-                ((CheckBox)panel.Controls["ShowTranslation"]).Checked = false;
-                var button = (Button)panel.Controls["CopyDiagnosticReport"];
+                ((CheckBox)FindSetting(panel, "ShowTranslation")).Checked = false;
+                var button = (Button)FindSetting(panel, "CopyDiagnosticReport");
                 True(button.Enabled); button.PerformClick();
                 True(copied != null && copied.Contains("song_id=101"));
                 True(!copied.Contains(canary) && !copied.Contains("requested.flac") && !copied.Contains(_directories[plugin]));
@@ -118,7 +118,7 @@ internal static partial class Program
                 True(copied.Contains("default=Translation"));
                 True(saved.SequenceEqual(File.ReadAllBytes(configPath)));
                 plugin.DiagnosticClipboardWriter = _ => { throw new Exception(canary); };
-                button.PerformClick(); True(!panel.Controls["DiagnosticPrivacyNote"].Text.Contains(canary));
+                button.PerformClick(); True(!FindSetting(panel, "DiagnosticPrivacyNote").Text.Contains(canary));
             }
             Equal("[00:01]" + canary, Lookup(plugin));
             var errors = new Fixture((_, __) => { throw new System.Net.Http.HttpRequestException(canary); });
@@ -128,7 +128,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 failing.Configure(panel.Handle); ToggleAdvanced(panel);
-                ((Button)panel.Controls["CopyDiagnosticReport"]).PerformClick();
+                ((Button)FindSetting(panel, "CopyDiagnosticReport")).PerformClick();
                 True(copied.Contains("TransportFailure")); True(!copied.Contains(canary));
             }
         });
@@ -142,25 +142,25 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    True(!panel.Controls["CopyDiagnosticReport"].Enabled);
-                    True(!panel.Controls["CopyDiagnosticReport"].Visible);
-                    True(!panel.Controls["DiagnosticPrivacyNote"].Visible);
-                    True(!panel.Controls["AdvancedDiagnostics"].Text.Contains("DEV BUILD"));
+                    True(!FindSetting(panel, "CopyDiagnosticReport").Enabled);
+                    True(!FindSetting(panel, "CopyDiagnosticReport").Visible);
+                    True(!FindSetting(panel, "DiagnosticPrivacyNote").Visible);
+                    True(!FindSetting(panel, "AdvancedDiagnostics").Text.Contains("DEV BUILD"));
                     ToggleAdvanced(panel);
-                    True(panel.Controls["CopyDiagnosticReport"].Visible);
-                    True(panel.Controls["DiagnosticPrivacyNote"].Text.Contains(ui == 1 ? "listening history" : "听歌记录"));
+                    True(FindSetting(panel, "CopyDiagnosticReport").Visible);
+                    True(FindSetting(panel, "DiagnosticPrivacyNote").Text.Contains(ui == 1 ? "listening history" : "听歌记录"));
                     ToggleAdvanced(panel);
-                    True(!panel.Controls["CopyDiagnosticReport"].Visible);
+                    True(!FindSetting(panel, "CopyDiagnosticReport").Visible);
                     Equal("[00:01.00]Hello", Lookup(plugin));
                     plugin.Configure(panel.Handle);
-                    True(!panel.Controls["CopyDiagnosticReport"].Visible);
+                    True(!FindSetting(panel, "CopyDiagnosticReport").Visible);
                     ToggleAdvanced(panel);
-                    True(panel.Controls["CopyDiagnosticReport"].Enabled);
+                    True(FindSetting(panel, "CopyDiagnosticReport").Enabled);
                     string copied = null; plugin.DiagnosticClipboardWriter = text => copied = text;
-                    ((Button)panel.Controls["CopyDiagnosticReport"]).PerformClick();
+                    ((Button)FindSetting(panel, "CopyDiagnosticReport")).PerformClick();
                     True(copied != null); Equal(1, handler.Calls.Count);
                     plugin.Close(default(Plugin.PluginCloseReason));
-                    plugin.Configure(panel.Handle); True(!panel.Controls["CopyDiagnosticReport"].Enabled);
+                    plugin.Configure(panel.Handle); True(!FindSetting(panel, "CopyDiagnosticReport").Enabled);
                 }
             }
         });
@@ -174,7 +174,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle); ToggleAdvanced(panel);
-                ((Button)panel.Controls["CopyDiagnosticReport"]).PerformClick();
+                ((Button)FindSetting(panel, "CopyDiagnosticReport")).PerformClick();
                 True(copied.Contains("code=-460")); True(!copied.Contains("SECRET_RESPONSE"));
                 True(copied.Contains("lyric_phase_requests=2"));
             }

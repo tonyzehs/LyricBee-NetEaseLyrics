@@ -129,75 +129,72 @@ namespace MusicBeePlugin
             foreach (Control control in configPanel.Controls.Cast<Control>().ToArray()) control.Dispose();
             configPanel.Controls.Clear();
 
+            configPanel.AutoScrollPosition = Point.Empty;
             var config = _settingsDraft;
             string T(SettingsLabel label) => SettingsText.Get(label, config.InterfaceLanguage);
-            void Label(string name, SettingsLabel caption, int y, bool heading = false)
+            var layout = new SettingsLayout(configPanel);
+            Label Caption(string name, SettingsLabel caption, bool heading = false)
             {
-                var label = new Label { Name = name, Text = T(caption), Location = new Point(0, y),
-                    AutoSize = true, ForeColor = configPanel.ForeColor };
+                var label = new Label { Name = name, Text = T(caption), AutoSize = true, ForeColor = configPanel.ForeColor };
                 if (heading)
                 {
                     var font = new Font(configPanel.Font, FontStyle.Bold);
                     label.Font = font;
-                    label.Disposed += (sender, e) => font.Dispose();
+                    EventHandler changedFont = (sender, e) =>
+                    {
+                        if (configPanel.Disposing || configPanel.IsDisposed || label.Disposing || label.IsDisposed) return;
+                        var replacement = new Font(configPanel.Font, FontStyle.Bold);
+                        label.Font = replacement; font.Dispose(); font = replacement;
+                    };
+                    configPanel.FontChanged += changedFont;
+                    label.Disposed += (sender, e) => { configPanel.FontChanged -= changedFont; font.Dispose(); };
                 }
-                configPanel.Controls.Add(label);
+                return label;
             }
-            Label("InterfaceLanguageLabel", SettingsLabel.InterfaceLanguage, 3);
-            _interfaceLanguageComboBox = new ComboBox { Name = "InterfaceLanguage", DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(configPanel.Controls["InterfaceLanguageLabel"].Right + 12, 0), Width = 260 };
+            _interfaceLanguageComboBox = new ComboBox { Name = "InterfaceLanguage", DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
             _interfaceLanguageComboBox.Items.AddRange(new object[] { "Automatic / 自动", "English", "简体中文" });
             _interfaceLanguageComboBox.SelectedIndex = (int)config.InterfaceLanguage;
-            configPanel.Controls.Add(_interfaceLanguageComboBox);
-
-            Label("DefaultDisplayHeading", SettingsLabel.Defaults, 36, true);
-            Label("OriginalAlways", SettingsLabel.OriginalAlways, 58);
+            layout.Inline(Caption("InterfaceLanguageLabel", SettingsLabel.InterfaceLanguage), _interfaceLanguageComboBox, 9);
+            layout.Add(Caption("DefaultDisplayHeading", SettingsLabel.Defaults, true), 4);
+            layout.Add(Caption("OriginalAlways", SettingsLabel.OriginalAlways), 4);
             _translationCheckBox = new CheckBox { Name = "ShowTranslation", Text = T(SettingsLabel.Translation),
-                Location = new Point(0, 80), AutoSize = true, Checked = NeteaseConfig.HasTranslation(config.DefaultContent), ForeColor = configPanel.ForeColor };
+                AutoSize = true, Checked = NeteaseConfig.HasTranslation(config.DefaultContent), ForeColor = configPanel.ForeColor };
             _pronunciationCheckBox = new CheckBox { Name = "ShowPronunciation", Text = T(SettingsLabel.Pronunciation),
-                Location = new Point(160, 80), AutoSize = true, Checked = NeteaseConfig.HasPronunciation(config.DefaultContent), ForeColor = configPanel.ForeColor };
-            configPanel.Controls.Add(_translationCheckBox); configPanel.Controls.Add(_pronunciationCheckBox);
-            Label("LayoutLabel", SettingsLabel.Layout, 111);
-            _formatComboBox = new ComboBox { Name = "OutputLayout", DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(130, 108), Width = 260 };
+                AutoSize = true, Checked = NeteaseConfig.HasPronunciation(config.DefaultContent), ForeColor = configPanel.ForeColor };
+            layout.Extras(_translationCheckBox, _pronunciationCheckBox);
+            _formatComboBox = new ComboBox { Name = "OutputLayout", DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
             _formatComboBox.Items.AddRange(new object[] { T(SettingsLabel.SeparateLines), T(SettingsLabel.SameLine) });
             _formatComboBox.SelectedIndex = config.UseSeparateLines ? 0 : 1;
-            configPanel.Controls.Add(_formatComboBox);
-
-            Label("LanguageOverridesHeading", SettingsLabel.Overrides, 146, true);
-            _japaneseComboBox = AddLanguageChoice(configPanel, SettingsLabel.Japanese, "JapaneseContent", 170, config.JapaneseOverride);
-            _koreanComboBox = AddLanguageChoice(configPanel, SettingsLabel.Korean, "KoreanContent", 200, config.KoreanOverride);
-            _cantoneseComboBox = AddLanguageChoice(configPanel, SettingsLabel.Cantonese, "CantoneseContent", 230, config.CantoneseOverride, cantonese: true);
-            _englishComboBox = AddLanguageChoice(configPanel, SettingsLabel.English, "EnglishContent", 260, config.EnglishOverride, true);
-            var note = new Label { Name = "RefetchHint", Text = T(SettingsLabel.Refetch), Location = new Point(0, 296),
-                Size = new Size(430, 38), ForeColor = configPanel.ForeColor, AutoSize = false };
-            configPanel.Controls.Add(note);
-            Label("MatchingNetworkHeading", SettingsLabel.MatchingNetwork, 342, true);
+            layout.Pair(Caption("LayoutLabel", SettingsLabel.Layout), _formatComboBox, 11);
+            layout.Add(Caption("LanguageOverridesHeading", SettingsLabel.Overrides, true), 6);
+            _japaneseComboBox = AddLanguageChoice(layout, SettingsLabel.Japanese, "JapaneseContent", config.JapaneseOverride);
+            _koreanComboBox = AddLanguageChoice(layout, SettingsLabel.Korean, "KoreanContent", config.KoreanOverride);
+            _cantoneseComboBox = AddLanguageChoice(layout, SettingsLabel.Cantonese, "CantoneseContent", config.CantoneseOverride, cantonese: true);
+            _englishComboBox = AddLanguageChoice(layout, SettingsLabel.English, "EnglishContent", config.EnglishOverride, english: true, gap: 9);
+            var note = Caption("RefetchHint", SettingsLabel.Refetch);
+            layout.Add(note, 8, 38);
+            layout.Add(Caption("MatchingNetworkHeading", SettingsLabel.MatchingNetwork, true), 6);
             _fuzzyCheckBox = new CheckBox { Name = "SmallSpellingDifferences", Text = T(SettingsLabel.SmallDifferences),
-                Location = new Point(0, 366), Checked = config.AllowSpelling,
-                AutoSize = true, ForeColor = configPanel.ForeColor };
-            configPanel.Controls.Add(_fuzzyCheckBox);
+                Checked = config.AllowSpelling, AutoSize = true, ForeColor = configPanel.ForeColor };
+            layout.Add(_fuzzyCheckBox, 10);
             _allowHttpCheckBox = new CheckBox { Name = "AllowHttpFallback", Text = T(SettingsLabel.HttpFallback),
-                Location = new Point(0, 396), Checked = config.AllowInsecureHttp, AutoSize = true, ForeColor = configPanel.ForeColor };
-            configPanel.Controls.Add(_allowHttpCheckBox);
-            var resizeUpdates = AddUpdateControls(configPanel, T);
-            var advanced = new LinkLabel { Name = "AdvancedDiagnostics", Text = T(SettingsLabel.Advanced),
-                Location = new Point(0, 508), AutoSize = true,
-                LinkColor = configPanel.ForeColor, ActiveLinkColor = configPanel.ForeColor,
-                VisitedLinkColor = configPanel.ForeColor };
-            configPanel.Controls.Add(advanced);
+                Checked = config.AllowInsecureHttp, AutoSize = true, ForeColor = configPanel.ForeColor };
+            layout.Add(_allowHttpCheckBox, 14);
+            AddUpdateControls(layout, T);
+            var advanced = new LinkLabel { Name = "AdvancedDiagnostics", Text = T(SettingsLabel.Advanced), AutoSize = true,
+                LinkColor = configPanel.ForeColor, ActiveLinkColor = configPanel.ForeColor, VisitedLinkColor = configPanel.ForeColor };
+            layout.Add(advanced, 4);
             var copyDiagnostics = new Button { Name = "CopyDiagnosticReport", Text = T(SettingsLabel.CopyDiagnostics),
-                Location = new Point(0, 530), AutoSize = true, Visible = false, Enabled = _diagnostics.HasLookups };
-            var diagnosticNote = new Label { Name = "DiagnosticPrivacyNote", Text = T(SettingsLabel.DiagnosticPrivacy),
-                Location = new Point(0, 566), Size = new Size(430, 44), ForeColor = configPanel.ForeColor, Visible = false };
-            configPanel.Controls.Add(copyDiagnostics); configPanel.Controls.Add(diagnosticNote);
+                AutoSize = true, Visible = false, Enabled = _diagnostics.HasLookups };
+            layout.Add(copyDiagnostics, 7);
+            var diagnosticNote = Caption("DiagnosticPrivacyNote", SettingsLabel.DiagnosticPrivacy);
+            diagnosticNote.Visible = false; layout.Add(diagnosticNote, 0, 44);
             var advancedOpen = false;
             advanced.LinkClicked += (sender, e) =>
             {
                 advancedOpen = !advancedOpen;
-                copyDiagnostics.Visible = advancedOpen;
-                diagnosticNote.Visible = advancedOpen;
-                advanced.Text = T(advancedOpen ? SettingsLabel.HideAdvanced : SettingsLabel.Advanced);
+                copyDiagnostics.Visible = advancedOpen; diagnosticNote.Visible = advancedOpen;
+                advanced.Text = T(advancedOpen ? SettingsLabel.HideAdvanced : SettingsLabel.Advanced); layout.Reflow();
             };
             copyDiagnostics.Click += (sender, e) =>
             {
@@ -214,21 +211,7 @@ namespace MusicBeePlugin
             var diagnosticTimer = new System.Windows.Forms.Timer { Interval = 500 };
             diagnosticTimer.Tick += (sender, e) => { if (!copyDiagnostics.IsDisposed) copyDiagnostics.Enabled = _diagnostics.HasLookups; };
             copyDiagnostics.Disposed += (sender, e) => { diagnosticTimer.Stop(); diagnosticTimer.Dispose(); };
-            diagnosticTimer.Start();
-
-            Action resize = () =>
-            {
-                foreach (var combo in configPanel.Controls.OfType<ComboBox>())
-                    combo.Width = Math.Max(140, Math.Min(360, configPanel.ClientSize.Width - combo.Left - 8));
-                note.Width = Math.Max(200, configPanel.ClientSize.Width - 8);
-                diagnosticNote.Width = note.Width;
-                resizeUpdates();
-            };
-            // The handler owns only this set of controls; remove it when rebuilding the language UI.
-            EventHandler resized = (sender, e) => resize();
-            configPanel.SizeChanged += resized;
-            note.Disposed += (sender, e) => configPanel.SizeChanged -= resized;
-            resize();
+            diagnosticTimer.Start(); layout.Reflow();
             _interfaceLanguageComboBox.SelectedIndexChanged += (sender, e) =>
             {
                 CaptureSettings();
@@ -242,13 +225,12 @@ namespace MusicBeePlugin
             NeteaseConfig.AccompanyingText.Original, NeteaseConfig.AccompanyingText.Translation,
             NeteaseConfig.AccompanyingText.Pronunciation, NeteaseConfig.AccompanyingText.PronunciationAndTranslation };
 
-        private ComboBox AddLanguageChoice(Panel panel, SettingsLabel caption, string name, int y,
-            NeteaseConfig.AccompanyingText? value, bool english = false, bool cantonese = false)
+        private ComboBox AddLanguageChoice(SettingsLayout layout, SettingsLabel caption, string name,
+            NeteaseConfig.AccompanyingText? value, bool english = false, bool cantonese = false, int gap = 3)
         {
-            panel.Controls.Add(new Label { Text = SettingsText.Get(caption, _settingsDraft.InterfaceLanguage),
-                Location = new Point(0, y + 3), AutoSize = true, ForeColor = panel.ForeColor });
-            var choice = new ComboBox { Name = name, DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(130, y), Width = 300 };
+            var labelControl = new Label { Name = name + "Label", Text = SettingsText.Get(caption, _settingsDraft.InterfaceLanguage),
+                AutoSize = true, ForeColor = layout.Host.ForeColor };
+            var choice = new ComboBox { Name = name, DropDownStyle = ComboBoxStyle.DropDownList, Width = 300 };
             var values = cantonese ? new[] { NeteaseConfig.AccompanyingText.Original, NeteaseConfig.AccompanyingText.Pronunciation } :
                 english ? ContentChoices.Take(2).ToArray() : ContentChoices;
             choice.Tag = values;
@@ -261,9 +243,7 @@ namespace MusicBeePlugin
                 choice.Items.Add(SettingsText.Get(label, _settingsDraft.InterfaceLanguage));
             }
             choice.SelectedIndex = value.HasValue ? Array.IndexOf(values, value.Value) + 1 : 0;
-            choice.DropDownWidth = Math.Max(choice.Width, choice.Items.Cast<string>()
-                .Max(s => TextRenderer.MeasureText(s, panel.Font).Width) + SystemInformation.VerticalScrollBarWidth + 12);
-            panel.Controls.Add(choice);
+            layout.Pair(labelControl, choice, gap);
             return choice;
         }
 

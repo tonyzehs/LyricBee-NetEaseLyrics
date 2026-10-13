@@ -1,8 +1,8 @@
 # Build and test
 
-The current build passes **386 checks in each isolated x64/x86 process**. SHA256SUMS.txt includes the installer and the `mb_NeteaseLyrics.dll` inside it; the source package checksum is appended when that package is prepared. The default extra-retry cap saves one lyric attempt in a three-listing, missing-translation fixture. The cached Mandarin shortcut is opportunistic and does not run under fresh defaults unless a label was already obtained earlier.
+The current build passes **389 checks in each isolated x64/x86 process**. SHA256SUMS.txt includes the installer and the `mb_NeteaseLyrics.dll` inside it; the source package checksum is appended when that package is prepared. The default extra-retry cap saves one lyric attempt in a three-listing, missing-translation fixture. The cached Mandarin shortcut is opportunistic and does not run under fresh defaults unless a label was already obtained earlier.
 
-The current local test version is **1.9.6-test.3** (assembly/file version 1.9.6.3), following the published 1.9.5 release. Development takes place on `dev`; `master` carries stable updates. `tests/AuditUpdateTests.cs` covers load-time rollback repair, failed repair, Cancel/Save after interface switching, bounded extra retries, per-listing instrumental recovery, cached Mandarin labels, 5xx recovery, guarded title normalization and uninstall cleanup. `tests/AuditFollowupTests.cs` and `tests/NextAuditTests.cs` cover isolated malformed timing, repeated cues, whitespace continuations, offsets, Roman-word classification and corroborated track prefixes. Deadline fixtures control linked cancellation tokens instead of relying on tiny timed waits.
+The current local test version is **1.9.6-test.4** (assembly/file version 1.9.6.4), following the published 1.9.5 release. Development takes place on `dev`; `master` carries stable updates. `tests/AuditUpdateTests.cs` covers load-time rollback repair, failed repair, Cancel/Save after interface switching, bounded extra retries, per-listing instrumental recovery, cached Mandarin labels, 5xx recovery, guarded title normalization and uninstall cleanup. `tests/AuditFollowupTests.cs` and `tests/NextAuditTests.cs` cover isolated malformed timing, repeated cues, whitespace continuations, offsets, Roman-word classification and corroborated track prefixes. Deadline fixtures control linked cancellation tokens instead of relying on tiny timed waits.
 
 For independent rollback probes, compile `tests/RollbackProbe.cs` as a standalone .NET Framework console executable and run `RollbackProbe.exe plugin.dll repaired-settings.json http://127.0.0.1:PORT`. Each invocation loads one shipped DLL and exercises its lookup through a local fixture proxy; the proxy must serve all NetEase HTTP/HTTPS responses locally. `NeteaseLyricsTest.exe --repair-settings old.json repaired.json` exports the actual load-time repair for these probes. Tests against published v1.8.1, v1.9.0, pre.7 and 1.9.3 confirm conservative legacy flags. All four reject an unrelated first listing; v1.8.1 still accepts a same-title cover because its own matcher checks only the first title segment. The other three select the correct recording in that fixture. This limit is separate from the repaired settings regression.
 
@@ -106,6 +106,15 @@ Settings checks in MusicBee:
 Standalone WinForms previews verify layout and visibility only; they do not reproduce MusicBee's skin engine. MusicBee settings and scrolling checks are separate from these previews.
 
 Verify that fresh settings select Follow default for every language, translation on, pronunciation off and separate lines. Existing saved choices remain selected after migration. Preview screenshots do not establish how a particular MusicBee skin renders the settings.
+
+## Automatic settings layout
+
+The settings use auto-sized table/flow rows with the same controls, order and grouping. Wrapped status/hint text grows its row; oversized text or a narrow host can scroll rather than clip. `tests/AutomaticLayoutTests.cs` checks English/Chinese at 100%, 150% and 200% simulated font scaling, with Advanced expanded and View update shown, plus a narrow high-scale viewport and text/font changes after opening. These are offscreen WinForms font/viewport simulations, not a change to Windows display settings and not a native MusicBee skin/DPI test. Check the new layout inside MusicBee before release. The offscreen test host keeps one STA message context alive across forms and enables cross-thread control checks; asynchronous UI handlers must return to that context.
+
+```powershell
+.\tests\bin\Release\net48\NeteaseLyricsTest.exe --layout-tests
+.\tests\bin\Release\net48\NeteaseLyricsTest.exe --scaled-settings-preview artifacts/previews
+```
 
 ## Current settings validation
 

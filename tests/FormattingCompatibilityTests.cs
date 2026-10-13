@@ -128,7 +128,7 @@ internal static partial class Program
             var json = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
             Equal(1, (int)json["Format"]); Equal(true, (bool)json["TwoLineTranslation"]);
             plugin.ReadConfig();
-            using (var panel = new Panel()) { plugin.Configure(panel.Handle); Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex); }
+            using (var panel = new Panel()) { plugin.Configure(panel.Handle); Equal(0, SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex); }
         });
         Test("Old Format three migrates once with a byte-preserving backup", () =>
         {
@@ -149,8 +149,8 @@ internal static partial class Program
             SetConfig(plugin, "{\"Format\":3,\"AllowInsecureHttp\":false}");
             using (var panel = new Panel())
             {
-                plugin.Configure(panel.Handle); Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
-                Equal(false, panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
+                plugin.Configure(panel.Handle); Equal(0, SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
+                Equal(false, SettingsControls(panel).OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
             }
             Equal(3, (int)JObject.Parse(File.ReadAllText(path))["Format"]);
         });
@@ -163,7 +163,7 @@ internal static partial class Program
         {
             var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
             SetConfig(plugin, "{\"Format\":1,\"TwoLineTranslation\":true}");
-            using (var panel = new Panel()) { plugin.Configure(panel.Handle); panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex = 1; plugin.SaveSettings(); }
+            using (var panel = new Panel()) { plugin.Configure(panel.Handle); SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex = 1; plugin.SaveSettings(); }
             var json = JObject.Parse(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
             Equal(1, (int)json["Format"]); Equal(false, (bool)json["TwoLineTranslation"]);
         });

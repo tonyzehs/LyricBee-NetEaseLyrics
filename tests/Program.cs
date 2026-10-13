@@ -22,6 +22,22 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        // These offscreen fixtures pump messages without Application.Run. Keep one
+        // UI context alive across forms so asynchronous handlers stay on this STA.
+        WindowsFormsSynchronizationContext.AutoInstall = false;
+        Control.CheckForIllegalCrossThreadCalls = true;
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
+        var previous = SynchronizationContext.Current;
+        using (var context = new WindowsFormsSynchronizationContext())
+        {
+            SynchronizationContext.SetSynchronizationContext(context);
+            try { return Run(args); }
+            finally { SynchronizationContext.SetSynchronizationContext(previous); }
+        }
+    }
+
+    private static int Run(string[] args)
+    {
         if (args.Contains("--repair-settings"))
         {
             var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));
@@ -36,11 +52,17 @@ internal static partial class Program
         }
         if (args.Contains("--settings-tests"))
         {
-            DisplaySettingsTests(); ContentChoiceTests();
+            DisplaySettingsTests(); ContentChoiceTests(); AutomaticLayoutTests();
             Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
             return _failed == 0 ? 0 : 1;
         }
         if (args.Contains("--settings-preview")) return SettingsPreview(args.Last());
+        if (args.Contains("--layout-tests"))
+        {
+            AutomaticLayoutTests(); Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
+            return _failed == 0 ? 0 : 1;
+        }
+        if (args.Contains("--scaled-settings-preview")) return ScaledSettingsPreview(args.Last());
         if (args.Contains("--live")) return LiveSmoke();
         if (args.Contains("--live-recording")) return LiveRecording();
         if (args.Contains("--live-pronunciation")) return LivePronunciation();
@@ -229,7 +251,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
+                    Equal(0, SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
                     plugin.SaveSettings();
                 }
                 plugin.SaveSettings(); // MusicBee may invoke this after the panel is disposed.
@@ -244,7 +266,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    var fuzzy = panel.Controls.OfType<CheckBox>().Single(box => box.Name == "SmallSpellingDifferences");
+                    var fuzzy = SettingsControls(panel).OfType<CheckBox>().Single(box => box.Name == "SmallSpellingDifferences");
                     True(fuzzy.Enabled); Equal(!legacy, fuzzy.Checked);
                     fuzzy.Checked = legacy; plugin.SaveSettings();
                 }
@@ -252,7 +274,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(legacy, panel.Controls.OfType<CheckBox>().Single(box => box.Name == "SmallSpellingDifferences").Checked);
+                    Equal(legacy, SettingsControls(panel).OfType<CheckBox>().Single(box => box.Name == "SmallSpellingDifferences").Checked);
                 }
             }
         });
@@ -331,6 +353,7 @@ internal static partial class Program
         NextAuditTests();
         DiagnosticTests();
         UpdateTests();
+        AutomaticLayoutTests();
         Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed");
         Console.WriteLine("Process architecture: " + (Environment.Is64BitProcess ? "x64" : "x86"));
         return _failed == 0 ? 0 : 1;
@@ -450,7 +473,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                var option = panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP"));
+                var option = SettingsControls(panel).OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP"));
                 True(option.Checked);
                 option.Checked = false;
                 plugin.SaveSettings();
@@ -459,7 +482,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                True(!panel.Controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
+                True(!SettingsControls(panel).OfType<CheckBox>().Single(c => c.Text.StartsWith("Allow HTTP")).Checked);
             }
         });
         Test("The search deadline preserves part of the lookup for available lyrics", () =>
@@ -624,7 +647,7 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(scenario.Value, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
+                    Equal(scenario.Value, SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
                 }
                 Equal(scenario.Key == "{\"Format\":0}" ? "Hello" : "Hello / Translation", Lookup(plugin));
             }
@@ -636,7 +659,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
+                Equal(0, SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
                 plugin.SaveSettings();
             }
             var saved = JsonConvert.DeserializeObject<NeteaseConfig>(File.ReadAllText(Path.Combine(_directories[plugin], "netease_config")));
@@ -645,7 +668,7 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                Equal(0, panel.Controls.OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
+                Equal(0, SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == "OutputLayout").SelectedIndex);
             }
         });
         Test("Two-line mode leaves blank or missing translations alone", () =>

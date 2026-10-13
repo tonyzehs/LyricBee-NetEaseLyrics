@@ -12,15 +12,19 @@ namespace MusicBeePlugin
         internal Action<string> ReleasePageOpener { get; set; } = url =>
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 
-        private Action AddUpdateControls(Panel panel, Func<SettingsLabel, string> text)
+        private void AddUpdateControls(SettingsLayout layout, Func<SettingsLabel, string> text)
         {
+            var panel = layout.Host;
             var check = new Button { Name = "CheckForUpdates", Text = text(SettingsLabel.CheckUpdates),
-                Location = new Point(0, 430), AutoSize = true };
+                Margin = new Padding(0, 0, 12, 0), AutoSize = true };
             var found = new Button { Name = "UpdateFound", Text = text(SettingsLabel.UpdateFound),
-                Location = new Point(170, 430), AutoSize = true, Visible = false };
+                Margin = Padding.Empty, AutoSize = true, Visible = false };
             var status = new Label { Name = "UpdateStatus", Text = string.Format(text(SettingsLabel.UpdateInstalled), BuildVersion),
-                Location = new Point(0, 466), Size = new Size(430, 36), ForeColor = panel.ForeColor };
-            panel.Controls.Add(check); panel.Controls.Add(found); panel.Controls.Add(status);
+                AutoSize = true, ForeColor = panel.ForeColor };
+            var buttons = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                WrapContents = true, Margin = Padding.Empty, Padding = Padding.Empty };
+            buttons.Controls.Add(check); buttons.Controls.Add(found); layout.Add(buttons, 7, 29);
+            layout.Add(status, 6, 36);
             CancellationTokenSource pending = null;
             UpdateResult result = null;
             var failedText = text(SettingsLabel.UpdateFailed);
@@ -57,11 +61,6 @@ namespace MusicBeePlugin
                 if (result?.UpdateAvailable != true || !result.Succeeded) return;
                 try { ReleasePageOpener(result.ReleasePage); }
                 catch { status.Text = text(SettingsLabel.UpdateOpenFailed); }
-            };
-            return () =>
-            {
-                found.Left = check.Right + 12;
-                status.Width = Math.Max(200, panel.ClientSize.Width - 8);
             };
         }
     }

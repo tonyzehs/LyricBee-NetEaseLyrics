@@ -9,8 +9,18 @@ using System.Windows.Forms;
 
 internal static partial class Program
 {
-    private static CheckBox DisplayCheck(Panel panel, string name) => panel.Controls.OfType<CheckBox>().Single(c => c.Name == name);
-    private static ComboBox DisplayCombo(Panel panel, string name) => panel.Controls.OfType<ComboBox>().Single(c => c.Name == name);
+    private static Control FindSetting(Panel panel, string name) => panel.Controls.Find(name, true).Single();
+    private static System.Collections.Generic.IEnumerable<Control> SettingsControls(Control parent)
+    {
+        foreach (Control control in parent.Controls)
+        {
+            yield return control;
+            foreach (var child in SettingsControls(control)) yield return child;
+        }
+    }
+
+    private static CheckBox DisplayCheck(Panel panel, string name) => SettingsControls(panel).OfType<CheckBox>().Single(c => c.Name == name);
+    private static ComboBox DisplayCombo(Panel panel, string name) => SettingsControls(panel).OfType<ComboBox>().Single(c => c.Name == name);
     private static string ModernSettings(bool translation = true, bool pronunciation = false, bool separate = true, string extra = "") =>
         "{\"DisplaySettingsVersion\":1,\"ShowTranslation\":" + translation.ToString().ToLowerInvariant() +
         ",\"ShowPronunciation\":" + pronunciation.ToString().ToLowerInvariant() + ",\"SeparateLines\":" + separate.ToString().ToLowerInvariant() +
@@ -28,9 +38,9 @@ internal static partial class Program
                 True(!DisplayCheck(panel, "ShowPronunciation").Checked);
                 Equal(0, DisplayCombo(panel, "OutputLayout").SelectedIndex);
                 foreach (var language in new[] { "Cantonese", "Japanese", "Korean", "English" }) Equal(0, LanguageControl(panel, language).SelectedIndex);
-                True(!panel.Controls.OfType<CheckBox>().Any(c => c.Name.Contains("Original")));
-                var heading = panel.Controls.OfType<Label>().Single(c => c.Name == "LanguageOverridesHeading");
-                True(panel.Controls.OfType<ComboBox>().Where(c => c.Name.EndsWith("Content")).All(c => c.Top > heading.Bottom));
+                True(!SettingsControls(panel).OfType<CheckBox>().Any(c => c.Name.Contains("Original")));
+                var heading = SettingsControls(panel).OfType<Label>().Single(c => c.Name == "LanguageOverridesHeading");
+                True(SettingsControls(panel).OfType<ComboBox>().Where(c => c.Name.EndsWith("Content")).All(c => c.Top > heading.Bottom));
             }
         });
         foreach (var separate in new[] { true, false })
@@ -107,10 +117,10 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    var caption = panel.Controls.OfType<Label>().Single(c => c.Name == "InterfaceLanguageLabel");
+                    var caption = SettingsControls(panel).OfType<Label>().Single(c => c.Name == "InterfaceLanguageLabel");
                     True(caption.Text.Contains("界面语言") && caption.Text.Contains("Interface language"));
                     True(DisplayCombo(panel, "InterfaceLanguage").Left > caption.Right);
-                    Equal("JapaneseContent|KoreanContent|CantoneseContent|EnglishContent", string.Join("|", panel.Controls.OfType<ComboBox>()
+                    Equal("JapaneseContent|KoreanContent|CantoneseContent|EnglishContent", string.Join("|", SettingsControls(panel).OfType<ComboBox>()
                         .Where(c => c.Name.EndsWith("Content")).OrderBy(c => c.Top).Select(c => c.Name)));
                     var items = LanguageControl(panel, "Cantonese").Items.Cast<string>().ToArray();
                     Equal(ui == 1 ? "Follow default|Lyrics|Lyrics + Pronunciation" : "使用默认设置|歌词|歌词 + 发音", string.Join("|", items));
@@ -166,7 +176,7 @@ internal static partial class Program
                 DisplayCombo(panel, "OutputLayout").SelectedIndex = 1;
                 DisplayCheck(panel, "AllowHttpFallback").Checked = false;
                 DisplayCombo(panel, "InterfaceLanguage").SelectedIndex = 2;
-                Equal("语言覆盖设置", panel.Controls.OfType<Label>().Single(c => c.Name == "LanguageOverridesHeading").Text);
+                Equal("语言覆盖设置", SettingsControls(panel).OfType<Label>().Single(c => c.Name == "LanguageOverridesHeading").Text);
                 True(!DisplayCheck(panel, "ShowTranslation").Checked); True(DisplayCheck(panel, "ShowPronunciation").Checked);
                 Equal(4, LanguageControl(panel, "Japanese").SelectedIndex); Equal(1, DisplayCombo(panel, "OutputLayout").SelectedIndex);
                 True(!DisplayCheck(panel, "AllowHttpFallback").Checked);
@@ -276,20 +286,22 @@ internal static partial class Program
                 using (var font = new Font("Segoe UI", size))
                 using (var panel = new Panel { Size = new Size(width, Plugin.SettingsPanelHeight + 25), Font = font })
                 {
-                    form.Controls.Add(panel); plugin.Configure(panel.Handle); form.Show(); Application.DoEvents();
+                    form.ClientSize = panel.Size; form.Controls.Add(panel); plugin.Configure(panel.Handle); form.Show(); Application.DoEvents();
                     plugin.UpdateChecker = new UpdateChecker(() => UpdateResponse(ReleaseJson()));
-                    ((Button)panel.Controls["CheckForUpdates"]).PerformClick();
-                    PumpUpdate(() => panel.Controls["CheckForUpdates"].Enabled);
+                    ((Button)FindSetting(panel, "CheckForUpdates")).PerformClick();
+                    PumpUpdate(() => FindSetting(panel, "CheckForUpdates").Enabled);
                     ToggleAdvanced(panel);
-                    foreach (var control in panel.Controls.Cast<Control>().Where(c => c.Visible))
+                    foreach (var control in SettingsControls(panel).Where(c => c.Visible))
                     {
-                        if (control.Right > panel.ClientSize.Width || control.Bottom > panel.ClientSize.Height)
+                        var area = control.Parent is ScrollableControl scrolling && scrolling.AutoScroll ? scrolling.DisplayRectangle :
+                            new Rectangle(Point.Empty, control.Parent.ClientSize);
+                        if (control.Right > area.Right || control.Bottom > area.Bottom)
                             throw new Exception("Outside panel: " + control.Name + " ui=" + ui + " width=" + width + " font=" + size + " bounds=" + control.Bounds);
                         if (control is CheckBox || (control is Label && ((Label)control).AutoSize))
                             if (control.PreferredSize.Width > control.Width)
                                 throw new Exception("Clipped text: " + control.Name + " ui=" + ui + " font=" + size);
                     }
-                    True(panel.Controls.OfType<ComboBox>().All(c => c.Enabled));
+                    True(SettingsControls(panel).OfType<ComboBox>().All(c => c.Enabled));
                     form.Close();
                 }
             }
@@ -313,8 +325,8 @@ internal static partial class Program
                 ToggleAdvanced(panel); Application.DoEvents(); panel.DrawToBitmap(bitmap, panel.ClientRectangle);
                 bitmap.Save(Path.Combine(directory, ui == 1 ? "settings-en-advanced.png" : "settings-zh-CN-advanced.png"));
                 plugin.UpdateChecker = new UpdateChecker(() => UpdateResponse(ReleaseJson()));
-                ((Button)panel.Controls["CheckForUpdates"]).PerformClick();
-                PumpUpdate(() => panel.Controls["CheckForUpdates"].Enabled);
+                ((Button)FindSetting(panel, "CheckForUpdates")).PerformClick();
+                PumpUpdate(() => FindSetting(panel, "CheckForUpdates").Enabled);
                 panel.DrawToBitmap(bitmap, panel.ClientRectangle);
                 bitmap.Save(Path.Combine(directory, ui == 1 ? "settings-en-update-found.png" : "settings-zh-CN-update-found.png"));
                 form.Close();

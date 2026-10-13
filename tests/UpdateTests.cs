@@ -118,22 +118,22 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal(0, handler.Calls); True(!panel.Controls["UpdateFound"].Visible);
-                    True(panel.Controls["UpdateStatus"].Text.Contains(Plugin.BuildVersion));
-                    var check = (Button)panel.Controls["CheckForUpdates"];
+                    Equal(0, handler.Calls); True(!FindSetting(panel, "UpdateFound").Visible);
+                    True(FindSetting(panel, "UpdateStatus").Text.Contains(Plugin.BuildVersion));
+                    var check = (Button)FindSetting(panel, "CheckForUpdates");
                     True(check.Text == (ui == 1 ? "Check for LyricBee updates" : "检查 LyricBee 更新"));
-                    Equal(ui == 1 ? "View update" : "查看更新", panel.Controls["UpdateFound"].Text);
+                    Equal(ui == 1 ? "View update" : "查看更新", FindSetting(panel, "UpdateFound").Text);
                     var windows = Application.OpenForms.Count;
                     check.PerformClick(); PumpUpdate(() => check.Enabled);
                     Equal(windows, Application.OpenForms.Count);
-                    Equal(1, handler.Calls); Equal(null, opened); True(panel.Controls["UpdateFound"].Visible);
-                    True(panel.Controls["UpdateStatus"].Text.Contains("9.9.9"));
-                    ((Button)panel.Controls["UpdateFound"]).PerformClick();
+                    Equal(1, handler.Calls); Equal(null, opened); True(FindSetting(panel, "UpdateFound").Visible);
+                    True(FindSetting(panel, "UpdateStatus").Text.Contains("9.9.9"));
+                    ((Button)FindSetting(panel, "UpdateFound")).PerformClick();
                     Equal("https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v9.9.9", opened);
                     plugin.ReleasePageOpener = _ => throw new Exception("private error");
-                    ((Button)panel.Controls["UpdateFound"]).PerformClick();
-                    True(!panel.Controls["UpdateStatus"].Text.Contains("private error"));
-                    True(panel.Controls["UpdateStatus"].Text.Contains(ui == 1 ? "Could not open" : "无法打开"));
+                    ((Button)FindSetting(panel, "UpdateFound")).PerformClick();
+                    True(!FindSetting(panel, "UpdateStatus").Text.Contains("private error"));
+                    True(FindSetting(panel, "UpdateStatus").Text.Contains(ui == 1 ? "Could not open" : "无法打开"));
                 }
             }
         });
@@ -150,14 +150,14 @@ internal static partial class Program
             using (var panel = new Panel())
             {
                 plugin.Configure(panel.Handle);
-                var check = (Button)panel.Controls["CheckForUpdates"];
+                var check = (Button)FindSetting(panel, "CheckForUpdates");
                 check.PerformClick(); True(!check.Enabled); check.PerformClick(); Equal(1, handler.Calls);
-                True(panel.Controls["UpdateStatus"].Text.Contains("Checking"));
-                ((CheckBox)panel.Controls["ShowTranslation"]).Checked = false;
-                ((ComboBox)panel.Controls["InterfaceLanguage"]).SelectedIndex = 2;
+                True(FindSetting(panel, "UpdateStatus").Text.Contains("Checking"));
+                ((CheckBox)FindSetting(panel, "ShowTranslation")).Checked = false;
+                ((ComboBox)FindSetting(panel, "InterfaceLanguage")).SelectedIndex = 2;
                 True(handler.Token.IsCancellationRequested); True(check.IsDisposed);
-                Application.DoEvents(); True(panel.Controls["CheckForUpdates"].Enabled);
-                True(!panel.Controls["UpdateFound"].Visible); True(!opened);
+                Application.DoEvents(); True(FindSetting(panel, "CheckForUpdates").Enabled);
+                True(!FindSetting(panel, "UpdateFound").Visible); True(!opened);
                 Equal(saved, System.IO.File.ReadAllText(path));
             }
             var closePending = new TaskCompletionSource<HttpResponseMessage>();
@@ -165,7 +165,7 @@ internal static partial class Program
             plugin.UpdateChecker = new UpdateChecker(() => closeHandler);
             using (var panel = new Panel())
             {
-                plugin.Configure(panel.Handle); ((Button)panel.Controls["CheckForUpdates"]).PerformClick();
+                plugin.Configure(panel.Handle); ((Button)FindSetting(panel, "CheckForUpdates")).PerformClick();
             }
             True(closeHandler.Token.IsCancellationRequested); Application.DoEvents();
             Equal(saved, System.IO.File.ReadAllText(path)); True(!opened);
@@ -180,10 +180,10 @@ internal static partial class Program
                 plugin.UpdateChecker = new UpdateChecker(() => handler);
                 using (var panel = new Panel())
                 {
-                    plugin.Configure(panel.Handle); var check = (Button)panel.Controls["CheckForUpdates"];
+                    plugin.Configure(panel.Handle); var check = (Button)FindSetting(panel, "CheckForUpdates");
                     check.PerformClick(); PumpUpdate(() => check.Enabled);
-                    True(!panel.Controls["UpdateFound"].Visible);
-                    True(panel.Controls["UpdateStatus"].Text.Contains(response == "not JSON" ? "Could not check" : "No newer stable release"));
+                    True(!FindSetting(panel, "UpdateFound").Visible);
+                    True(FindSetting(panel, "UpdateStatus").Text.Contains(response == "not JSON" ? "Could not check" : "No newer stable release"));
                 }
             }
         });
@@ -244,10 +244,10 @@ internal static partial class Program
                 using (var panel = new Panel())
                 {
                     plugin.Configure(panel.Handle);
-                    Equal((ui == 1 ? "Installed: LyricBee " : "已安装：LyricBee ") + Plugin.BuildVersion, panel.Controls["UpdateStatus"].Text);
-                    var check = (Button)panel.Controls["CheckForUpdates"]; check.PerformClick(); PumpUpdate(() => check.Enabled);
-                    Equal(SettingsText.Get(item.Item3 ? SettingsLabel.UpdateRateLimited : SettingsLabel.UpdateFailed, (NeteaseConfig.UiLanguage)ui), panel.Controls["UpdateStatus"].Text);
-                    True(!panel.Controls["UpdateFound"].Visible); Equal(1, handler.Calls); Equal(1, traces.Count);
+                    Equal((ui == 1 ? "Installed: LyricBee " : "已安装：LyricBee ") + Plugin.BuildVersion, FindSetting(panel, "UpdateStatus").Text);
+                    var check = (Button)FindSetting(panel, "CheckForUpdates"); check.PerformClick(); PumpUpdate(() => check.Enabled);
+                    Equal(SettingsText.Get(item.Item3 ? SettingsLabel.UpdateRateLimited : SettingsLabel.UpdateFailed, (NeteaseConfig.UiLanguage)ui), FindSetting(panel, "UpdateStatus").Text);
+                    True(!FindSetting(panel, "UpdateFound").Visible); Equal(1, handler.Calls); Equal(1, traces.Count);
                 }
             }
         });
@@ -261,10 +261,10 @@ internal static partial class Program
             plugin.UpdateChecker = null;
             using (var panel = new Panel())
             {
-                plugin.Configure(panel.Handle); var check = (Button)panel.Controls["CheckForUpdates"];
+                plugin.Configure(panel.Handle); var check = (Button)FindSetting(panel, "CheckForUpdates");
                 var windows = Application.OpenForms.Count; check.PerformClick(); PumpUpdate(() => check.Enabled);
-                Equal(windows, Application.OpenForms.Count); True(!panel.Controls["UpdateFound"].Visible);
-                Equal(SettingsText.Get(SettingsLabel.UpdateFailed, NeteaseConfig.UiLanguage.English), panel.Controls["UpdateStatus"].Text);
+                Equal(windows, Application.OpenForms.Count); True(!FindSetting(panel, "UpdateFound").Visible);
+                Equal(SettingsText.Get(SettingsLabel.UpdateFailed, NeteaseConfig.UiLanguage.English), FindSetting(panel, "UpdateStatus").Text);
                 True(trace.Single().EndsWith("Update check failed: internal failure"));
             }
         });
