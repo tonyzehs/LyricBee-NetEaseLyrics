@@ -22,8 +22,8 @@ Older settings are repaired automatically when the plugin loads, with the previo
 
 从[最新发布](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest)下载 `LyricBee-NetEaseLyrics_[version].zip`。请选择安装 ZIP，不要下载 GitHub 自动生成的 Source code 压缩包。需要 Windows 上的 MusicBee 3.x 和 .NET Framework 4.8。已在 MusicBee 3.6.9668（Microsoft Store 版）中测试。
 
-1. 在 MusicBee 的**首选项 → 插件**中使用“添加插件”，选择 ZIP 并启用 **LyricBee — NetEase Lyrics**。
-2. 在**标签 (2)**的歌词提供者优先级中选择 **Netease Cloud Music**。
+1. 在 MusicBee 的 **首选项 → 插件** 中使用“添加插件”，选择 ZIP 并启用 **LyricBee — NetEase Lyrics**。
+2. 在 **标签 (2)** 的歌词提供者优先级中选择 **Netease Cloud Music**。
 3. 在插件设置中选择默认附加内容、排列方式、语言覆盖设置及界面语言。始终显示原文。首次安装默认开启翻译、关闭发音、采用分行显示，所有语言均使用默认设置。
 4. 升级或修改显示设置后，重新搜索歌词。MusicBee 会保留之前保存的歌词，直到这些文本被替换。
 
@@ -32,8 +32,8 @@ Older settings are repaired automatically when the plugin loads, with the previo
 （可选）备份设置。旧版插件可从[发布历史](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases)下载。
 
 1. 下载最新安装 ZIP。
-2. 打开 MusicBee 的**首选项 → 插件**，使用“添加插件”选择新的 ZIP，以更新 LyricBee。
-3. 点击出现的 **Restart（重启）**按钮。MusicBee 将重启并加载更新后的插件。
+2. 打开 MusicBee 的 **首选项 → 插件**，使用“添加插件”选择新的 ZIP，以更新 LyricBee。
+3. 点击出现的 **Restart（重启）** 按钮。MusicBee 将重启并加载更新后的插件。
 4. 重新搜索歌词，以将显示或匹配变化应用于之前保存的文本。
 
 插件加载时会自动修复旧设置，并将原文件保留为 `netease_config.pre-spelling.bak`。回退时请保留修复后的设置；恢复历史备份也会恢复其中的旧匹配选项。上游 v1.8.1 本身仍采用较弱的匹配规则。

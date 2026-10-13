@@ -30,8 +30,8 @@ Requires MusicBee 3.x on Windows with .NET Framework 4.8. Tested with MusicBee 3
 
 需要 Windows 上的 MusicBee 3.x 和 .NET Framework 4.8。已在 MusicBee 3.6.9668（Microsoft Store 版）中测试。
 
-1. 下载上方安装 ZIP，在**首选项 → 插件 → 添加插件**中安装。
-2. 启用 **LyricBee — NetEase Lyrics**，并在**标签 (2)**的提供者优先级中选择 **Netease Cloud Music**。
+1. 下载上方安装 ZIP，在 **首选项 → 插件 → 添加插件** 中安装。
+2. 启用 **LyricBee — NetEase Lyrics**，并在 **标签 (2)** 的提供者优先级中选择 **Netease Cloud Music**。
 3. 选择显示设置；升级时点击 **Restart（重启）**，然后重新搜索歌词。
 
 See [INSTALL.md](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/blob/v{{VERSION}}/INSTALL.md) for details / 详细说明见安装文档。
