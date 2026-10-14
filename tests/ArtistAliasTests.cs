@@ -217,6 +217,67 @@ internal static partial class Program
             var report = diagnostics.Report(); True(report.Contains("ArtistAliasLookup") && report.Contains("ArtistAliasMatch"));
             True(!report.Contains("Localized") && !report.Contains("Singer"));
         });
+        foreach (var refusal in new[] { "HTTP 404", "API -460" })
+        Test("Optional artist " + refusal + " does not block permitted lyric HTTP fallback", () =>
+        {
+            foreach (var allowHttp in new[] { true, false })
+            {
+                var handler = new Fixture((r, _) =>
+                {
+                    if (r.RequestUri.AbsolutePath.Contains("/api/artist/"))
+                        return refusal == "HTTP 404" ? new System.Net.Http.HttpResponseMessage(HttpStatusCode.NotFound) : Json("{\"code\":-460}");
+                    if (r.RequestUri.Scheme == "https") throw new System.Net.Http.HttpRequestException("fixture HTTPS failure");
+                    return Json(Lyrics);
+                });
+                using (var session = Session(handler))
+                {
+                    session.AllowInsecureHttp = allowHttp;
+                    Equal(0, NeteaseApi.RequestArtistAliases(81, session).Length);
+                    var lyrics = NeteaseApi.RequestLyric(101, session);
+                    if (allowHttp) Equal("[00:01.00]Hello", lyrics.lrc.lyric); else Equal(null, lyrics);
+                }
+                Equal(allowHttp ? 1 : 0, handler.Calls.Count(c => c.StartsWith("GET http://")));
+                True(handler.Calls.Where(ArtistCall).All(c => c.StartsWith("GET https://")));
+            }
+        });
+        foreach (var failure in new[] { "cancellation", "transport", "server-error" })
+        Test("Transient artist " + failure + " is retryable in the next lookup", () =>
+        {
+            var cache = new ArtistAliasCache();
+            var failed = new Fixture((_, __) =>
+            {
+                if (failure == "cancellation") throw new OperationCanceledException();
+                if (failure == "transport") throw new System.Net.Http.HttpRequestException("fixture network failure");
+                return new System.Net.Http.HttpResponseMessage(HttpStatusCode.BadGateway);
+            });
+            using (var session = Session(failed))
+            {
+                session.AliasCache = cache; Equal(0, NeteaseApi.RequestArtistAliases(81, session).Length);
+                True(!cache.TryGet(81, out _)); Equal(0, cache.Count);
+            }
+            var recovered = AliasFixture(new[] { AliasSong() });
+            Equal(1L, AliasLookup(recovered, cache: cache).Single()); Equal(1, recovered.Calls.Count(ArtistCall));
+        });
+        Test("Artist reply size measures the entire UTF8 payload without retaining its text", () =>
+        {
+            var body = JObject.Parse(AliasDetails(81, "七音阿卡莉", "ナナヲアカリ"));
+            body["hotSongs"] = new JArray(new JObject { ["name"] = new string('x', 4096) });
+            var payload = body.ToString(); var handler = AliasFixture(new[] { AliasSong() }, payload);
+            using (var session = Session(handler))
+            {
+                Equal(2, NeteaseApi.RequestArtistAliases(81, session).Length);
+                Equal(System.Text.Encoding.UTF8.GetByteCount(payload), session.LastArtistReplyBytes);
+                True(session.LastArtistReplyBytes > 4096);
+            }
+        });
+        Test("Alias matches use the agreed trace without calling the artist identity an annotation", () =>
+        {
+            var trace = new System.Collections.Generic.List<string>(); var handler = AliasFixture(new[] { AliasSong() });
+            using (var session = Session(handler, trace.Add))
+                Equal(1L, SearchMatch.SearchCandidates("Song", "Singer", "Album", 200000, session).Single());
+            True(trace.Contains("Matching: matched through a verified NetEase artist alias"));
+            True(!trace.Any(s => s.Contains("artist alias annotation")));
+        });
     }
 
     private static int LiveArtistAlias()
@@ -234,11 +295,16 @@ internal static partial class Program
             api.Library_GetFileTag = (_, tag) => tag == Plugin.MetaDataType.TrackTitle ? (string)f["title"] :
                 tag == Plugin.MetaDataType.Artist ? (string)f["artist"] : tag == Plugin.MetaDataType.Album ? (string)f["album"] : null;
             api.Library_GetFileProperty = (_, property) => property == Plugin.FilePropertyType.Duration ? "3:41.736" : null;
-            var plugin = new Plugin(api, () => new LookupSession(Console.WriteLine)); _directories[plugin] = directory;
+            LookupSession lastSession = null;
+            var plugin = new Plugin(api, () => lastSession = new LookupSession(Console.WriteLine)); _directories[plugin] = directory;
             SetConfig(plugin, JsonConvert.SerializeObject(new NeteaseConfig { Format = NeteaseConfig.OutputFormat.Original, AllowSmallSpellingDifferences = spelling }));
             var text = Lookup(plugin, (string)f["artist"], (string)f["title"]);
             var correct = text == expected;
             Console.WriteLine("Live MusicBee callback: unchanged tags; Custom10 absent; spelling=" + spelling + "; correct original lyrics=" + correct);
+            var artistId = (long)f["details"]["artist"]["id"];
+            Console.WriteLine(lastSession != null && lastSession.LastArtistReplyBytes > 0 ?
+                "/api/artist/" + artistId + " reply size: " + lastSession.LastArtistReplyBytes + " bytes" :
+                "Artist aliases served from cache; no metadata reply downloaded");
             if (!correct) return 1;
         }
         Console.WriteLine("LIVE ARTIST ALIAS: passed; no audio sent or downloaded lyrics printed/saved");

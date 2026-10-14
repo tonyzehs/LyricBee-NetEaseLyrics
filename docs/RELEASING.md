@@ -24,6 +24,7 @@ Install the candidate ZIP through Add plugin, then Restart. Clear stored lyrics 
 - [ ] Now Playing two-line and three-line highlighting/scrolling. Check timed, untimed and offset lyrics, near timestamps, unequal untimed line counts and missing/unaligned extras.
 - [ ] Cantonese ID 409931770 and Japanese/Korean samples. Japanese ID 400875204 with pronunciation plus translation must retain original/translation when pronunciation is missing. Avoid duplicated English-only cues.
 - [ ] Automatic By Your Side (ID 400875204) and Ma Meilleure Ennemie (ID 3374505659), without Custom10. Include missing duration or album tags and soundtrack attribution.
+- [ ] Automatic 奇縁ロマンス (ID 2032748562), with artist tag ナナヲアカリ, original album/title tags and no Custom10. Check translation/pronunciation. With controlled fixtures, confirm an alias timeout can recover on immediate re-fetch and optional artist refusal does not block permitted lyric HTTP fallback.
 - [ ] Duplicate listings, including Jonas Blue's By Your Side with an absent/nonmatching album and Lia's 鳥の詩 if still available. Check grouping and recording selection.
 - [ ] A Part 1 / Part 2 pair, a remastered title and a meaningful live/remix/edit distinction. The wrong part or recording must not supply lyrics.
 - [ ] A background lookup for one track while another plays. Check requested-file Custom10 ownership, desktop and phone-share song URLs.

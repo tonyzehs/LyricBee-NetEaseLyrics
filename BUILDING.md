@@ -58,6 +58,6 @@ These commands contact NetEase only when explicitly run. They print IDs, counts 
 
 CI runs the offline build script on Windows and uploads artifacts. It does not publish releases or run live NetEase checks. Checksums identify the delivered files; byte-identical rebuilds in different folders are not established.
 
-`--live-alias` sends the public title/artist/album metadata in the 奇縁ロマンス fixture and verifies a simulated MusicBee callback with the Japanese artist tag against the known song ID. It does not send audio or a local file path, save fetched lyrics, or establish native MusicBee display behavior.
+`--live-alias` sends the public title/artist/album metadata in the 奇縁ロマンス fixture and verifies a simulated MusicBee callback with the Japanese artist tag against the known song ID. It prints the full `/api/artist/{id}` reply size in bytes when fetched, or indicates a cache hit. It does not send audio or a local file path, print/save response contents or fetched lyrics, or establish native MusicBee display behavior.
 
 Use the fresh MusicBee checklist in [docs/RELEASING.md](docs/RELEASING.md) for each release. Runtime rules are documented in [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md), and version history is in [CHANGELOG.md](CHANGELOG.md).

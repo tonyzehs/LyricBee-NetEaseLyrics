@@ -111,12 +111,17 @@ namespace MusicBeePlugin
             if (matches[0].Notes.Contains("mono") || matches[0].Notes.Contains("stereo") || matches[0].Notes.Contains("album version")) session.Diagnostic(DiagnosticKind.VersionNote);
             if (matches[0].Notes.Contains("soundtrack")) session.Diagnostic(DiagnosticKind.SoundtrackNote);
             if (matches[0].Notes.Contains("TrackNo")) session.Diagnostic(DiagnosticKind.TrackPrefixNote);
-            if (matches[0].Notes.Contains("artist alias")) session.Diagnostic(DiagnosticKind.ArtistAliasMatch);
+            if (matches[0].Notes.Contains("artist alias"))
+            {
+                session.Diagnostic(DiagnosticKind.ArtistAliasMatch);
+                session.Report("Matching: matched through a verified NetEase artist alias");
+            }
             if (matches.Length > 1)
                 session.Report("Matching: grouped " + matches.Length + " compatible listings; selected song ID " +
                     matches[0].Song.id + " by album similarity, then duration, then ID");
-            if (matches[0].Notes.Length > 0)
-                session.Report("Matching: treated recognized " + matches[0].Notes + " annotation as a note");
+            var annotationNotes = matches[0].Notes.Split('/').Where(n => n.Length > 0 && n != "verified artist alias").ToArray();
+            if (annotationNotes.Length > 0)
+                session.Report("Matching: treated recognized " + string.Join("/", annotationNotes) + " annotation as a note");
             // No extra searches or lyric comparisons are made to group catalogue entries.
             return matches.Take(3).Select(m => m.Song.id).ToArray();
         }

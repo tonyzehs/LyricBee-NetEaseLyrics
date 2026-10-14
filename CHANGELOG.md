@@ -1,3 +1,11 @@
+# 1.9.7-test.2 — artist-alias review follow-ups (local testing build)
+
+- Keep optional artist metadata refusals separate from the lyric HTTP-fallback policy, matching optional language metadata. Artist requests remain HTTPS only; search/lyric refusals still block insecure fallback.
+- Allow immediate retry after artist metadata timeouts, cancellations, network failures or temporary server errors. Keep the five-minute cooldown for definite refusals or invalid records.
+- Print the full artist response size in bytes during `--live-alias`, without logging response content. Use the trace: “Matching: matched through a verified NetEase artist alias”.
+- Add regression checks for optional refusal, HTTP opt-out, transient-failure retry, UTF-8 reply measurement and trace wording. Record the 奇縁ロマンス example as checked in MusicBee and add it to the per-release checklist.
+- Product version: `1.9.7-test.2`; assembly version: `1.9.7.0`; file version: `1.9.7.2`. Local testing only; publication requires approval.
+
 # 1.9.7-test.1 — verified artist aliases (local testing build)
 
 - Match localized NetEase artist names against verified aliases from the same artist ID when the title and album agree exactly and durations differ by at most two seconds. Keep the primary singer and additional artist-credit checks.

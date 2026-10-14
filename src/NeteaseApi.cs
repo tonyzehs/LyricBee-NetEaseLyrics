@@ -104,7 +104,9 @@ namespace MusicBeePlugin
             var names = result == null ? new string[0] : new[] { result.artist.name }
                 .Concat((result.artist.alias ?? new string[0]).Take(32))
                 .Where(n => !string.IsNullOrWhiteSpace(n) && n.Length <= 256).Distinct(StringComparer.Ordinal).ToArray();
-            session.AliasCache.Store(id, names);
+            var outcome = session.OutcomeFor(RequestInterface.ArtistHttps);
+            if (result != null || outcome == RequestOutcome.Rejected || outcome == RequestOutcome.InvalidResponse)
+                session.AliasCache.Store(id, names);
             return names;
         }
 
@@ -153,6 +155,7 @@ namespace MusicBeePlugin
         private int _searchRequests, _lyricRequests;
         private int _artistRequests;
         internal ArtistAliasCache AliasCache { get; set; }
+        internal int LastArtistReplyBytes { get; private set; }
         private bool _languageRequested;
         private bool _secureRefusal;
         private readonly Dictionary<RequestInterface, RequestOutcome> _outcomes = new Dictionary<RequestInterface, RequestOutcome>();
@@ -220,8 +223,17 @@ namespace MusicBeePlugin
         internal bool TryReserveArtistRequest()
         {
             if (_artistRequests >= MaxArtistRequests || !CanSearch || !CanRequest(RequestInterface.ArtistHttps)) return false;
-            _artistRequests++; return true;
+            _artistRequests++;
+            _outcomes[RequestInterface.ArtistHttps] = RequestOutcome.None;
+            LastArtistReplyBytes = 0;
+            return true;
         }
+
+        internal RequestOutcome OutcomeFor(RequestInterface api) =>
+            _outcomes.TryGetValue(api, out var outcome) ? outcome : RequestOutcome.None;
+
+        private static bool OptionalMetadata(RequestInterface api) =>
+            api == RequestInterface.LanguageHttps || api == RequestInterface.ArtistHttps;
 
         private int AttemptsRemaining(RequestInterface api)
         {
@@ -273,12 +285,15 @@ namespace MusicBeePlugin
                     Diagnostic(DiagnosticKind.RequestStarted, api);
                     using (var response = _client.SendAsync(request, timeout.Token).GetAwaiter().GetResult())
                     {
+                        if (api == RequestInterface.ArtistHttps)
+                            LastArtistReplyBytes = response.Content == null ? 0 :
+                                response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult().Length;
                         if (!response.IsSuccessStatusCode)
                         {
                             var temporary = (int)response.StatusCode >= 500 && (int)response.StatusCode <= 599;
                             _outcomes[api] = temporary ? RequestOutcome.TransportFailure : RequestOutcome.Rejected;
                             if (temporary) _unavailable.Add(api);
-                            else if (request.RequestUri.Scheme == "https" && api != RequestInterface.LanguageHttps) _secureRefusal = true;
+                            else if (request.RequestUri.Scheme == "https" && !OptionalMetadata(api)) _secureRefusal = true;
                             Trace(label + ": HTTP " + (int)response.StatusCode);
                             Diagnostic(DiagnosticKind.RequestFailure, api, _outcomes[api], (int)response.StatusCode);
                             return null;
@@ -296,7 +311,7 @@ namespace MusicBeePlugin
                             code.HasValue && code.Value != 200 ? RequestOutcome.Rejected : RequestOutcome.InvalidResponse;
                         if (serverError) _unavailable.Add(api);
                         if (_outcomes[api] == RequestOutcome.Rejected && request.RequestUri.Scheme == "https" &&
-                            api != RequestInterface.LanguageHttps) _secureRefusal = true;
+                            !OptionalMetadata(api)) _secureRefusal = true;
                         Diagnostic(DiagnosticKind.RequestFailure, api, _outcomes[api], code ?? 0);
                         Trace(label + ": rejected or incomplete response" +
                             (code.HasValue ? " (code " + code.Value + ")" : ""));
