@@ -85,11 +85,10 @@ Songs that earlier versions missed or paired with the wrong lyrics:
 | [By Your Side](https://music.163.com/song?id=400875204) — 澤田かおり and 服部隆之, from *Mobile Suit Gundam The Origin* | The Japanese song received unrelated Cantonese lyrics. | Finds the Japanese recording, including when both the singer and composer are in the artist tag. |
 | [Ma Meilleure Ennemie](https://music.163.com/song?id=3374505659) — Stromae and Pomme, from *Arcane Season 2* | NetEase adds `(from the series Arcane League of Legends)` to the title, which stopped the song matching. | Finds the recording with the shorter local title when the artists, album and length agree. |
 | [奇縁ロマンス](https://music.163.com/song?id=2032748562) — ナナヲアカリ, listed as 七音阿卡莉 on NetEase | The Japanese and Chinese artist names were treated as different performers. | Uses NetEase’s artist aliases to match the Japanese tag to the Chinese name. |
-| [Blood Sweat & Tears](https://music.163.com/song?id=3374505661) — Sheryl Lee Ralph, from *Arcane Season 2* | The file has the Chinese soundtrack album name, while NetEase uses English and adds the series name to the song title. | Finds the soundtrack recording and its Chinese translation with the existing album tag. |
-| [Fantastic](https://music.163.com/song?id=3374504658) — King Princess, from *Arcane Season 2* | The Chinese album tag did not match NetEase's English soundtrack listing. | Finds the song and its Chinese translation despite the album names being in different languages. |
+| [Blood Sweat & Tears](https://music.163.com/song?id=3374505661) — Sheryl Lee Ralph<br>[Fantastic](https://music.163.com/song?id=3374504658) — King Princess<br>Both from *Arcane Season 2* | The files use the Chinese soundtrack album name, while NetEase uses English and adds the series name to the song titles. | Finds both recordings and their Chinese translations with the existing album tags. |
 | [Spin The Wheel](https://music.163.com/song?id=2684031162) — Mick Wingert, from *Arcane Season 2* | The file names Mick Wingert; NetEase credits the show or game instead. The album names also use different languages. | Finds the Arcane soundtrack recording, including the Chinese translation. |
 
-The first three examples were checked in MusicBee. The final three were checked through live NetEase lookups.
+The first three rows were checked in MusicBee. The remaining songs were checked through live NetEase lookups.
 
 Re-fetch affected tracks to replace lyrics MusicBee already saved.
 
