@@ -38,6 +38,7 @@ internal static partial class Program
 
     private static int Run(string[] args)
     {
+        if (args.Contains("--lookup-replay")) { Console.WriteLine(LookupReplay()); return 0; }
         if (args.Contains("--repair-settings"))
         {
             var plugin = CreatePlugin(new Fixture((_, __) => Json(Lyrics)));

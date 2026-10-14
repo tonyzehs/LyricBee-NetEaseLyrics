@@ -162,21 +162,20 @@ namespace MusicBeePlugin
             IReadOnlyDictionary<long, string[]> aliases = null, bool allowLocalizedSoundtrack = false)
         {
             var candidates = songs.Where(s => s != null && s.id > 0).ToArray();
-            var supported = candidates.Select(s => Evaluate(s, request, aliases)).Where(m => m != null).ToArray();
-            // A corroborated prefix is a fallback: never erase a supported title such as "7 Rings".
-            if (supported.Length == 0 && alternate != null)
+            var supported = new Match[0];
+            // An eligible but ambiguous tier is ranked below; it never falls through.
+            foreach (var tier in MatchingOrder)
             {
-                supported = candidates.Select(s => Evaluate(s, alternate, aliases)).Where(m => m != null).ToArray();
-                foreach (var match in supported) match.Notes = string.Join("/", new[] { match.Notes, "TrackNo-confirmed title prefix" }.Where(n => n.Length > 0));
-            }
-            // Do not resolve an ordinary ambiguous match by relaxing a different rule.
-            // This pass runs only after normal searches and never combines with TrackNo/artist aliases.
-            if (supported.Length == 0 && allowLocalizedSoundtrack && !request.PrefixIdentity)
-            {
-                supported = candidates.Select(s => Evaluate(s, request, allowLocalizedSoundtrack: true))
-                    .Where(m => m != null).ToArray();
-                if (supported.Select(m => m.SoundtrackSource).Distinct(StringComparer.Ordinal).Count() > 1)
+                if (tier == MatchingTier.ArtistAlias && aliases == null) continue;
+                if (tier == MatchingTier.TrackPrefix && alternate == null) continue;
+                if (tier == MatchingTier.TranslatedSoundtrack && (!allowLocalizedSoundtrack || request.PrefixIdentity)) continue;
+                supported = candidates.Select(song => EvaluateTier(song, request, alternate, aliases, tier))
+                    .Where(match => match != null).ToArray();
+                if (supported.Length == 0) continue;
+                if (tier == MatchingTier.TranslatedSoundtrack &&
+                    supported.Select(m => m.SoundtrackSource).Distinct(StringComparer.Ordinal).Count() > 1)
                     return new Match[0];
+                break;
             }
             var matches = supported
                 .Where(m => m != null).GroupBy(m => m.Song.id).Select(g => g.OrderByDescending(m => m.Score).First())
@@ -198,6 +197,28 @@ namespace MusicBeePlugin
                 ranked[0].Max(m => m.Score) - ranked[1].Max(m => m.Score) < 3)) return new Match[0];
             return ranked[0].OrderByDescending(m => m.AlbumScore).ThenBy(m => m.DurationDifference)
                 .ThenBy(m => m.Song.id).ToArray();
+        }
+
+        private enum MatchingTier { Ordinary, ArtistAlias, TrackPrefix, TranslatedSoundtrack }
+        private static readonly MatchingTier[] MatchingOrder = {
+            MatchingTier.Ordinary, MatchingTier.ArtistAlias, MatchingTier.TrackPrefix, MatchingTier.TranslatedSoundtrack
+        };
+
+        private static Match EvaluateTier(SearchResultSong song, TrackIdentity request, TrackIdentity alternate,
+            IReadOnlyDictionary<long, string[]> aliases, MatchingTier tier)
+        {
+            Match match;
+            switch (tier)
+            {
+                case MatchingTier.Ordinary: return Evaluate(song, request);
+                case MatchingTier.ArtistAlias: return Evaluate(song, request, aliases);
+                case MatchingTier.TrackPrefix:
+                    match = Evaluate(song, alternate, aliases);
+                    if (match != null) match.Notes = string.Join("/", new[] { match.Notes, "TrackNo-confirmed title prefix" }.Where(n => n.Length > 0));
+                    return match;
+                case MatchingTier.TranslatedSoundtrack: return Evaluate(song, request, allowLocalizedSoundtrack: true);
+                default: return null;
+            }
         }
 
         private static bool Equivalent(Match a, Match b) => a.ExactTitleAndArtist && b.ExactTitleAndArtist &&
