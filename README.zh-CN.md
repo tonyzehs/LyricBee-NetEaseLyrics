@@ -1,3 +1,5 @@
+<img align="right" src="docs/assets/icons/lyricbee.svg" alt="LyricBee 标志" width="64" height="64">
+
 # LyricBee — MusicBee 网易云音乐歌词插件
 
 [EN](README.md) | ZH（简体中文） | [下载与安装 ↓](#下载与安装)

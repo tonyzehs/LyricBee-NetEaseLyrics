@@ -1,3 +1,5 @@
+<img align="right" src="docs/assets/icons/lyricbee.svg" alt="LyricBee logo" width="64" height="64">
+
 # LyricBee — NetEase Lyrics for MusicBee
 
 EN | [ZH（简体中文）](README.zh-CN.md) | [Download & install ↓](#download-and-install)
