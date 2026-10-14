@@ -1,0 +1,56 @@
+{
+  "selected_concept": 11,
+  "name": "Negative-space bee",
+  "selected_on": "2026-10-13",
+  "source": "Original LyricBee concept generated with image_gen; selected by Tony Y.",
+  "vector": "Vector trace of the selected raster silhouette with simplified texture and editable gradients.",
+  "use": "Reserved project branding assets. Saving these files does not change the plugin UI or existing release packages.",
+  "files": [
+    {
+      "file": "lyricbee-32.webp",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 1282,
+      "webp_quality": 90
+    },
+    {
+      "file": "lyricbee-48.webp",
+      "size": [
+        48,
+        48
+      ],
+      "bytes": 2098,
+      "webp_quality": 90
+    },
+    {
+      "file": "lyricbee-64.webp",
+      "size": [
+        64,
+        64
+      ],
+      "bytes": 3006,
+      "webp_quality": 90
+    },
+    {
+      "file": "lyricbee-reference.webp",
+      "size": [
+        1254,
+        1254
+      ],
+      "bytes": 89612,
+      "webp_quality": 90
+    },
+    {
+      "file": "lyricbee.svg",
+      "size": [
+        1254,
+        1254
+      ],
+      "bytes": 13619,
+      "paths": 6,
+      "type": "editable spline paths and gradients; no embedded raster"
+    }
+  ]
+}
