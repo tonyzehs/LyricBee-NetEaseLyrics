@@ -1,3 +1,11 @@
+# 1.9.8-test.2 — saved song IDs and show-credited soundtracks (local testing build)
+
+- Use the song ID in a NetEase download's comment when its saved title and length agree with the file. If that ID has no lyrics, continue searching. Custom10 remains the final manual choice.
+- Match soundtrack listings credited to a show or game instead of the singer when the title, work name and length agree. The recorded **Spin The Wheel** search now finds the Arcane soundtrack group and recovers translation from a compatible listing.
+- Make the matching order explicit. Artist aliases, track-number prefixes, translated albums and show credits are separate steps; ambiguous results stop the lookup. Cache normalized search-result facts within the lookup and reuse the result of an unsuccessful saved-ID request.
+- Add recorded request/selection comparisons against the shipped test.1 DLL, a Spin The Wheel catalogue fixture and saved-comment/matching-order counterexamples. The first refactor is a separate commit, verified before adding the new steps.
+- Product version: `1.9.8-test.2`; assembly version: `1.9.8.0`; file version: `1.9.8.2`. Awaiting native MusicBee testing; unpublished.
+
 # 1.9.8-test.1 — localized soundtrack matching (local testing build)
 
 - Add a last-resort soundtrack match for exact base titles, identical full artist credits and known durations within two seconds. The service title must end with a recognized film/series/game attribution and its album must identify the same work as a soundtrack.

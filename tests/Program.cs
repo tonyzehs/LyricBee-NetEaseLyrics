@@ -38,6 +38,11 @@ internal static partial class Program
 
     private static int Run(string[] args)
     {
+        if (args.Contains("--lookup-tests"))
+        {
+            LookupOrderTests(); SavedIdTests(); ShowCreditedTests();
+            Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed"); return _failed == 0 ? 0 : 1;
+        }
         if (args.Contains("--lookup-replay")) { Console.WriteLine(LookupReplay()); return 0; }
         if (args.Contains("--repair-settings"))
         {
@@ -740,7 +745,7 @@ internal static partial class Program
 
     private static void MatchingTests()
     {
-        MatchingAuditTests();
+        MatchingAuditTests(); LookupOrderTests(); SavedIdTests(); ShowCreditedTests();
         SoundtrackTests();
         LocalizedSoundtrackTests();
         Test("Captured By Your Side search results are rejected rather than choosing another song", () =>

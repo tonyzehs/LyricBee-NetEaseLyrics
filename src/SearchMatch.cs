@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace MusicBeePlugin
 {
-    internal static class SearchMatch
+    internal static partial class SearchMatch
     {
         private static readonly Regex ParenthesizedFeat = new Regex(
             @"\s*\((?:feat\.?|featuring|ft\.?)\s+(?<artists>[^()]+)\)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
@@ -51,6 +51,7 @@ namespace MusicBeePlugin
             var split = SplitTitleArtist(title, artist);
             var request = new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos);
             var alternate = TrackPrefixIdentity(title, artist, album, duration, allowTypos, trackNumber);
+            if (alternate != null) alternate.Facts = request.Facts;
             if (request.Title.Length == 0) return new long[0];
             var songs = new List<SearchResultSong>();
             var aliases = new Dictionary<long, string[]>();
@@ -61,19 +62,20 @@ namespace MusicBeePlugin
                 var found = NeteaseApi.Search(query, session).ToArray();
                 songs.AddRange(found);
                 // A code=200 payload can still contain unrelated songs. Try the other search interface.
-                if (!found.Any(song => Evaluate(song, request, aliases) != null || (alternate != null && Evaluate(song, alternate, aliases) != null)))
+                if (!found.Any(song => Evaluate(song, request, aliases) != null))
                     songs.AddRange(NeteaseApi.SearchLegacy(query, session));
-                var best = Choose(songs, request, alternate, aliases);
-                if (best.Length == 0 && !songs.Any(s => Evaluate(s, request, aliases) != null ||
-                    (alternate != null && Evaluate(s, alternate, aliases) != null)))
+                var best = Choose(songs, request, out var ambiguous, aliases: aliases);
+                if (ambiguous) return ReportAmbiguity(session, songs.Count);
+                if (best.Length == 0)
                 {
                     ResolveArtistAliases(songs, request, session, aliases);
-                    best = Choose(songs, request, alternate, aliases);
+                    best = Choose(songs, request, out ambiguous, aliases: aliases);
+                    if (ambiguous) return ReportAmbiguity(session, songs.Count);
                 }
                 if (best.Length > 0 && best[0].Strong) return ReportSelection(best, session);
             }
             // Try one normalized query only if the ordinary searches found no eligible identity.
-            if (alternate != null && session.CanSearch && !songs.Any(s => Evaluate(s, request) != null || Evaluate(s, alternate) != null))
+            if (alternate != null && session.CanSearch && !songs.Any(s => Evaluate(s, request, aliases) != null || Evaluate(s, alternate) != null))
             {
                 var query = BuildQueries(alternate.RawTitle, alternate.Artists, null).FirstOrDefault();
                 if (query != null)
@@ -82,12 +84,12 @@ namespace MusicBeePlugin
                     if (!found.Any(s => Evaluate(s, alternate) != null)) songs.AddRange(NeteaseApi.SearchLegacy(query, session));
                 }
             }
-            var final = Choose(songs, request, alternate, aliases, allowLocalizedSoundtrack: true);
+            var final = Choose(songs, request, out var finalAmbiguous, alternate, aliases, allowPostSearch: true);
+            if (finalAmbiguous) return ReportAmbiguity(session, songs.Count);
             if (final.Length == 0)
             {
                 session.Report("Matching: no sufficiently supported, unambiguous candidate");
-                session.Diagnostic(songs.Any(s => Evaluate(s, request, aliases) != null || (alternate != null && Evaluate(s, alternate, aliases) != null)) ?
-                    DiagnosticKind.MatchingAmbiguous : DiagnosticKind.MatchingNoEligible, count: songs.Count);
+                session.Diagnostic(DiagnosticKind.MatchingNoEligible, count: songs.Count);
             }
             return ReportSelection(final, session);
         }
@@ -97,14 +99,32 @@ namespace MusicBeePlugin
             string album, long? duration, bool allowTypos = true, string trackNumber = null)
         {
             var split = SplitTitleArtist(title, artist);
-            return Choose(songs, new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos),
-                TrackPrefixIdentity(title, artist, album, duration, allowTypos, trackNumber), allowLocalizedSoundtrack: true)
-                .Select(m => m.Song.id).FirstOrDefault();
+            var request = new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos);
+            var alternate = TrackPrefixIdentity(title, artist, album, duration, allowTypos, trackNumber);
+            if (alternate != null) alternate.Facts = request.Facts;
+            return Choose(songs, request, out _, alternate, allowPostSearch: true).Select(m => m.Song.id).FirstOrDefault();
+        }
+
+        private static long[] ReportAmbiguity(LookupSession session, int count)
+        {
+            session.Diagnostic(DiagnosticKind.MatchingAmbiguous, count: count);
+            session.Report("Matching: stopped because the matches disagree");
+            return new long[0];
         }
 
         private static long[] ReportSelection(Match[] matches, LookupSession session)
         {
             if (matches.Length == 0) return new long[0];
+            if (matches[0].Tier == MatchingTier.Ordinary)
+            {
+                session.Diagnostic(DiagnosticKind.OrdinaryMatch);
+                session.Report("Matching: matched title and artist");
+            }
+            if (matches[0].Tier == MatchingTier.ShowCreditedSoundtrack)
+            {
+                session.Diagnostic(DiagnosticKind.ShowCreditedSoundtrackMatch);
+                session.Report("Matching: matched a soundtrack credited to the show");
+            }
             session.Diagnostic(DiagnosticKind.MatchingSelected, songId: matches[0].Song.id, count: matches.Length);
             if (matches.Length > 1) session.Diagnostic(DiagnosticKind.CompatibleGroup, count: matches.Length);
             if (matches[0].Notes.Contains("remaster")) session.Diagnostic(DiagnosticKind.RemasterNote);
@@ -113,9 +133,13 @@ namespace MusicBeePlugin
             if (matches[0].LocalizedSoundtrack)
             {
                 session.Diagnostic(DiagnosticKind.LocalizedSoundtrackMatch);
-                session.Report("Matching: used restricted localized soundtrack fallback");
+                session.Report("Matching: matched a soundtrack with a different album language");
             }
-            if (matches[0].Notes.Contains("TrackNo")) session.Diagnostic(DiagnosticKind.TrackPrefixNote);
+            if (matches[0].Tier == MatchingTier.TrackPrefix)
+            {
+                session.Diagnostic(DiagnosticKind.TrackPrefixNote);
+                session.Report("Matching: matched after removing the tagged track number");
+            }
             if (matches[0].Notes.Contains("artist alias"))
             {
                 session.Diagnostic(DiagnosticKind.ArtistAliasMatch);
@@ -158,23 +182,25 @@ namespace MusicBeePlugin
             return queries.Select(q => Regex.Replace(q, @"\s+", " ").Trim()).Where(q => q.Length > 0).Distinct(StringComparer.Ordinal);
         }
 
-        private static Match[] Choose(IEnumerable<SearchResultSong> songs, TrackIdentity request, TrackIdentity alternate = null,
-            IReadOnlyDictionary<long, string[]> aliases = null, bool allowLocalizedSoundtrack = false)
+        private static Match[] Choose(IEnumerable<SearchResultSong> songs, TrackIdentity request, out bool ambiguous, TrackIdentity alternate = null,
+            IReadOnlyDictionary<long, string[]> aliases = null, bool allowPostSearch = false)
         {
+            ambiguous = false;
             var candidates = songs.Where(s => s != null && s.id > 0).ToArray();
             var supported = new Match[0];
             // An eligible but ambiguous tier is ranked below; it never falls through.
             foreach (var tier in MatchingOrder)
             {
                 if (tier == MatchingTier.ArtistAlias && aliases == null) continue;
-                if (tier == MatchingTier.TrackPrefix && alternate == null) continue;
-                if (tier == MatchingTier.TranslatedSoundtrack && (!allowLocalizedSoundtrack || request.PrefixIdentity)) continue;
+                if (tier == MatchingTier.TrackPrefix && (!allowPostSearch || alternate == null)) continue;
+                if (tier >= MatchingTier.TranslatedSoundtrack && (!allowPostSearch || request.PrefixIdentity)) continue;
                 supported = candidates.Select(song => EvaluateTier(song, request, alternate, aliases, tier))
                     .Where(match => match != null).ToArray();
                 if (supported.Length == 0) continue;
-                if (tier == MatchingTier.TranslatedSoundtrack &&
-                    supported.Select(m => m.SoundtrackSource).Distinct(StringComparer.Ordinal).Count() > 1)
-                    return new Match[0];
+                if (tier >= MatchingTier.TranslatedSoundtrack &&
+                    (supported.Select(m => m.SoundtrackSource).Distinct(StringComparer.Ordinal).Count() > 1 ||
+                    (tier == MatchingTier.ShowCreditedSoundtrack && supported.Any(a => supported.Any(b => !Equivalent(a, b))))))
+                { ambiguous = true; return new Match[0]; }
                 break;
             }
             var matches = supported
@@ -194,31 +220,10 @@ namespace MusicBeePlugin
             var ranked = eligible.OrderByDescending(g => g.Max(m => m.Score))
                 .ThenBy(g => g.Min(m => m.Song.id)).ToArray();
             if (ranked.Length == 0 || (ranked.Length > 1 &&
-                ranked[0].Max(m => m.Score) - ranked[1].Max(m => m.Score) < 3)) return new Match[0];
+                ranked[0].Max(m => m.Score) - ranked[1].Max(m => m.Score) < 3))
+            { ambiguous = ranked.Length > 0; return new Match[0]; }
             return ranked[0].OrderByDescending(m => m.AlbumScore).ThenBy(m => m.DurationDifference)
                 .ThenBy(m => m.Song.id).ToArray();
-        }
-
-        private enum MatchingTier { Ordinary, ArtistAlias, TrackPrefix, TranslatedSoundtrack }
-        private static readonly MatchingTier[] MatchingOrder = {
-            MatchingTier.Ordinary, MatchingTier.ArtistAlias, MatchingTier.TrackPrefix, MatchingTier.TranslatedSoundtrack
-        };
-
-        private static Match EvaluateTier(SearchResultSong song, TrackIdentity request, TrackIdentity alternate,
-            IReadOnlyDictionary<long, string[]> aliases, MatchingTier tier)
-        {
-            Match match;
-            switch (tier)
-            {
-                case MatchingTier.Ordinary: return Evaluate(song, request);
-                case MatchingTier.ArtistAlias: return Evaluate(song, request, aliases);
-                case MatchingTier.TrackPrefix:
-                    match = Evaluate(song, alternate, aliases);
-                    if (match != null) match.Notes = string.Join("/", new[] { match.Notes, "TrackNo-confirmed title prefix" }.Where(n => n.Length > 0));
-                    return match;
-                case MatchingTier.TranslatedSoundtrack: return Evaluate(song, request, allowLocalizedSoundtrack: true);
-                default: return null;
-            }
         }
 
         private static bool Equivalent(Match a, Match b) => a.ExactTitleAndArtist && b.ExactTitleAndArtist &&
@@ -230,19 +235,17 @@ namespace MusicBeePlugin
             IReadOnlyDictionary<long, string[]> aliases = null, bool ignoreArtist = false, bool allowLocalizedSoundtrack = false)
         {
             if (song == null || song.id <= 0 || string.IsNullOrWhiteSpace(song.name) || song.name.Length > 512) return null;
-            var creditedArtists = (song.artists ?? new SearchResultArtist[0])
-                .Where(a => !string.IsNullOrWhiteSpace(a?.name)).Select(a => a.name).ToArray();
-            var candidate = SplitTitleArtist(song.name, string.Join(";", creditedArtists));
+            var facts = Facts(song, request);
             var durationClose = request.Duration.HasValue && request.Duration > 0 && song.duration > 0 &&
                 Math.Abs((double)request.Duration.Value - song.duration) <= 2000;
-            var artists = candidate.Item2.Select(Canonical).Where(a => a.Length > 0).ToArray();
-            var album = Canonical(song.album?.name);
+            var artists = facts.Artists;
+            var album = facts.Album;
             if (request.PrefixIdentity && (!durationClose || request.Artists.Length == 0 ||
                 !request.Artists.Select(Canonical).Distinct().OrderBy(a => a, StringComparer.Ordinal)
                     .SequenceEqual(artists.Distinct().OrderBy(a => a, StringComparer.Ordinal)) ||
                 (request.Album.Length > 0 && request.Album != album))) return null;
             var expectedRaw = request.RawTitle;
-            var actualRaw = candidate.Item1;
+            var actualRaw = facts.Title;
             string soundtrackSource = null;
             var conflictingSource = false;
             var localizedSoundtrack = false;
@@ -580,6 +583,7 @@ namespace MusicBeePlugin
             internal readonly long? Duration;
             internal readonly bool AllowTypos;
             internal readonly bool PrefixIdentity;
+            internal Dictionary<SearchResultSong, CandidateFacts> Facts = new Dictionary<SearchResultSong, CandidateFacts>();
             internal TrackIdentity(string title, string[] artists, string album, long? duration, bool allowTypos, bool prefixIdentity = false)
             {
                 RawTitle = title; Title = Canonical(title); Artists = artists;
@@ -590,6 +594,7 @@ namespace MusicBeePlugin
         private sealed class Match
         {
             internal SearchResultSong Song;
+            internal MatchingTier Tier;
             internal double Score;
             internal double AlbumScore, DurationDifference;
             internal string Identity, Notes;

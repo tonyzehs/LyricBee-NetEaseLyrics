@@ -1,6 +1,6 @@
 # Preparing release notes
 
-Use [.github/RELEASE_TEMPLATE.md](../.github/RELEASE_TEMPLATE.md) for 1.9.5 and later. Keep the changes to three to six bullets about what users will notice. Release notes are English; installation instructions stay bilingual. Put hashes, source identity, regression counts and CI status under the collapsed Build details section.
+Use [.github/RELEASE_TEMPLATE.md](../.github/RELEASE_TEMPLATE.md) for 1.9.5 and later. Keep the summary short and focus on what users will notice. Release notes are English; installation instructions stay bilingual. Put hashes, source identity, regression counts and CI status under the collapsed Build details section.
 
 Fill every placeholder from the actual release candidate and its verification records. Link the download to the installation ZIP, INSTALL.md to the release tag, and the full changes to the previous stable tag. Use the check count from the final packaged DLL; stable and development builds both include the diagnostic report under Advanced.
 
@@ -16,6 +16,8 @@ Copy this list into a new release record and start with every box unticked. Reco
 
 Install the candidate ZIP through Add plugin, then Restart. Clear stored lyrics before testing a fresh search. Settings backup is optional; keep the repaired current settings during rollback, as explained in [INSTALL.md](../INSTALL.md).
 
+- [ ] Saved NetEase download ID: a real file whose Comment contains the 163 key, with Custom10 empty. Confirm the saved-ID event in Advanced diagnostics and no searches. Check a changed title/length and an unavailable ID fall back to search. The verified FLAC samples store this under Vorbis DESCRIPTION; confirm MusicBee exposes it as Comment.
+- [ ] Spin The Wheel tagged Mick Wingert with the original Chinese Arcane album. Clear stored lyrics and Custom10, re-fetch, and check original plus translation. Confirm the show-credited soundtrack event in diagnostics. Recheck Blood Sweat & Tears and Fantastic.
 - [ ] Confirm the plugin name and candidate version; stable builds must not show DEV BUILD.
 - [ ] Fresh settings: translation on, pronunciation off, separate lines and Follow default for every language. Upgrades retain saved preferences.
 - [ ] English and Simplified Chinese settings in light/dark skins, at normal and enlarged text sizes (100%, 150%, 200%). Expand Advanced and show View update; check dropdown text, wrapping, scrolling and resize.

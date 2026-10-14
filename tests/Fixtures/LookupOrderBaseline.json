@@ -1,0 +1,69 @@
+[
+  {
+    "title": "By Your Side",
+    "ids": [
+      400875204
+    ],
+    "requests": [
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=By Your Side 澤田かおり&type=1&offset=0&total=true&limit=6",
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=By Your Side 服部隆之&type=1&offset=0&total=true&limit=6",
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=By Your Side 澤田かおり 服部隆之&type=1&offset=0&total=true&limit=6",
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=By Your Side 澤田かおり 服部隆之 『機動戦士ガンダム THE ORIGIN』オリジナルサウンドトラック portrait 02&type=1&offset=0&total=true&limit=6",
+      "POST https://music.163.com/weapi/search/get"
+    ]
+  },
+  {
+    "title": "Ma Meilleure Ennemie",
+    "ids": [
+      3374505659,
+      2684030272,
+      2686826730
+    ],
+    "requests": [
+      "POST https://music.163.com/weapi/search/get"
+    ]
+  },
+  {
+    "title": "Blood Sweat & Tears",
+    "ids": [
+      3374505661
+    ],
+    "requests": [
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=Blood Sweat %26 Tears Sheryl Lee Ralph&type=1&offset=0&total=true&limit=6",
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=Blood Sweat %26 Tears Sheryl Lee Ralph 《英雄联盟%3A双城之战》动画第二季 原声带&type=1&offset=0&total=true&limit=6",
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=Blood Sweat %26 Tears&type=1&offset=0&total=true&limit=6"
+    ]
+  },
+  {
+    "title": "Fantastic",
+    "ids": [
+      3374504658
+    ],
+    "requests": [
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=Fantastic King Princess&type=1&offset=0&total=true&limit=6",
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=Fantastic King Princess 《英雄联盟%3A双城之战》动画第二季 原声带&type=1&offset=0&total=true&limit=6",
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=Fantastic&type=1&offset=0&total=true&limit=6"
+    ]
+  },
+  {
+    "title": "奇縁ロマンス",
+    "ids": [
+      2032748562
+    ],
+    "requests": [
+      "POST https://music.163.com/weapi/search/get",
+      "GET https://music.163.com/api/search/get?s=奇縁ロマンス ナナヲアカリ&type=1&offset=0&total=true&limit=6",
+      "GET https://music.163.com/api/artist/28083218"
+    ]
+  }
+]

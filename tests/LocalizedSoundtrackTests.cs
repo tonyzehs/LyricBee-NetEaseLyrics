@@ -157,7 +157,7 @@ internal static partial class Program
                 session.DiagnosticLookup = diagnostics.Begin(new NeteaseConfig());
                 Equal(1L, SearchMatch.SearchCandidates("Song", "Singer", LocalSoundtrack, 200000, session).Single());
             }
-            True(trace.Contains("Matching: used restricted localized soundtrack fallback"));
+            True(trace.Contains("Matching: matched a soundtrack with a different album language"));
             True(diagnostics.Report().Contains("LocalizedSoundtrackMatch"));
             True(!diagnostics.Report().Contains("Distant Film") && !diagnostics.Report().Contains(LocalSoundtrack));
         });

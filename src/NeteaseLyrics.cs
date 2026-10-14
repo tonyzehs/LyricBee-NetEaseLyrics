@@ -367,9 +367,15 @@ namespace MusicBeePlugin
                 using (var session = _sessionFactory())
                 {
                     session.DiagnosticLookup = diagnosticLookup;
-                    if (id > 0) session.Diagnostic(DiagnosticKind.Custom10Override, songId: id);
+                    if (id > 0)
+                    {
+                        session.Diagnostic(DiagnosticKind.Custom10Override, songId: id);
+                        session.Report("Matching: using the Custom10 song ID");
+                    }
                     session.AllowInsecureHttp = config.AllowInsecureHttp;
                     var candidates = id > 0 ? new[] { id } : new long[0];
+                    long savedId = 0;
+                    LyricResult savedAttempt = null;
                     if (id == 0)
                     {
                         var realArtist = FirstNonBlank(ReadTag(sourceFileUrl, MetaDataType.Artist), artist);
@@ -377,9 +383,28 @@ namespace MusicBeePlugin
                         string durationStr = null;
                         try { durationStr = _mbApiInterface.Library_GetFileProperty?.Invoke(sourceFileUrl, FilePropertyType.Duration); }
                         catch (Exception ex) { Trace("Failed to read duration: " + ex.GetType().Name); }
+                        var duration = ParseDurationString(durationStr);
+                        var savedStatus = SavedNeteaseId.Read(ReadTag(sourceFileUrl, MetaDataType.Comment), realTitle, duration, out savedId);
+                        if (savedStatus == SavedIdStatus.Valid)
+                        {
+                            savedAttempt = NeteaseApi.RequestLyric(savedId, session);
+                            if (!NeteaseApi.IsInstrumental(savedAttempt) && LyricProcessor.HasLyricText(savedAttempt?.lrc?.lyric))
+                            {
+                                session.Diagnostic(DiagnosticKind.SavedIdUsed, songId: savedId);
+                                session.Report("Matching: used the song ID saved by NetEase");
+                                var savedText = FormatLookupAttempt(savedId, savedAttempt, config, session, out _, out _);
+                                diagnosticStatus = DiagnosticLookupStatus.Lyrics;
+                                return savedText;
+                            }
+                            savedStatus = SavedIdStatus.NoLyrics;
+                        }
+                        if (savedStatus != SavedIdStatus.Absent)
+                        {
+                            session.Diagnostic(DiagnosticKind.SavedIdIgnored, code: (int)savedStatus);
+                            session.Report("Matching: ignored saved NetEase song ID (" + savedStatus + ")");
+                        }
                         candidates = SearchMatch.SearchCandidates(realTitle, realArtist, realAlbum,
-                            ParseDurationString(durationStr), session, config.AllowSpelling,
-                            ReadTag(sourceFileUrl, MetaDataType.TrackNo));
+                            duration, session, config.AllowSpelling, ReadTag(sourceFileUrl, MetaDataType.TrackNo));
                     }
                     string result = null;
                     var bestExtras = -1;
@@ -399,7 +424,7 @@ namespace MusicBeePlugin
                         }
                         if (candidate != candidates[0]) session.Report("Lyrics: trying compatible song ID " + candidate);
                         if (candidate != candidates[0]) session.Diagnostic(DiagnosticKind.RetryCompatibleListing, songId: candidate);
-                        var attempt = NeteaseApi.RequestLyric(candidate, session);
+                        var attempt = savedId > 0 && candidate == savedId ? savedAttempt : NeteaseApi.RequestLyric(candidate, session);
                         if (NeteaseApi.IsInstrumental(attempt))
                         {
                             session.Diagnostic(DiagnosticKind.InstrumentalListing, songId: candidate);
@@ -412,24 +437,8 @@ namespace MusicBeePlugin
                             session.Diagnostic(DiagnosticKind.OriginalMissing, songId: candidate);
                             continue;
                         }
-                        var choice = config.DefaultContent;
-                        if (config.NeedsLanguageChoice)
-                            choice = LanguagePreferences.Choice(config, _languagePreferences.Resolve(candidate, attempt, session,
-                                // Changed content overrides also apply to songs without a pronunciation track.
-                                new[] { config.CantoneseOverride, config.JapaneseOverride, config.KoreanOverride, config.EnglishOverride }
-                                    .AnyDifferent(config.DefaultContent)));
-                        var formatted = FormatLyrics(attempt, choice, config.UseSeparateLines, session.Report, out var usableExtras);
-                        session.Diagnostic(DiagnosticKind.AuxiliaryOutput, songId: candidate, count: usableExtras);
+                        var formatted = FormatLookupAttempt(candidate, attempt, config, session, out var usableExtras, out var wanted);
                         if (usableExtras > bestExtras) { result = formatted; bestExtras = usableExtras; }
-                        var wanted = choice == NeteaseConfig.AccompanyingText.Original ? 0 :
-                            choice == NeteaseConfig.AccompanyingText.PronunciationAndTranslation ? 2 : 1;
-                        if (NeteaseConfig.HasTranslation(choice) && !LyricProcessor.HasLyricText(attempt.tlyric?.lyric) &&
-                            _languagePreferences.TryGetKnownLanguage(candidate, out var knownLanguage) && knownLanguage == SongLanguage.Mandarin)
-                        {
-                            session.Report("Lyrics: known Mandarin label; skipped missing-translation retries");
-                            session.Diagnostic(DiagnosticKind.CachedMandarin);
-                            wanted = NeteaseConfig.HasPronunciation(choice) ? 1 : 0;
-                        }
                         if (usableExtras >= wanted) break;
                     }
                     diagnosticStatus = result == null ? DiagnosticLookupStatus.NoLyrics : DiagnosticLookupStatus.Lyrics;
@@ -443,6 +452,29 @@ namespace MusicBeePlugin
                 return null;
             }
             finally { diagnosticLookup.Complete(diagnosticStatus); }
+        }
+
+        private string FormatLookupAttempt(long candidate, LyricResult attempt, NeteaseConfig config, LookupSession session,
+            out int usableExtras, out int wanted)
+        {
+            var choice = config.DefaultContent;
+            if (config.NeedsLanguageChoice)
+                choice = LanguagePreferences.Choice(config, _languagePreferences.Resolve(candidate, attempt, session,
+                    // Changed content overrides also apply to songs without a pronunciation track.
+                    new[] { config.CantoneseOverride, config.JapaneseOverride, config.KoreanOverride, config.EnglishOverride }
+                        .AnyDifferent(config.DefaultContent)));
+            var formatted = FormatLyrics(attempt, choice, config.UseSeparateLines, session.Report, out usableExtras);
+            session.Diagnostic(DiagnosticKind.AuxiliaryOutput, songId: candidate, count: usableExtras);
+            wanted = choice == NeteaseConfig.AccompanyingText.Original ? 0 :
+                choice == NeteaseConfig.AccompanyingText.PronunciationAndTranslation ? 2 : 1;
+            if (NeteaseConfig.HasTranslation(choice) && !LyricProcessor.HasLyricText(attempt.tlyric?.lyric) &&
+                _languagePreferences.TryGetKnownLanguage(candidate, out var knownLanguage) && knownLanguage == SongLanguage.Mandarin)
+            {
+                session.Report("Lyrics: known Mandarin label; skipped missing-translation retries");
+                session.Diagnostic(DiagnosticKind.CachedMandarin);
+                wanted = NeteaseConfig.HasPronunciation(choice) ? 1 : 0;
+            }
+            return formatted;
         }
 
         private string FormatLyrics(LyricResult result, NeteaseConfig.AccompanyingText choice, bool separateLines, Action<string> trace, out int usableExtras)
