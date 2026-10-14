@@ -1,10 +1,10 @@
 # LyricBee — NetEase Lyrics for MusicBee
 
-**EN** | [ZH（简体中文）](README.zh-CN.md) | **[Download & install ↓](#download-and-install)**
+EN | [ZH（简体中文）](README.zh-CN.md) | [Download & install ↓](#download-and-install)
 
-A lyrics retrieval plugin for [MusicBee](https://getmusicbee.com/) that downloads synchronized lyrics from NetEase Cloud Music (网易云音乐), with optional translation and pronunciation.
+LyricBee brings timed lyrics from NetEase Cloud Music (网易云音乐) to [MusicBee](https://getmusicbee.com/). It can show translations and pronunciation alongside the original lyrics.
 
-LyricBee is an independently maintained continuation of [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics), originally written by Charlie Jiang. It includes the reliability, matching and display improvements developed through **1.9.1-pre.1–pre.12**. The original licenses and upstream Git history are retained. Development takes place on **dev**, with stable updates on **master** and issue tracking in this repository. The [previous fork](https://github.com/tonyzehs/MusicBee-NeteaseLyrics) preserves historical download links.
+Based on [Charlie Jiang’s NetEase Lyrics plugin](https://github.com/cqjjjzr/MusicBee-NeteaseLyrics), LyricBee is now maintained as a separate project. It keeps the original licenses and Git history. Please use this repository for [bug reports](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/issues).
 
 ## Feature additions
 
@@ -12,104 +12,83 @@ LyricBee is an independently maintained continuation of [cqjjjzr/MusicBee-Neteas
 
 ### Original, translation and pronunciation displays
 
-Original lyrics are always included. Choose the extras and their layout separately:
+Original lyrics are always shown. In the plugin settings, choose whether to add:
 
-- **Translation** — enabled by default.
-- **Pronunciation** — disabled by default; availability depends on NetEase and the song's language.
-- **Layout** — **Separate lines** by default, or **Same line: JP / CN**, using a spaced ` / ` separator.
+- **Translation** — on by default.
+- **Pronunciation** — off by default.
+- **Layout** — **Separate lines** by default, or **Same line: JP / CN** with a spaced ` / ` separator.
 
-Turn both extras off for original lyrics only. Language overrides can independently replace this default selection.
+Turn both extras off to show just the original lyrics. In MusicBee’s Now Playing panel, the original, pronunciation and translation can scroll and highlight together. Text wrapping and appearance depend on your MusicBee panel and skin.
 
-Separate-line timed output groups the original and its extras under one timestamp:
-
-```text
-[00:12.300]Original lyrics
-Translated lyrics
-[00:17.500]Next original line
-Next translated line
-```
-
-With pronunciation and translation selected, a cue can contain three lines:
-
-```text
-[00:12.300]Original lyrics
-Pronunciation
-Translated lyrics
-```
-
-The continuation lines belong to the original cue; the plugin does not repeat its timestamp or add a slash marker to separate-line output. The screenshots show two- and three-line highlighting in MusicBee's Now Playing panel. MusicBee controls wrapping and appearance in other panels.
+Translations and pronunciation come from NetEase, so availability varies by song. If one is missing or its timing cannot be matched, LyricBee shows the remaining lines. Choosing pronunciation alone gives the original lyrics when a reading is unavailable.
 
 ### Language overrides
 
-The language-specific controls appear together under **Language overrides**. Every language starts at **Follow default** on a fresh installation.
+Use **Language overrides** to choose different content for particular languages. Each starts at **Follow default**, which uses the Translation and Pronunciation checkboxes above it.
 
-| Language | Choices besides Follow default |
+| Language | Other choices |
 | --- | --- |
 | Japanese | Lyrics; Lyrics + Translation; Lyrics + Pronunciation; Lyrics + Pronunciation + Translation |
 | Korean | Lyrics; Lyrics + Translation; Lyrics + Pronunciation; Lyrics + Pronunciation + Translation |
 | Cantonese | Lyrics; Lyrics + Pronunciation |
 | English | Lyrics; Lyrics + Translation |
 
-**Follow default** uses the default extras for that language. A specific choice replaces them, even when both default extras are off. Layout remains common to all languages. Cantonese offers pronunciation, while English offers translation.
+A language choice replaces the default checkboxes for that language. For example, you can keep translations on for most songs and choose original lyrics only for English. Layout applies to every language.
 
-Pronunciation comes from NetEase's `romalrc` track; the plugin does not generate readings locally. For triple-line output, missing or safely unalignable extras are omitted independently. If neither is available, the original is retained. Pronunciation-only does not substitute translation when pronunciation is unavailable.
-
-The plugin uses NetEase's song-language label, with conservative kana/Hangul detection when needed. Han characters alone cannot identify Cantonese, and Latin letters alone do not identify English. An English translation override therefore does not turn off translations for French and other languages. Unsupported, multilingual or unresolved labels retain the default translation preference.
-
-Saved preferences carry over when upgrading. The former global Translation-only choice becomes original + translation; original-only keeps extras off. Older Cantonese translation choices become Lyrics or Lyrics + Pronunciation. Loading older settings repairs the legacy matching flags and retains the original file as `netease_config.pre-spelling.bak` in MusicBee's persistent plugin storage. Keep the repaired current settings when rolling back: restoring a historical backup also restores its old flags. Older builds cannot represent every new override combination, and upstream v1.8.1 retains its weaker matching behavior.
+LyricBee uses NetEase’s language information and can also recognize Japanese kana and Korean text. When it cannot tell the language, it uses your defaults. The English setting applies to songs identified as English; French and other languages keep their own default display.
 
 ### English and Simplified Chinese interface
 
-**Interface language / 界面语言** offers **Automatic / 自动**, **English**, and **简体中文**. Automatic follows the Windows UI culture available to the plugin; Chinese cultures use Simplified Chinese text. Changing interface language preserves unsaved choices and does not change the lyric language.
+**Interface language / 界面语言** offers **Automatic / 自动**, **English**, and **简体中文**. Automatic follows your Windows display language and uses Simplified Chinese for Chinese languages. Switching the interface language keeps your current choices. The lyrics stay in their original language.
 
 ### Two-line examples
 
-Click either preview to open the full-size screenshot.
+Click either preview to see it at full size.
 
-| Japanese: lyrics + Chinese translation | Cantonese: lyrics + pronunciation |
+| Japanese: lyrics and Chinese translation | Cantonese: lyrics and pronunciation |
 | :---: | :---: |
 | [<img src="docs/screenshots/japanese-two-line.webp" alt="Japanese lyrics and Chinese translation highlighted together in MusicBee" width="400">](docs/screenshots/japanese-two-line.webp) | [<img src="docs/screenshots/cantonese-two-line.webp" alt="Cantonese lyrics and romanized pronunciation highlighted together in MusicBee" width="400">](docs/screenshots/cantonese-two-line.webp) |
 
 ### Original-only example
 
-English lyrics with both extras turned off. Click the preview to open the full-size screenshot.
+English lyrics with Translation and Pronunciation turned off. Click to see the full-size screenshot.
 
-[<img src="docs/screenshots/english-single-line.webp" alt="Original English lyrics highlighted in MusicBee, without translation or pronunciation" width="800">](docs/screenshots/english-single-line.webp)
+[<img src="docs/screenshots/english-single-line.webp" alt="Original English lyrics highlighted in MusicBee" width="800">](docs/screenshots/english-single-line.webp)
 
 ### Untimed lyrics
 
-When original lyrics have no timestamps, compatible lines are displayed as `Original / Translation`, or `Original / Pronunciation / Translation`. There are no language-specific labels. Original verse breaks and section markers are retained.
+Lyrics without timestamps use `Original / Translation` or `Original / Pronunciation / Translation`. Verse breaks and section labels are kept.
 
-If line counts differ but verse structure agrees, each verse's original lines are followed by its available pronunciation/translation lines. Incompatible structures retain the original rather than forcing correspondence. The plugin never invents timestamps or borrows translation timing for an untimed original.
+When the texts have different line counts but matching verses, each verse shows the original first, followed by its pronunciation and translation. If the verses cannot be paired, the original is shown on its own. Scrolling with the music requires timed original lyrics.
 
 ### More careful automatic matching
 
-Title, artist, album and available duration contribute to matching. The plugin rejects contradictory or ambiguous recordings rather than choosing an unrelated song simply because its duration is close.
+LyricBee checks the title, artists, album and song length to find the right recording. If the results leave more than one likely recording, it returns no lyrics so you can choose the song yourself.
 
-- Numbered titles remain distinct; explicit **Pt. II** and **Part 2** can agree.
-- Live, remix, radio-edit and other meaningful version labels remain significant.
-- Recognized remaster notes can be ignored. Mono/stereo and album-version notes require known, closely matching durations.
-- Compatible duplicate catalogue listings are grouped. If the chosen listing lacks lyrics or requested extras, another compatible listing can be tried.
-- A terminal soundtrack attribution such as **(from the series Arcane League of Legends)** can be ignored only when complete artist credits, album, duration and the named work corroborate it. Meaningful title words and recording-version labels remain significant.
-- Verified NetEase artist aliases can connect a local artist tag with a different catalogue display name. The title and album must agree, and known durations must be within two seconds.
+- Numbered songs stay separate. `Pt. II` and `Part 2` can mean the same part.
+- Words such as Live, Remix and Radio Edit still count when choosing a version.
+- Remaster notes can be ignored. Mono, stereo and album-version notes can be ignored when the song lengths are close.
+- When NetEase lists a recording more than once, LyricBee can try another listing for missing lyrics, translation or pronunciation.
+- Soundtrack searches can handle an added title ending such as `(from the series Arcane League of Legends)`. A Chinese soundtrack album tag can also match an English listing when the title, full artist list and length agree.
+- Artist names in different languages can match through NetEase’s own aliases. The title and album must agree, and song lengths must be within two seconds.
 
-Missing tags, translated titles or unresolved editions can still prevent a confident match. The manual song override remains available.
+Some songs still need a [manual song link](#select-a-specific-netease-song), especially when tags are missing or several recordings look alike. See [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md#matching-and-compatible-listings) for the detailed matching rules and their limits.
 
 ### Real-song examples
 
-These cases show the earlier lookup failures and the corrected results. All three have been checked in MusicBee with existing tags and no Custom10 override.
+These three songs have been checked in MusicBee using their existing tags and an empty Custom10 field.
 
-| Recording | Earlier lookup behavior | Corrected result |
+| Song | Earlier problem | Result |
 | --- | --- | --- |
-| **[By Your Side](https://music.163.com/song?id=400875204)** — 澤田かおり / 服部隆之, from the *Mobile Suit Gundam The Origin* soundtrack | Paired the Japanese recording with unrelated Cantonese lyrics. | Retrieves the intended recording, **ID 400875204**. Recognizes the singer alongside the composer credit, checks title/artist/album/duration, and rejects unrelated songs. |
-| **[Ma Meilleure Ennemie](https://music.163.com/song?id=3374505659)** — Stromae / Pomme, from the *Arcane Season 2* soundtrack | Returned no lyrics even though the correct recording was available. NetEase appends **(from the series Arcane League of Legends)** to the title, while the local title omits it. | Retrieves the intended recording, **ID 3374505659**. Accepts the soundtrack attribution only when the artist credits, album, duration and named work corroborate the match. |
-| **[奇縁ロマンス](https://music.163.com/song?id=2032748562)** — ナナヲアカリ / 七音阿卡莉 | Found the right listings but rejected them because the Japanese artist tag differed from NetEase's Chinese display name. | Verifies the Japanese name against NetEase's artist aliases and selects **ID 2032748562**, keeping the original tags. Title, album and duration must also agree. |
+| [By Your Side](https://music.163.com/song?id=400875204) — 澤田かおり and 服部隆之, from *Mobile Suit Gundam The Origin* | The Japanese song received unrelated Cantonese lyrics. | Finds the Japanese recording, including when both the singer and composer are in the artist tag. |
+| [Ma Meilleure Ennemie](https://music.163.com/song?id=3374505659) — Stromae and Pomme, from *Arcane Season 2* | NetEase adds `(from the series Arcane League of Legends)` to the title, which stopped the song matching. | Finds the recording with the shorter local title when the artists, album and length agree. |
+| [奇縁ロマンス](https://music.163.com/song?id=2032748562) — ナナヲアカリ, listed as 七音阿卡莉 on NetEase | The Japanese and Chinese artist names were treated as different performers. | Uses NetEase’s artist aliases to match the Japanese tag to the Chinese name. |
 
-Re-fetch affected tracks to replace lyrics MusicBee already stored.
+Re-fetch affected tracks to replace lyrics MusicBee already saved.
 
 ### Select a specific NetEase song
 
-Set the requested music file's **Custom10** tag to a NetEase song URL or `netease=ID`, then re-search:
+Put a NetEase song link or `netease=ID` in the music file’s **Custom10** tag, then search for lyrics again:
 
 ```text
 https://music.163.com/#/song?id=29126914
@@ -118,82 +97,88 @@ https://y.music.163.com/m/song?id=29126914
 netease=29126914
 ```
 
-Desktop and phone-share song links are supported. Album, playlist, artist and unrelated-domain links are rejected. The override belongs to the file being searched, including background lookups while a different song is playing.
+Both desktop and phone-share song links work. Use a link to the song itself, rather than an album, playlist or artist page.
 
 ### Matching, network and privacy
 
-**Allow small spelling differences** is a single checkbox, enabled by default. Turning it off requires stricter spelling agreement. Existing effective spelling preferences are retained when upgrading. Number, artist and recording checks still apply.
+**Allow small spelling differences** is on by default. Turn it off for exact spelling. Song numbers, artists and recording versions are still checked.
 
-**Allow HTTP fallback (unencrypted metadata)** is enabled by default. HTTPS is tried first. Plain HTTP is used only after a transport failure on the legacy HTTPS interface; a secure HTTP/API refusal prevents that downgrade for the lookup. Turn this option off to require HTTPS. Optional language metadata always uses HTTPS.
+**Allow HTTP fallback (unencrypted metadata)** is also on by default. LyricBee tries HTTPS first. If that connection fails or NetEase has a temporary server error, it can try HTTP. HTTP sends song information without encryption; turn this setting off to require HTTPS.
 
-Searches send the song’s title, artist and album to NetEase; lyric requests send the NetEase song ID. No login or account is used.
-When HTTP fallback is used, that metadata is sent without encryption. Anonymous server cookies are not stored and replayed between requests. The plugin supplies lyric text to MusicBee; MusicBee handles display and storage.
+Searches send the title, artists and album to NetEase. Fetching lyrics sends the NetEase song ID. LyricBee works without a NetEase account. MusicBee handles how the returned lyrics are displayed and saved.
 
 ### Check for LyricBee updates
 
-Click **Check for LyricBee updates** in the plugin settings. The result appears in the panel; when a newer stable version is available, **View update** opens its release page only when clicked. Checks are manual and send no song metadata to GitHub. Install the downloaded ZIP through **Add plugin → Restart**.
+Click **Check for LyricBee updates** in the plugin settings. The result appears there. If a newer version is available, click **View update** to open its release page.
+
+Update checks are manual. They send no song information to GitHub, and updates are installed only when you download and add the ZIP yourself.
 
 ## Download and install
 
-Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). The install ZIP contains `mb_NeteaseLyrics.dll`, the license/attribution files, and bilingual installation instructions; runtime dependencies are embedded. Each release includes SHA256SUMS.txt. GitHub's Source code archives are for development. Older development releases are retained for reference; use the latest stable release for normal installation.
+Download `LyricBee-NetEaseLyrics_[version].zip` from the [latest release](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/latest). Choose this installation ZIP; GitHub’s Source code archives are for development. The ZIP includes the plugin, licenses and installation guide. `SHA256SUMS.txt` is available if you want to check the download.
 
 Requires MusicBee 3.x on Windows with .NET Framework 4.8. Tested with MusicBee 3.6.9668 (Microsoft Store edition).
 
-1. Open MusicBee’s **Preferences → Plugins**, use **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**.
-2. In **Tags (2)**, set the lyrics provider priority to use **Netease Cloud Music**.
-3. Open the plugin settings to choose default extras, layout, language overrides and interface language.
-4. Re-fetch lyrics for tracks whose display or matching you want to change.
+1. Open MusicBee’s **Preferences → Plugins**, click **Add plugin**, select the ZIP and enable **LyricBee — NetEase Lyrics**.
+2. Under **Tags (2)**, put **Netease Cloud Music** in the lyrics provider priority list.
+3. Open the plugin settings to choose translations, pronunciation, layout and interface language.
+4. Search for lyrics on the songs you want to update.
 
 ### Upgrading
 
-(Optional) Back up your settings first. Previous plugin versions remain available in the [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases).
+(Optional) Back up your settings first. Older versions are available in the [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases).
 
 1. Download the latest installation ZIP.
-2. Open MusicBee’s **Preferences → Plugins**, use **Add plugin**, and select the new ZIP to update LyricBee.
+2. Open **Preferences → Plugins → Add plugin** and select the new ZIP.
 3. Click the **Restart** button that appears. MusicBee will restart with the updated plugin.
-4. Re-fetch lyrics to apply display or matching changes to previously saved text.
+4. Clear and re-fetch saved lyrics to use the new matching or display settings.
 
-MusicBee can keep lyrics it has already downloaded or embedded. Installing an update or restarting playback does not replace that stored text. Clear or replace incorrect lyrics and search again to evaluate a new lookup.
+Your settings carry over. If you return to an older plugin, keep the current settings file: restoring an old backup can bring back earlier matching problems. See [INSTALL.md](INSTALL.md) for more about older settings.
+
+MusicBee keeps lyrics it has downloaded or written into music files. Re-fetching replaces that saved text; restarting playback alone leaves it in place.
 
 ## Troubleshooting
 
-- **No lyrics found:** check the provider priority under **Tags (2)**, re-fetch lyrics, and try the correct NetEase song link in **Custom10**. If HTTPS is blocked, check the HTTP fallback setting.
-- **Wrong song:** set **Custom10** to the correct NetEase song link or `netease=ID`, then search again.
-- **Old lyrics still shown:** MusicBee keeps downloaded or embedded lyrics. Clear the stored text and re-fetch it.
-- **Reporting a problem:** include the NetEase song link, MusicBee version and LyricBee version. After reproducing the problem, open the plugin settings → **Advanced… → Copy diagnostic report**. The report is copied locally; nothing is uploaded. It includes NetEase song IDs, which can reveal listening history, but excludes lyrics, tag values, file paths and account data.
+- If lyrics are missing, check the provider priority under **Tags (2)**, then try searching again. You can also put the correct NetEase song link in **Custom10**.
+- If the wrong song appears, set **Custom10** to the correct song link or `netease=ID`, then clear and re-fetch the lyrics.
+- If old lyrics keep showing, clear the saved text in MusicBee and fetch it again.
+- To report a problem, include the NetEase song link and your MusicBee and LyricBee versions. Reproduce the problem, then open the plugin settings → **Advanced… → Copy diagnostic report**. Paste the report into your issue. It is copied to your clipboard, not uploaded automatically. It contains song IDs that may reveal your listening history; lyrics, tags, file paths and account details are left out.
 
 ## Fixes over upstream v1.9.0
 
-- Failed or incomplete network answers and missing tags return safely instead of crashing.
-- Title, artist, album, duration and recording-version checks reduce wrong-song matches; compatible duplicate listings can supply missing lyrics.
-- Translation and pronunciation align line by line, retaining useful originals, timing metadata and offsets.
-- Bounded lookups recover through another interface when HTTPS fails, with an option to disable plain-HTTP fallback.
-- English and Simplified Chinese settings separate lyric content, layout and language overrides while preserving saved preferences.
+- Handles failed network requests and missing tags without crashing.
+- Checks more song details to reduce wrong lyrics, and tries duplicate listings when lyrics are missing.
+- Keeps original lyrics, translations and pronunciation together, with fixes for timing and untimed text.
+- Limits how long a search can wait and tries another connection when possible.
+- Offers English and Simplified Chinese settings, with separate choices for content and layout.
 - Smaller plugin: removing unused dependencies reduced the DLL from about 4 MB to 1.1 MB.
 
 See [UPSTREAM-CHANGES.md](UPSTREAM-CHANGES.md) for the full list.
 
 ## Build and development history
 
-See [BUILDING.md](BUILDING.md) for the Windows/.NET build instructions and validation details, and [CHANGELOG.md](CHANGELOG.md) for the step-by-step changes. Run `build.ps1` from the repository root to build, test and package the plugin.
+See [BUILDING.md](BUILDING.md) to build and test the plugin on Windows, and [CHANGELOG.md](CHANGELOG.md) for changes by version. Development takes place on `dev`; stable updates go to `master`.
 
-Offline fixtures cover the MusicBee callback, matching, timing, configuration and controlled network failures; they do not replace native MusicBee testing or guarantee NetEase availability in every region.
+The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases) keeps the earlier versions. The [previous fork](https://github.com/tonyzehs/MusicBee-NeteaseLyrics) also preserves its original download links.
 
-The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases) includes the historical development milestones and LyricBee releases. Each release uses its original build packages; smaller updates are included in the next milestone. Padded prerelease tags keep the listing in numeric order. Tags identify archived source snapshots, and release dates reflect their publication. Source code archives include the documentation from their respective tags.
+<details>
+<summary>Earlier release milestones</summary>
 
 | Milestone | Included development steps | Main changes |
 |---|---|---|
-| [1.9.1-pre.1](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre01) | pre.1 | Reliability and build foundation |
-| [1.9.1-pre.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre04) | pre.2, pre.3, pre.4 | Safer matching and network recovery |
+| [1.9.1-pre.1](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre01) | pre.1 | Fewer crashes and a repeatable build |
+| [1.9.1-pre.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre04) | pre.2, pre.3, pre.4 | Better matching and network recovery |
 | [1.9.1-pre.7](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre07) | pre.5, pre.6, pre.7 | Separate-line bilingual lyrics |
-| [1.9.1-pre.9](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre09) | pre.8, pre.9 | Recording identity, alignment and compatibility |
+| [1.9.1-pre.9](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre09) | pre.8, pre.9 | Duplicate recordings, timing and older settings |
 | [1.9.1-pre.10](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre10) | pre.10 | Pronunciation and three-line lyrics |
-| [1.9.1-pre.11](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre11) | pre.11 | Soundtrack attribution matching |
+| [1.9.1-pre.11](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.1-pre11) | pre.11 | Soundtrack title matching |
 | [1.9.2](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.2) | pre.12, 1.9.2 | Language choices and translation defaults |
 | [1.9.3](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.3) | 1.9.3 | Standalone LyricBee project and display name |
 | [1.9.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.4) | 1.9.4-test.1, test.2, 1.9.4 | Bilingual settings, independent extras, language overrides and simpler spelling controls |
 | [1.9.5](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.5) | 1.9.5-test.1–test.4, 1.9.5 | Automatic settings repair, matching and timing fixes, and diagnostic reports under Advanced |
 | [1.9.6](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.6) | 1.9.6-test.1–test.4, 1.9.6 | Manual update checking, improved diagnostic reports and automatic settings layout |
-| [1.9.7](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.7) | 1.9.7-test.1–test.2, 1.9.7 | Verified artist aliases for localized names and recovery from temporary artist metadata failures |
+| [1.9.7](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.7) | 1.9.7-test.1–test.2, 1.9.7 | Artist names in different languages |
 
-The project remains under [Apache 2.0](LICENSE), with the retained [Zony MIT notice](LICENSE-Zony) for adopted API code. Credit for the original plugin and its upstream history belongs to Charlie Jiang and the upstream contributors. LyricBee is maintained by [Tony Y](https://github.com/tonyzehs). See [NOTICE](NOTICE) for attribution.
+</details>
+
+LyricBee is maintained by [Tony Y](https://github.com/tonyzehs). Thanks to Charlie Jiang and the upstream contributors for the original plugin. The project uses [Apache 2.0](LICENSE), with [Zony’s MIT notice](LICENSE-Zony) for the adopted API code. See [NOTICE](NOTICE) for credits.

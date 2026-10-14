@@ -5,7 +5,8 @@ Preparing this text is not approval to publish a release, upload assets or push 
 
 ## What's new
 
-<!-- Use 3–6 plain bullets describing user-visible effects. -->
+<!-- Describe the changes listeners will notice. Use only as many bullets as needed;
+one or two are enough for a small release. Keep implementation details in CHANGELOG. -->
 - {{CHANGE_1}}
 - {{CHANGE_2}}
 - {{CHANGE_3}}
