@@ -26,6 +26,62 @@ internal static partial class Program
 
     private static void SavedIdTests()
     {
+        foreach (var token in new[] { "123", "\"123\"", "9223372036854775807", "\"9223372036854775807\"" })
+        Test("Saved IDs accept integer and canonical digit-string forms: " + token, () =>
+        {
+            var comment = SavedComment("music:{\"musicId\":" + token + ",\"musicName\":\"Song\",\"duration\":200000}");
+            var expected = long.Parse(token.Trim('"'), System.Globalization.CultureInfo.InvariantCulture);
+            Equal(SavedIdStatus.Valid, SavedNeteaseId.Read(comment, "Song", 200000, out var id)); Equal(expected, id);
+            var handler = new Fixture((r, _) => { True(r.RequestUri.AbsolutePath.Contains("lyric")); return Json(Lyrics); });
+            var plugin = SavedPlugin(handler, comment);
+            Equal("[00:01.00]Hello", Lookup(plugin, "Singer", "Song", "Album")); Equal(1, handler.Calls.Count);
+            var recorder = (DevelopmentDiagnostics)typeof(Plugin).GetField("_diagnostics", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(plugin);
+            var events = recorder.Report().Split('\n');
+            True(events.Any(line => line.Contains("SavedIdUsed") && line.Contains("song_id=" + expected + " ")));
+            True(!events.Any(line => line.Contains(comment) || line.Contains("musicName")));
+        });
+        foreach (var token in new[] { "\"\"", "\"0\"", "\"007\"", "\"-1\"", "\"+1\"", "\"1.5\"", "\"1e3\"",
+            "\" 123\"", "\"123 \"", "\"12a\"", "\"１２３\"", "\"١٢٣\"", "\"99999999999999999999\"", "\"9223372036854775808\"",
+            "true", "null", "[]", "{}", "1.5", "1e3", "0", "-1", "9223372036854775808" })
+        Test("Invalid saved-ID forms fall through to ordinary search: " + token, () =>
+        {
+            var comment = SavedComment("music:{\"musicId\":" + token + ",\"musicName\":\"Song\",\"duration\":200000}");
+            Equal(SavedIdStatus.Unreadable, SavedNeteaseId.Read(comment, "Song", 200000, out var id)); Equal(0L, id);
+            var handler = new Fixture((r, _) => Json(r.RequestUri.AbsolutePath.Contains("search") ? Search : Lyrics));
+            Equal("[00:01.00]Hello", Lookup(SavedPlugin(handler, comment), "Singer", "Song", "Album"));
+            Equal(2, handler.Calls.Count); Equal(1, handler.Calls.Count(c => c.Contains("search")));
+        });
+        foreach (var duration in new[] { "\"200000\"", "true", "null", "[]", "{}", "0", "202001" })
+        Test("Digit-string IDs retain numeric-only and close saved duration: " + duration, () =>
+        {
+            var comment = SavedComment("music:{\"musicId\":\"123\",\"musicName\":\"Song\",\"duration\":" + duration + "}");
+            Equal(SavedIdStatus.LengthMismatch, SavedNeteaseId.Read(comment, "Song", 200000, out var id)); Equal(0L, id);
+        });
+        Test("Digit-string and integer IDs preserve exactly the same request sequences", () =>
+        {
+            var calls = new System.Collections.Generic.List<string[]>();
+            var events = new System.Collections.Generic.List<string[]>();
+            foreach (var token in new[] { "123", "\"123\"" })
+            {
+                var comment = SavedComment("music:{\"musicId\":" + token + ",\"musicName\":\"Song\",\"duration\":200000}");
+                var handler = new Fixture((_, __) => Json(Lyrics));
+                var plugin = SavedPlugin(handler, comment);
+                Equal("[00:01.00]Hello", Lookup(plugin, "Singer", "Song", "Album")); calls.Add(handler.Calls.ToArray());
+                var recorder = (DevelopmentDiagnostics)typeof(Plugin).GetField("_diagnostics", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(plugin);
+                events.Add(recorder.Report().Split('\n').Where(line => System.Text.RegularExpressions.Regex.IsMatch(line, @"^\d+ms "))
+                    .Select(line => System.Text.RegularExpressions.Regex.Replace(line, @"^\d+ms ", "")).ToArray());
+            }
+            True(calls[0].SequenceEqual(calls[1]));
+            True(events[0].Length > 0 && events[0].SequenceEqual(events[1]));
+        });
+        Test("Digit-string IDs keep title and host-duration validation unchanged", () =>
+        {
+            var comment = SavedComment("music:{\"musicId\":\"123\",\"musicName\":\"Song\",\"duration\":200000.0}");
+            Equal(SavedIdStatus.Valid, SavedNeteaseId.Read(comment, "Song", 200000, out _));
+            Equal(SavedIdStatus.TitleMismatch, SavedNeteaseId.Read(comment, "Other Song", 200000, out _));
+            Equal(SavedIdStatus.LengthMismatch, SavedNeteaseId.Read(comment, "Song", null, out _));
+            Equal(SavedIdStatus.LengthMismatch, SavedNeteaseId.Read(comment, "Song", 202001, out _));
+        });
         Test("Saved NetEase ID fetches lyrics without searching despite changed credits", () =>
         {
             var handler = new Fixture((r, _) => { True(r.RequestUri.AbsolutePath.Contains("lyric")); return Json(Lyrics); });

@@ -16,7 +16,8 @@ Copy this list into a new release record and start with every box unticked. Reco
 
 Install the candidate ZIP through Add plugin, then Restart. Clear stored lyrics before testing a fresh search. Settings backup is optional; keep the repaired current settings during rollback, as explained in [INSTALL.md](../INSTALL.md).
 
-- [ ] Saved NetEase download ID: a real file whose Comment contains the 163 key, with Custom10 empty. Confirm the saved-ID event in Advanced diagnostics and no searches. Check a changed title/length and an unavailable ID fall back to search. The verified FLAC samples store this under Vorbis DESCRIPTION; confirm MusicBee exposes it as Comment.
+- [ ] Saved NetEase download ID: a real file whose Comment contains the 163 key, with Custom10 empty. Confirm the saved-ID event in Advanced diagnostics and no searches. Check a changed title/length and an unavailable ID fall back to search. Use a FLAC with a quoted saved ID, such as Magical Defense Training, and an MP3 with a numeric ID. FLAC DESCRIPTION is displayed as Comment and may be rewritten to COMMENT on save.
+- [ ] MP3 comment selection: test a synthetic MP3 with both NetEase COMM (XXX, empty description) and a personal COMM (eng, empty description). Record which one MusicBee exposes as Comment and whether SavedIdUsed appears; decide any code change from that result.
 - [ ] Spin The Wheel tagged Mick Wingert with the original Chinese Arcane album. Clear stored lyrics and Custom10, re-fetch, and check original plus translation. Confirm the show-credited soundtrack event in diagnostics. Recheck Blood Sweat & Tears and Fantastic.
 - [ ] Confirm the plugin name and candidate version; stable builds must not show DEV BUILD.
 - [ ] Fresh settings: translation on, pronunciation off, separate lines and Follow default for every language. Upgrades retain saved preferences.

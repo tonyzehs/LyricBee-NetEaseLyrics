@@ -1,3 +1,10 @@
+# 1.9.8-test.3 — saved download ID formats (local testing build)
+
+- Accept saved NetEase song IDs stored as either JSON integers or quoted decimal digits. Some real FLAC downloads use the quoted form; test.2 skipped their saved IDs and searched instead.
+- Keep title, duration and comment validation unchanged. Invalid ID values fall through to searching; Custom10 remains the final manual override.
+- Record NetEase's FLAC DESCRIPTION / MusicBee COMMENT rewrite and MP3 COMM layout. Add a native check for MP3s carrying both a NetEase comment and a personal comment.
+- Product version: `1.9.8-test.3`; assembly version: `1.9.8.0`; file version: `1.9.8.3`. Local testing; unpublished.
+
 # 1.9.8-test.2 — saved song IDs and show-credited soundtracks (local testing build)
 
 - Use the song ID in a NetEase download's comment when its saved title and length agree with the file. If that ID has no lyrics, continue searching. Custom10 remains the final manual choice.

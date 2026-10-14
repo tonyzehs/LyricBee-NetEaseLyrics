@@ -44,8 +44,7 @@ namespace MusicBeePlugin
                     metadata = JObject.Load(reader);
                     if (reader.Read()) return SavedIdStatus.Unreadable;
                 }
-                if (metadata["musicId"]?.Type != JTokenType.Integer ||
-                    !long.TryParse(metadata["musicId"].ToString(), NumberStyles.None, CultureInfo.InvariantCulture, out var saved) || saved <= 0)
+                if (!TryReadSongId(metadata["musicId"], out var saved))
                     return SavedIdStatus.Unreadable;
                 if (metadata["musicName"]?.Type != JTokenType.String || string.IsNullOrWhiteSpace(title) ||
                     SearchMatch.Canonical((string)metadata["musicName"]).Length == 0 ||
@@ -61,6 +60,17 @@ namespace MusicBeePlugin
                 return SavedIdStatus.Valid;
             }
             catch (Exception) { return SavedIdStatus.Unreadable; }
+        }
+
+        private static bool TryReadSongId(JToken token, out long id)
+        {
+            id = 0;
+            if (token == null || (token.Type != JTokenType.Integer && token.Type != JTokenType.String)) return false;
+            var digits = token.Type == JTokenType.String ? (string)token : token.ToString(Formatting.None);
+            if (string.IsNullOrEmpty(digits) || digits.Length > 19 || digits[0] == '0') return false;
+            foreach (var digit in digits)
+                if (digit < '0' || digit > '9') return false;
+            return long.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out id) && id > 0;
         }
     }
 }
