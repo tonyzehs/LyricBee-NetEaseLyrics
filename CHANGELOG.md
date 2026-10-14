@@ -1,3 +1,12 @@
+# 1.9.7
+
+- Match verified NetEase artist aliases when the title, album and known duration corroborate the recording. Fix automatic lookup of **奇縁ロマンス** tagged **ナナヲアカリ**, without changing local tags or setting Custom10.
+- Retry artist-name verification on the next lookup after timeouts, cancellations or temporary network/server failures. Keep the five-minute cooldown for definite refusals or invalid artist records.
+- Keep optional artist metadata refusals separate from lyric HTTP fallback, as with language metadata. Artist requests remain HTTPS only; search and lyric refusals still block insecure fallback.
+- Add alias regression fixtures, clearer matching traces and artist reply-size output for the optional live check. Ordinary matches make no extra requests; no bundled alias database or new runtime dependencies are added.
+- Refresh the three-line README screenshot and add an original-only English example, using quality-95 WebP images in both languages.
+- Product version: `1.9.7`; assembly/file version: `1.9.7.0`.
+
 # 1.9.7-test.2 — artist-alias review follow-ups (local testing build)
 
 - Keep optional artist metadata refusals separate from the lyric HTTP-fallback policy, matching optional language metadata. Artist requests remain HTTPS only; search/lyric refusals still block insecure fallback.

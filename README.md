@@ -70,6 +70,12 @@ Click either preview to open the full-size screenshot.
 | :---: | :---: |
 | [<img src="docs/screenshots/japanese-two-line.webp" alt="Japanese lyrics and Chinese translation highlighted together in MusicBee" width="400">](docs/screenshots/japanese-two-line.webp) | [<img src="docs/screenshots/cantonese-two-line.webp" alt="Cantonese lyrics and romanized pronunciation highlighted together in MusicBee" width="400">](docs/screenshots/cantonese-two-line.webp) |
 
+### Original-only example
+
+English lyrics with both extras turned off. Click the preview to open the full-size screenshot.
+
+[<img src="docs/screenshots/english-single-line.webp" alt="Original English lyrics highlighted in MusicBee, without translation or pronunciation" width="800">](docs/screenshots/english-single-line.webp)
+
 ### Untimed lyrics
 
 When original lyrics have no timestamps, compatible lines are displayed as `Original / Translation`, or `Original / Pronunciation / Translation`. There are no language-specific labels. Original verse breaks and section markers are retained.
@@ -91,7 +97,7 @@ Missing tags, translated titles or unresolved editions can still prevent a confi
 
 ### Real-song examples
 
-These cases show the earlier lookup failures and the corrected results. All three have been checked in MusicBee with existing tags and no Custom10 override. The artist-alias fix is currently available in the local 1.9.7 test build.
+These cases show the earlier lookup failures and the corrected results. All three have been checked in MusicBee with existing tags and no Custom10 override.
 
 | Recording | Earlier lookup behavior | Corrected result |
 | --- | --- | --- |
@@ -188,5 +194,6 @@ The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/release
 | [1.9.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.4) | 1.9.4-test.1, test.2, 1.9.4 | Bilingual settings, independent extras, language overrides and simpler spelling controls |
 | [1.9.5](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.5) | 1.9.5-test.1–test.4, 1.9.5 | Automatic settings repair, matching and timing fixes, and diagnostic reports under Advanced |
 | [1.9.6](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.6) | 1.9.6-test.1–test.4, 1.9.6 | Manual update checking, improved diagnostic reports and automatic settings layout |
+| [1.9.7](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.7) | 1.9.7-test.1–test.2, 1.9.7 | Verified artist aliases for localized names and recovery from temporary artist metadata failures |
 
 The project remains under [Apache 2.0](LICENSE), with the retained [Zony MIT notice](LICENSE-Zony) for adopted API code. Credit for the original plugin and its upstream history belongs to Charlie Jiang and the upstream contributors. LyricBee is maintained by [Tony Y](https://github.com/tonyzehs). See [NOTICE](NOTICE) for attribution.

@@ -38,7 +38,7 @@ Plain HTTP fallback is enabled by default and can be disabled in settings. It se
 
 Optional language metadata uses HTTPS only, with a two-second request limit inside the lookup budget. Its refusal does not change lyric transport fallback. Known labels use a bounded six-hour per-ID cache. Unknown or multilingual labels retain translation behavior; missing metadata permits conservative kana/Hangul inference. Lyrics-only overrides may request a language label even without pronunciation.
 
-### Verified artist aliases (1.9.7 testing)
+### Verified artist aliases (1.9.7)
 
 When ordinary matching finds no eligible song, candidates with an exact title and album and a known duration within two seconds may verify the primary artist through NetEase's `/api/artist/{id}` metadata. Only exact normalized names from that artist record can supply the missing identity. A secondary composer/guest alias cannot identify the singer, and additional local artist credits still need direct support. Candidate grouping retains the original service artist credits.
 

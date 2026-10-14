@@ -70,6 +70,12 @@ LyricBee 是 [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBe
 | :---: | :---: |
 | [<img src="docs/screenshots/japanese-two-line.webp" alt="MusicBee 同时高亮日语原文和中文翻译" width="400">](docs/screenshots/japanese-two-line.webp) | [<img src="docs/screenshots/cantonese-two-line.webp" alt="MusicBee 同时高亮粤语原文和罗马字发音" width="400">](docs/screenshots/cantonese-two-line.webp) |
 
+### 仅原文示例
+
+关闭翻译和发音后显示英语原文。点击预览图可打开原尺寸截图。
+
+[<img src="docs/screenshots/english-single-line.webp" alt="MusicBee 高亮英语原文，不显示翻译或发音" width="800">](docs/screenshots/english-single-line.webp)
+
 ### 无时间戳歌词
 
 原文没有时间戳时，可对应的歌词行显示为 `原文 / 翻译` 或 `原文 / 发音 / 翻译`，无需语言专属标签。原文的段落分隔和章节标记会保留。
@@ -91,7 +97,7 @@ LyricBee 是 [cqjjjzr/MusicBee-NeteaseLyrics](https://github.com/cqjjjzr/MusicBe
 
 ### 实际歌曲案例
 
-以下案例展示了此前的检索问题及修复后的结果。三首歌均已在 MusicBee 中使用原文件标签、不设置 Custom10 的情况下确认自动检索成功。艺人别名修复目前可在本地 1.9.7 测试版本中使用。
+以下案例展示了此前的检索问题及修复后的结果。三首歌均已在 MusicBee 中使用原文件标签、不设置 Custom10 的情况下确认自动检索成功。
 
 | 录音 | 此前的检索结果 | 修复后的结果 |
 | --- | --- | --- |
@@ -188,5 +194,6 @@ Windows/.NET 构建及验证说明见 [BUILDING.md](BUILDING.md)，各阶段的�
 | [1.9.4](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.4) | 1.9.4-test.1、test.2、1.9.4 | 双语设置、独立附加内容、语言覆盖设置及简化拼写选项 |
 | [1.9.5](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.5) | 1.9.5-test.1–test.4、1.9.5 | 自动修复设置、改进匹配与时间对齐，并在高级设置中提供诊断报告 |
 | [1.9.6](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.6) | 1.9.6-test.1–test.4、1.9.6 | 手动检查更新、改进诊断报告和自动调整的设置布局 |
+| [1.9.7](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.7) | 1.9.7-test.1–test.2、1.9.7 | 验证艺人别名以匹配不同语言的名称，并改进临时艺人信息故障后的恢复 |
 
 项目继续使用 [Apache 2.0](LICENSE)，所采用的 API 代码保留 [Zony 的 MIT 声明](LICENSE-Zony)。原插件及其上游历史归功于 Charlie Jiang 和上游贡献者。LyricBee 由 [Tony Y](https://github.com/tonyzehs) 维护，署名说明见 [NOTICE](NOTICE)。
