@@ -14,7 +14,7 @@ namespace MusicBeePlugin
         MatchingNoEligible, CompatibleGroup, RemasterNote, VersionNote, SoundtrackNote,
         TrackPrefixNote, Custom10Override, RetryCompatibleListing, ExtrasRetryLimit,
         InstrumentalListing, OriginalMissing, AuxiliaryOutput, CachedMandarin, NoTitle, LookupException,
-        ArtistAliasLookup, ArtistAliasCacheHit, ArtistAliasMatch
+        ArtistAliasLookup, ArtistAliasCacheHit, ArtistAliasMatch, LocalizedSoundtrackMatch
     }
     internal enum DiagnosticLookupStatus { Running, Lyrics, NoLyrics, Instrumental, Error }
 

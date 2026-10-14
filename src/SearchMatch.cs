@@ -82,7 +82,7 @@ namespace MusicBeePlugin
                     if (!found.Any(s => Evaluate(s, alternate) != null)) songs.AddRange(NeteaseApi.SearchLegacy(query, session));
                 }
             }
-            var final = Choose(songs, request, alternate, aliases);
+            var final = Choose(songs, request, alternate, aliases, allowLocalizedSoundtrack: true);
             if (final.Length == 0)
             {
                 session.Report("Matching: no sufficiently supported, unambiguous candidate");
@@ -98,7 +98,7 @@ namespace MusicBeePlugin
         {
             var split = SplitTitleArtist(title, artist);
             return Choose(songs, new TrackIdentity(split.Item1, split.Item2.ToArray(), album, duration, allowTypos),
-                TrackPrefixIdentity(title, artist, album, duration, allowTypos, trackNumber))
+                TrackPrefixIdentity(title, artist, album, duration, allowTypos, trackNumber), allowLocalizedSoundtrack: true)
                 .Select(m => m.Song.id).FirstOrDefault();
         }
 
@@ -110,6 +110,11 @@ namespace MusicBeePlugin
             if (matches[0].Notes.Contains("remaster")) session.Diagnostic(DiagnosticKind.RemasterNote);
             if (matches[0].Notes.Contains("mono") || matches[0].Notes.Contains("stereo") || matches[0].Notes.Contains("album version")) session.Diagnostic(DiagnosticKind.VersionNote);
             if (matches[0].Notes.Contains("soundtrack")) session.Diagnostic(DiagnosticKind.SoundtrackNote);
+            if (matches[0].LocalizedSoundtrack)
+            {
+                session.Diagnostic(DiagnosticKind.LocalizedSoundtrackMatch);
+                session.Report("Matching: used restricted localized soundtrack fallback");
+            }
             if (matches[0].Notes.Contains("TrackNo")) session.Diagnostic(DiagnosticKind.TrackPrefixNote);
             if (matches[0].Notes.Contains("artist alias"))
             {
@@ -154,7 +159,7 @@ namespace MusicBeePlugin
         }
 
         private static Match[] Choose(IEnumerable<SearchResultSong> songs, TrackIdentity request, TrackIdentity alternate = null,
-            IReadOnlyDictionary<long, string[]> aliases = null)
+            IReadOnlyDictionary<long, string[]> aliases = null, bool allowLocalizedSoundtrack = false)
         {
             var candidates = songs.Where(s => s != null && s.id > 0).ToArray();
             var supported = candidates.Select(s => Evaluate(s, request, aliases)).Where(m => m != null).ToArray();
@@ -163,6 +168,15 @@ namespace MusicBeePlugin
             {
                 supported = candidates.Select(s => Evaluate(s, alternate, aliases)).Where(m => m != null).ToArray();
                 foreach (var match in supported) match.Notes = string.Join("/", new[] { match.Notes, "TrackNo-confirmed title prefix" }.Where(n => n.Length > 0));
+            }
+            // Do not resolve an ordinary ambiguous match by relaxing a different rule.
+            // This pass runs only after normal searches and never combines with TrackNo/artist aliases.
+            if (supported.Length == 0 && allowLocalizedSoundtrack && !request.PrefixIdentity)
+            {
+                supported = candidates.Select(s => Evaluate(s, request, allowLocalizedSoundtrack: true))
+                    .Where(m => m != null).ToArray();
+                if (supported.Select(m => m.SoundtrackSource).Distinct(StringComparer.Ordinal).Count() > 1)
+                    return new Match[0];
             }
             var matches = supported
                 .Where(m => m != null).GroupBy(m => m.Song.id).Select(g => g.OrderByDescending(m => m.Score).First())
@@ -192,7 +206,7 @@ namespace MusicBeePlugin
             Math.Abs((double)a.Song.duration - b.Song.duration) <= 2000;
 
         private static Match Evaluate(SearchResultSong song, TrackIdentity request,
-            IReadOnlyDictionary<long, string[]> aliases = null, bool ignoreArtist = false)
+            IReadOnlyDictionary<long, string[]> aliases = null, bool ignoreArtist = false, bool allowLocalizedSoundtrack = false)
         {
             if (song == null || song.id <= 0 || string.IsNullOrWhiteSpace(song.name) || song.name.Length > 512) return null;
             var creditedArtists = (song.artists ?? new SearchResultArtist[0])
@@ -210,12 +224,19 @@ namespace MusicBeePlugin
             var actualRaw = candidate.Item1;
             string soundtrackSource = null;
             var conflictingSource = false;
+            var localizedSoundtrack = false;
+            var localizedAlias = false;
+            var fullArtistsAgree = request.Artists.Length > 0 && request.Artists.Select(Canonical).Distinct().OrderBy(a => a, StringComparer.Ordinal)
+                .SequenceEqual(artists.Distinct().OrderBy(a => a, StringComparer.Ordinal));
             var soundtrackNote = durationClose && request.Album.Length > 0 && album.Length > 0 &&
-                request.Artists.Length > 0 && request.Artists.Select(Canonical).Distinct().OrderBy(a => a, StringComparer.Ordinal)
-                    .SequenceEqual(artists.Distinct().OrderBy(a => a, StringComparer.Ordinal)) &&
+                fullArtistsAgree &&
                 RemoveSoundtrackAttribution(ref expectedRaw, ref actualRaw, request.Album, request.RawAlbum,
                     album, song.album?.name, out soundtrackSource, out conflictingSource);
             if (conflictingSource) return null;
+            if (!soundtrackNote && allowLocalizedSoundtrack && !ignoreArtist && !request.PrefixIdentity &&
+                durationClose && fullArtistsAgree && TryLocalizedSoundtrack(request, song.album,
+                    ref actualRaw, out soundtrackSource, out localizedAlias))
+                soundtrackNote = localizedSoundtrack = true;
             // Without corroboration, attributed titles require their complete text to agree;
             // spelling allowance must not substitute a different named work.
             if (!soundtrackNote && (SoundtrackSuffix.IsMatch(expectedRaw) || SoundtrackSuffix.IsMatch(actualRaw)) &&
@@ -278,15 +299,56 @@ namespace MusicBeePlugin
                 AlbumScore = albumScore,
                 DurationDifference = durationDifference,
                 SoundtrackSource = soundtrackSource,
+                LocalizedSoundtrack = localizedSoundtrack,
                 ExactTitleAndArtist = titleExact && artistScore == 1 && artists.Length > 0,
                 Identity = title + "\0" + string.Join(";", artists.Distinct().OrderBy(a => a, StringComparer.Ordinal)) +
                     "\0" + editions + (aliasUsed ? "\0alias-artist-id:" + song.artists[0].id.ToString(CultureInfo.InvariantCulture) : ""),
-                Notes = string.Join("/", new[] { requestNotes, candidateNotes, soundtrackNote ? "soundtrack attribution" : "", aliasUsed ? "verified artist alias" : "" }.Where(n => n.Length > 0).Distinct()),
+                Notes = string.Join("/", new[] { requestNotes, candidateNotes,
+                    localizedSoundtrack ? (localizedAlias ? "localized soundtrack album alias" : "localized soundtrack script fallback") :
+                        soundtrackNote ? "soundtrack attribution" : "", aliasUsed ? "verified artist alias" : "" }.Where(n => n.Length > 0).Distinct()),
                 Score = 60 * titleScore + 30 * artistScore + 5 * albumScore + 5 * durationScore,
                 ExactIdentityAndAlbum = titleExact && artistScore == 1 && albumScore == 1,
-                Strong = titleExact && artistScore == 1 && albumScore == 1 &&
+                Strong = !localizedSoundtrack && titleExact && artistScore == 1 && albumScore == 1 &&
                     (!request.Duration.HasValue || durationClose)
             };
+        }
+
+        private static bool TryLocalizedSoundtrack(TrackIdentity request, SearchResultAlbum album,
+            ref string actual, out string source, out bool verifiedAlbumAlias)
+        {
+            source = null; verifiedAlbumAlias = false;
+            if (request.Album.Length == 0 || string.IsNullOrWhiteSpace(album?.name) ||
+                SoundtrackSuffix.IsMatch(NormalizeText(request.RawTitle))) return false;
+            var match = SoundtrackSuffix.Match(NormalizeText(actual));
+            if (!match.Success || !SoundtrackAlbum.IsMatch(album.name)) return false;
+            if (Regex.IsMatch(request.RawAlbum + " " + album.name,
+                @"\b(?:live|remix|demo|piano|karaoke|instrumental|sped|slowed|radio\s+edit|tv\s+size)\b|现场|現場|伴奏|翻唱",
+                RegexOptions.IgnoreCase)) return false;
+            var label = Regex.Replace(match.Groups["label"].Value, @"^from\s+", "", RegexOptions.IgnoreCase).Trim();
+            // Require an explicit medium, not arbitrary '(from X)' text. For this weaker
+            // corroboration, even version words inside the attribution remain disqualifying.
+            if (!SourceMedium.IsMatch(label) || Edition.IsMatch(label) ||
+                Regex.IsMatch(label, @"\b(?:demo|piano|sped|slowed|edit|version|original\s+mix)\b", RegexOptions.IgnoreCase)) return false;
+            source = AttributionSource(match, Canonical(album.name), album.name);
+            if (source == null) return false;
+            verifiedAlbumAlias = new[] { album.alias, album.tns, album.transNames }
+                .SelectMany(names => (names ?? new string[0]).Take(16)).Take(32)
+                .Any(name => name != null && name.Length <= 512 && Canonical(name) == request.Album);
+            if (!verifiedAlbumAlias && !DifferentScriptSoundtrack(request.RawAlbum, source)) return false;
+            actual = NormalizeText(actual).Substring(0, match.Index).Trim();
+            return true;
+        }
+
+        private static bool DifferentScriptSoundtrack(string album, string source)
+        {
+            // This is a bounded identity heuristic, not a translation of the local work name.
+            // Same-script mismatches and mixed names containing another Latin work are retained.
+            if (!Regex.IsMatch(source, @"^[a-z0-9]+$") || Regex.Matches(source, @"[a-z]").Count < 4 ||
+                !Regex.IsMatch(album ?? "", @"原声|原聲|サウンドトラック|사운드트랙|\b(?:ost|soundtrack|original\s+score)\b", RegexOptions.IgnoreCase)) return false;
+            var work = Regex.Replace(NormalizeText(album), @"\b(?:(?:original|motion|picture)\s+)*(?:soundtrack|ost|score)\b", "", RegexOptions.IgnoreCase);
+            work = Regex.Replace(work, @"原[声聲](?:带|帶)?|サウンドトラック|オリジナル|사운드트랙|오리지널", "");
+            return !Regex.IsMatch(work, @"[a-zA-Z]") &&
+                Regex.Matches(work, @"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]").Count >= 2;
         }
 
         private static bool RemoveSoundtrackAttribution(ref string expected, ref string actual, string expectedAlbum, string expectedRawAlbum,
@@ -513,6 +575,7 @@ namespace MusicBeePlugin
             internal string SoundtrackSource;
             internal bool ExactTitleAndArtist;
             internal bool Strong;
+            internal bool LocalizedSoundtrack;
             internal bool ExactIdentityAndAlbum;
         }
     }

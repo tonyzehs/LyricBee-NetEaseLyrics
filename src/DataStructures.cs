@@ -34,6 +34,9 @@ namespace MusicBeePlugin
     {
         public long id;
         public string name;
+        public string[] alias;
+        public string[] tns;
+        public string[] transNames;
     }
 
     internal class SearchResultArtist

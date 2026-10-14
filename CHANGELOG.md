@@ -1,3 +1,11 @@
+# 1.9.8-test.1 — localized soundtrack matching (local testing build)
+
+- Add a last-resort soundtrack match for exact base titles, identical full artist credits and known durations within two seconds. The service title must end with a recognized film/series/game attribution and its album must identify the same work as a soundtrack.
+- Accept exact album aliases/translations supplied in search responses. When those are absent, permit a restricted CJK soundtrack-tag / Latin work-name fallback; this is an identity heuristic, not a verified translation. Conflicting service work names and competing recording groups remain unmatched.
+- Recover the recorded **Blood Sweat & Tears** (Sheryl Lee Ralph, ID 3374505661) and **Fantastic** (King Princess, ID 3374504658) lookups with the Chinese Arcane album tag. Retain rejection of additional franchise credits, covers, live/demo/remix variants, title typos and unknown durations in this fallback.
+- Reuse existing search results; add no metadata requests, dependencies, settings or bundled name mappings. Ordinary matching stays first, and the fallback does not combine with artist-alias or track-prefix relaxation. Add a structured diagnostic event and two complete recorded search fixtures.
+- Product version: `1.9.8-test.1`; assembly version: `1.9.8.0`; file version: `1.9.8.1`. Local MusicBee testing; no release has been published.
+
 # 1.9.7
 
 - Match verified NetEase artist aliases when the title, album and known duration corroborate the recording. Fix automatic lookup of **奇縁ロマンス** tagged **ナナヲアカリ**, without changing local tags or setting Custom10.

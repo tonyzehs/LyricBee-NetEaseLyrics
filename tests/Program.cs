@@ -741,6 +741,7 @@ internal static partial class Program
     {
         MatchingAuditTests();
         SoundtrackTests();
+        LocalizedSoundtrackTests();
         Test("Captured By Your Side search results are rejected rather than choosing another song", () =>
         {
             var fixture = ReadRecordingFixture();

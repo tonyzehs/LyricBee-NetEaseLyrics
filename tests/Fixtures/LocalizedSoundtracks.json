@@ -1,0 +1,804 @@
+{
+  "recorded_on": "2026-10-14",
+  "description": "Public NetEase search metadata and supplied file tags. No audio, lyrics or local paths. Artist/title query; 20 results per song.",
+  "cases": [
+    {
+      "title": "Blood Sweat & Tears",
+      "artist": "Sheryl Lee Ralph",
+      "album": "《英雄联盟:双城之战》动画第二季 原声带",
+      "duration_ms": 222867,
+      "correct": {
+        "duration": 222866,
+        "name": "Blood Sweat & Tears (from the series Arcane League of Legends)",
+        "id": 3374505661,
+        "artists": [
+          {
+            "id": 213446,
+            "name": "Sheryl Lee Ralph"
+          }
+        ],
+        "album": {
+          "id": 372929827,
+          "name": "Arcane League of Legends: Season 2 (Soundtrack from the Animated Series)"
+        }
+      },
+      "observed": [
+        {
+          "duration": 222866,
+          "name": "Blood Sweat & Tears (from the series Arcane League of Legends)",
+          "id": 2686826732,
+          "artists": [
+            {
+              "id": 213446,
+              "name": "Sheryl Lee Ralph"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 266574208,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 210782,
+          "name": "Blood Sweat & Tears (Live)",
+          "id": 2626123045,
+          "artists": [
+            {
+              "id": 783124,
+              "name": "BTS (防弹少年团)"
+            }
+          ],
+          "album": {
+            "id": 0,
+            "name": ""
+          }
+        },
+        {
+          "duration": 251225,
+          "name": "Blood Sweat & Tears",
+          "id": 1339196456,
+          "artists": [
+            {
+              "id": 31037243,
+              "name": "Piano Peace"
+            }
+          ],
+          "album": {
+            "id": 75162659,
+            "name": "Bts Piano Covers"
+          }
+        },
+        {
+          "duration": 219690,
+          "name": "Blood Sweat & Tears",
+          "id": 1995166019,
+          "artists": [
+            {
+              "id": 96558,
+              "name": "MDP"
+            }
+          ],
+          "album": {
+            "id": 154329671,
+            "name": "Origins"
+          }
+        },
+        {
+          "duration": 214342,
+          "name": "Blood Sweat & Tears",
+          "id": 1879991073,
+          "artists": [
+            {
+              "id": 37108872,
+              "name": "Pianella Piano"
+            }
+          ],
+          "album": {
+            "id": 133540119,
+            "name": "KPOP Piano Collection, Vol. 8"
+          }
+        },
+        {
+          "duration": 182073,
+          "name": "Blood Sweat & Tears (Warming Up, 8x12)",
+          "id": 2744913558,
+          "artists": [
+            {
+              "id": 0,
+              "name": "Nare SHIN"
+            }
+          ],
+          "album": {
+            "id": 284568470,
+            "name": "NARECORD Ballet Class Music, Vol. 7: BTS"
+          }
+        },
+        {
+          "duration": 190967,
+          "name": "Blood Sweat & Tears",
+          "id": 1445109428,
+          "artists": [
+            {
+              "id": 37962,
+              "name": "Kurt Hugo Schneider"
+            },
+            {
+              "id": 12901334,
+              "name": "Megan Lee"
+            }
+          ],
+          "album": {
+            "id": 88862621,
+            "name": "Blood Sweat & Tears"
+          }
+        },
+        {
+          "duration": 190967,
+          "name": "Blood Sweat & Tears",
+          "id": 1836100343,
+          "artists": [
+            {
+              "id": 37962,
+              "name": "Kurt Hugo Schneider"
+            },
+            {
+              "id": 1180034,
+              "name": "Yoandri"
+            },
+            {
+              "id": 12901334,
+              "name": "Megan Lee"
+            }
+          ],
+          "album": {
+            "id": 125810756,
+            "name": "Kurt & Company Vol 6"
+          }
+        },
+        {
+          "duration": 190967,
+          "name": "Blood Sweat & Tears",
+          "id": 1885641614,
+          "artists": [
+            {
+              "id": 37962,
+              "name": "Kurt Hugo Schneider"
+            },
+            {
+              "id": 1180034,
+              "name": "Yoandri"
+            },
+            {
+              "id": 12901334,
+              "name": "Megan Lee"
+            }
+          ],
+          "album": {
+            "id": 134533803,
+            "name": "Kurt & Company, Vol. 11"
+          }
+        },
+        {
+          "duration": 170500,
+          "name": "Blood Sweat & Tears",
+          "id": 1442191738,
+          "artists": [
+            {
+              "id": 29770942,
+              "name": "Funguypiano"
+            }
+          ],
+          "album": {
+            "id": 88294288,
+            "name": "Kpop Piano Collection, #2"
+          }
+        },
+        {
+          "duration": 212926,
+          "name": "Blood Sweat & Tears（翻自 BTS）",
+          "id": 561420535,
+          "artists": [
+            {
+              "id": 122455,
+              "name": "群星"
+            },
+            {
+              "id": 929010,
+              "name": "Megan Lee"
+            }
+          ],
+          "album": {
+            "id": 38783228,
+            "name": "狗爷翻唱合辑"
+          }
+        },
+        {
+          "duration": 250775,
+          "name": "blood sweat & tears (slowed down)",
+          "id": 2078806985,
+          "artists": [
+            {
+              "id": 58291976,
+              "name": "Casinoz"
+            }
+          ],
+          "album": {
+            "id": 173879458,
+            "name": "Velvet Horizons"
+          }
+        },
+        {
+          "duration": 216758,
+          "name": "Blood Sweat & Tears (Japanese Version)",
+          "id": 549941042,
+          "artists": [
+            {
+              "id": 783124,
+              "name": "BTS (防弹少年团)"
+            }
+          ],
+          "album": {
+            "id": 38033706,
+            "name": "FACE YOURSELF"
+          }
+        },
+        {
+          "duration": 185051,
+          "name": "Blood Sweat & Tears",
+          "id": 1874498174,
+          "artists": [
+            {
+              "id": 47975606,
+              "name": "Young Harry"
+            }
+          ],
+          "album": {
+            "id": 132584432,
+            "name": "Blood Sweat & Tears"
+          }
+        },
+        {
+          "duration": 266326,
+          "name": "Blood Sweat & Tears",
+          "id": 1446463617,
+          "artists": [
+            {
+              "id": 34860955,
+              "name": "신기원 (ShinGiWon)"
+            }
+          ],
+          "album": {
+            "id": 89137375,
+            "name": "BTS Music Jazz Piano Collection"
+          }
+        },
+        {
+          "duration": 222866,
+          "name": "Blood Sweat & Tears (from the series Arcane League of Legends)",
+          "id": 3374505661,
+          "artists": [
+            {
+              "id": 213446,
+              "name": "Sheryl Lee Ralph"
+            }
+          ],
+          "album": {
+            "id": 372929827,
+            "name": "Arcane League of Legends: Season 2 (Soundtrack from the Animated Series)"
+          }
+        },
+        {
+          "duration": 236843,
+          "name": "Go N' Get It (Album Version (Explicit))",
+          "id": 16332800,
+          "artists": [
+            {
+              "id": 27673,
+              "name": "Ace Hood"
+            }
+          ],
+          "album": {
+            "id": 1506500,
+            "name": "Blood Sweat & Tears"
+          }
+        },
+        {
+          "duration": 259854,
+          "name": "ErrryThang (Album Version (Explicit))",
+          "id": 16332801,
+          "artists": [
+            {
+              "id": 27673,
+              "name": "Ace Hood"
+            },
+            {
+              "id": 84935,
+              "name": "Yo Gotti"
+            }
+          ],
+          "album": {
+            "id": 1506500,
+            "name": "Blood Sweat & Tears"
+          }
+        },
+        {
+          "duration": 171000,
+          "name": "Blood Sweat & Tears (Piano Solo)",
+          "id": 1468389914,
+          "artists": [
+            {
+              "id": 29770942,
+              "name": "Funguypiano"
+            }
+          ],
+          "album": {
+            "id": 93497473,
+            "name": "The Army: BTS Piano Collection, Vol. 1"
+          }
+        },
+        {
+          "duration": 222866,
+          "name": "Blood Sweat & Tears (from the series Arcane League of Legends)",
+          "id": 2684031164,
+          "artists": [
+            {
+              "id": 213446,
+              "name": "Sheryl Lee Ralph"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 265672156,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Fantastic",
+      "artist": "King Princess",
+      "album": "《英雄联盟:双城之战》动画第二季 原声带",
+      "duration_ms": 184960,
+      "correct": {
+        "duration": 184960,
+        "name": "Fantastic (from the series Arcane League of Legends)",
+        "id": 3374504658,
+        "artists": [
+          {
+            "id": 13227500,
+            "name": "King Princess"
+          }
+        ],
+        "album": {
+          "id": 372929827,
+          "name": "Arcane League of Legends: Season 2 (Soundtrack from the Animated Series)"
+        }
+      },
+      "observed": [
+        {
+          "duration": 184960,
+          "name": "Fantastic (from the series Arcane League of Legends)",
+          "id": 2684028686,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 265670027,
+            "name": "Fantastic (demo version)"
+          }
+        },
+        {
+          "duration": 187133,
+          "name": "Fantastic (Live From Vevo)",
+          "id": 2687010632,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 266630826,
+            "name": "Fantastic (Live From Vevo)"
+          }
+        },
+        {
+          "duration": 184960,
+          "name": "Fantastic (from the series Arcane League of Legends)",
+          "id": 2687009076,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 266630826,
+            "name": "Fantastic (Live From Vevo)"
+          }
+        },
+        {
+          "duration": 150478,
+          "name": "Fantastic (demo version)",
+          "id": 2684029556,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 265670027,
+            "name": "Fantastic (demo version)"
+          }
+        },
+        {
+          "duration": 187133,
+          "name": "Fantastic (Live From Vevo) (from the series Arcane League of Legends)",
+          "id": 2686825113,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 266574208,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 150478,
+          "name": "Fantastic (demo version) (from the series Arcane League of Legends)",
+          "id": 2686825109,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 266574208,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 184960,
+          "name": "Fantastic (from the series Arcane League of Legends)",
+          "id": 2733579744,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 280628669,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 150478,
+          "name": "Fantastic (demo version) (from the series Arcane League of Legends)",
+          "id": 2684031156,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 265672156,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 187133,
+          "name": "Fantastic (Live From Vevo) (from the series Arcane League of Legends)",
+          "id": 3374505749,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 36466123,
+              "name": "Arcane"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 372929869,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 150478,
+          "name": "Fantastic (demo version) (from the series Arcane League of Legends)",
+          "id": 3374504690,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 36466123,
+              "name": "Arcane"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 372929839,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 184960,
+          "name": "Fantastic (from the series Arcane League of Legends)",
+          "id": 3374504658,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            }
+          ],
+          "album": {
+            "id": 372929827,
+            "name": "Arcane League of Legends: Season 2 (Soundtrack from the Animated Series)"
+          }
+        },
+        {
+          "duration": 150478,
+          "name": "Fantastic (demo version) (from the series Arcane League of Legends)",
+          "id": 3374504751,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 36466123,
+              "name": "Arcane"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 372929869,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 184960,
+          "name": "Fantastic(翻自：King Princess）",
+          "id": 3355999721,
+          "artists": [
+            {
+              "id": 49799992,
+              "name": "Hi筱乖w"
+            }
+          ],
+          "album": {
+            "id": 133599569,
+            "name": "大概是Hi筱乖w的翻唱专辑吧"
+          }
+        },
+        {
+          "duration": 215409,
+          "name": "FANTASTiC",
+          "id": 2117574482,
+          "artists": [
+            {
+              "id": 46576382,
+              "name": "Liella!"
+            }
+          ],
+          "album": {
+            "id": 183238288,
+            "name": "シェキラ☆☆☆"
+          }
+        },
+        {
+          "duration": 184960,
+          "name": "Fantastic (from the series Arcane League of Legends)",
+          "id": 2686826731,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 266574208,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 194505,
+          "name": "Fantastic",
+          "id": 28838045,
+          "artists": [
+            {
+              "id": 12664,
+              "name": "软硬天师"
+            }
+          ],
+          "album": {
+            "id": 2901199,
+            "name": "我最喜爱的Eric Kwok作品展"
+          }
+        },
+        {
+          "duration": 94396,
+          "name": "Fantastic",
+          "id": 2123301677,
+          "artists": [
+            {
+              "id": 59843026,
+              "name": "Løwkey"
+            }
+          ],
+          "album": {
+            "id": 184938088,
+            "name": "Fantastic"
+          }
+        },
+        {
+          "duration": 244357,
+          "name": "Fantastic",
+          "id": 2085352650,
+          "artists": [
+            {
+              "id": 361505,
+              "name": "Flume"
+            },
+            {
+              "id": 847346,
+              "name": "Glass Animals"
+            }
+          ],
+          "album": {
+            "id": 175560118,
+            "name": "FC Radio - Sad"
+          }
+        },
+        {
+          "duration": 184960,
+          "name": "Fantastic (from the series Arcane League of Legends)",
+          "id": 2684031163,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            },
+            {
+              "id": 50428486,
+              "name": "双城之战"
+            },
+            {
+              "id": 1047337,
+              "name": "英雄联盟"
+            }
+          ],
+          "album": {
+            "id": 265672156,
+            "name": "Arcane League of Legends: Season 2 Original Soundtrack (Extended Edition)"
+          }
+        },
+        {
+          "duration": 200341,
+          "name": "Cursed",
+          "id": 1967060694,
+          "artists": [
+            {
+              "id": 13227500,
+              "name": "King Princess"
+            }
+          ],
+          "album": {
+            "id": 148674498,
+            "name": "Hold On Baby"
+          }
+        }
+      ]
+    }
+  ]
+}
