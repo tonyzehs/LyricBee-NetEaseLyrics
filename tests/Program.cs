@@ -66,6 +66,7 @@ internal static partial class Program
         if (args.Contains("--live")) return LiveSmoke();
         if (args.Contains("--live-recording")) return LiveRecording();
         if (args.Contains("--live-pronunciation")) return LivePronunciation();
+        if (args.Contains("--live-alias")) return LiveArtistAlias();
         if (args.Contains("--cookie-test"))
         {
             CookieTransportTest();
@@ -348,6 +349,7 @@ internal static partial class Program
         AuditorTests();
         TwoLineTests();
         MatchingTests();
+        ArtistAliasTests();
         AuditUpdateTests();
         AuditFollowupTests();
         NextAuditTests();

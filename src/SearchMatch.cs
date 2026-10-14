@@ -53,6 +53,7 @@ namespace MusicBeePlugin
             var alternate = TrackPrefixIdentity(title, artist, album, duration, allowTypos, trackNumber);
             if (request.Title.Length == 0) return new long[0];
             var songs = new List<SearchResultSong>();
+            var aliases = new Dictionary<long, string[]>();
             var queries = BuildQueries(split.Item1, request.Artists, album).ToArray();
             foreach (var query in queries)
             {
@@ -60,9 +61,15 @@ namespace MusicBeePlugin
                 var found = NeteaseApi.Search(query, session).ToArray();
                 songs.AddRange(found);
                 // A code=200 payload can still contain unrelated songs. Try the other search interface.
-                if (!found.Any(song => Evaluate(song, request) != null || (alternate != null && Evaluate(song, alternate) != null)))
+                if (!found.Any(song => Evaluate(song, request, aliases) != null || (alternate != null && Evaluate(song, alternate, aliases) != null)))
                     songs.AddRange(NeteaseApi.SearchLegacy(query, session));
-                var best = Choose(songs, request, alternate);
+                var best = Choose(songs, request, alternate, aliases);
+                if (best.Length == 0 && !songs.Any(s => Evaluate(s, request, aliases) != null ||
+                    (alternate != null && Evaluate(s, alternate, aliases) != null)))
+                {
+                    ResolveArtistAliases(songs, request, session, aliases);
+                    best = Choose(songs, request, alternate, aliases);
+                }
                 if (best.Length > 0 && best[0].Strong) return ReportSelection(best, session);
             }
             // Try one normalized query only if the ordinary searches found no eligible identity.
@@ -75,11 +82,11 @@ namespace MusicBeePlugin
                     if (!found.Any(s => Evaluate(s, alternate) != null)) songs.AddRange(NeteaseApi.SearchLegacy(query, session));
                 }
             }
-            var final = Choose(songs, request, alternate);
+            var final = Choose(songs, request, alternate, aliases);
             if (final.Length == 0)
             {
                 session.Report("Matching: no sufficiently supported, unambiguous candidate");
-                session.Diagnostic(songs.Any(s => Evaluate(s, request) != null || (alternate != null && Evaluate(s, alternate) != null)) ?
+                session.Diagnostic(songs.Any(s => Evaluate(s, request, aliases) != null || (alternate != null && Evaluate(s, alternate, aliases) != null)) ?
                     DiagnosticKind.MatchingAmbiguous : DiagnosticKind.MatchingNoEligible, count: songs.Count);
             }
             return ReportSelection(final, session);
@@ -104,6 +111,7 @@ namespace MusicBeePlugin
             if (matches[0].Notes.Contains("mono") || matches[0].Notes.Contains("stereo") || matches[0].Notes.Contains("album version")) session.Diagnostic(DiagnosticKind.VersionNote);
             if (matches[0].Notes.Contains("soundtrack")) session.Diagnostic(DiagnosticKind.SoundtrackNote);
             if (matches[0].Notes.Contains("TrackNo")) session.Diagnostic(DiagnosticKind.TrackPrefixNote);
+            if (matches[0].Notes.Contains("artist alias")) session.Diagnostic(DiagnosticKind.ArtistAliasMatch);
             if (matches.Length > 1)
                 session.Report("Matching: grouped " + matches.Length + " compatible listings; selected song ID " +
                     matches[0].Song.id + " by album similarity, then duration, then ID");
@@ -111,6 +119,22 @@ namespace MusicBeePlugin
                 session.Report("Matching: treated recognized " + matches[0].Notes + " annotation as a note");
             // No extra searches or lyric comparisons are made to group catalogue entries.
             return matches.Take(3).Select(m => m.Song.id).ToArray();
+        }
+
+        private static void ResolveArtistAliases(IEnumerable<SearchResultSong> songs, TrackIdentity request,
+            LookupSession session, Dictionary<long, string[]> aliases)
+        {
+            // Only the primary credited artist can establish an alias match. Different singers
+            // sharing a composer/guest credit must not borrow that person's alias.
+            var ids = songs.Where(s => Evaluate(s, request, ignoreArtist: true) != null)
+                .Select(s => s.artists?.FirstOrDefault()?.id ?? 0).Where(id => id > 0).Distinct().ToArray();
+            if (ids.Length > LookupSession.MaxArtistRequests) return;
+            foreach (var id in ids)
+            {
+                if (aliases.ContainsKey(id)) continue;
+                var names = NeteaseApi.RequestArtistAliases(id, session);
+                if (names != null) aliases[id] = names;
+            }
         }
 
         private static IEnumerable<string> BuildQueries(string title, string[] artists, string album)
@@ -124,14 +148,15 @@ namespace MusicBeePlugin
             return queries.Select(q => Regex.Replace(q, @"\s+", " ").Trim()).Where(q => q.Length > 0).Distinct(StringComparer.Ordinal);
         }
 
-        private static Match[] Choose(IEnumerable<SearchResultSong> songs, TrackIdentity request, TrackIdentity alternate = null)
+        private static Match[] Choose(IEnumerable<SearchResultSong> songs, TrackIdentity request, TrackIdentity alternate = null,
+            IReadOnlyDictionary<long, string[]> aliases = null)
         {
             var candidates = songs.Where(s => s != null && s.id > 0).ToArray();
-            var supported = candidates.Select(s => Evaluate(s, request)).Where(m => m != null).ToArray();
+            var supported = candidates.Select(s => Evaluate(s, request, aliases)).Where(m => m != null).ToArray();
             // A corroborated prefix is a fallback: never erase a supported title such as "7 Rings".
             if (supported.Length == 0 && alternate != null)
             {
-                supported = candidates.Select(s => Evaluate(s, alternate)).Where(m => m != null).ToArray();
+                supported = candidates.Select(s => Evaluate(s, alternate, aliases)).Where(m => m != null).ToArray();
                 foreach (var match in supported) match.Notes = string.Join("/", new[] { match.Notes, "TrackNo-confirmed title prefix" }.Where(n => n.Length > 0));
             }
             var matches = supported
@@ -161,7 +186,8 @@ namespace MusicBeePlugin
             (a.SoundtrackSource == null || b.SoundtrackSource == null || a.SoundtrackSource == b.SoundtrackSource) &&
             Math.Abs((double)a.Song.duration - b.Song.duration) <= 2000;
 
-        private static Match Evaluate(SearchResultSong song, TrackIdentity request)
+        private static Match Evaluate(SearchResultSong song, TrackIdentity request,
+            IReadOnlyDictionary<long, string[]> aliases = null, bool ignoreArtist = false)
         {
             if (song == null || song.id <= 0 || string.IsNullOrWhiteSpace(song.name) || song.name.Length > 512) return null;
             var creditedArtists = (song.artists ?? new SearchResultArtist[0])
@@ -221,12 +247,25 @@ namespace MusicBeePlugin
                 // Duration supplies at most five points, never enough to outweigh song identity.
                 durationScore = Math.Max(0, 1 - Math.Max(0, seconds - 2) / 18);
             }
-            if (request.Artists.Length > 0 && artistScore < .92)
+            var aliasUsed = false;
+            if (ignoreArtist && (request.Artists.Length == 0 || !titleExact || albumScore != 1 || !durationClose)) return null;
+            if (!ignoreArtist && request.Artists.Length > 0 && artistScore < .92)
             {
-                // A secondary composer/guest credit alone must not identify a different recording.
-                // Accept service credit-order differences only with corroborating album and duration.
-                artistScore = ArtistSimilarity(request.Artists, artists, request.AllowTypos);
-                if (artistScore < .92 || !titleExact || albumScore != 1 || !durationClose) return null;
+                var primary = song.artists?.FirstOrDefault();
+                if (titleExact && albumScore == 1 && durationClose && primary != null && primary.id > 0 &&
+                    !string.IsNullOrWhiteSpace(primary.name) && aliases != null && aliases.TryGetValue(primary.id, out var names) &&
+                    names.Any(n => Canonical(n) == Canonical(request.Artists[0])) &&
+                    request.Artists.Skip(1).All(n => ArtistSimilarity(new[] { n }, artists, false) == 1))
+                {
+                    artistScore = 1; aliasUsed = true;
+                }
+                else
+                {
+                    // A secondary composer/guest credit alone must not identify a different recording.
+                    // Accept service credit-order differences only with corroborating album and duration.
+                    artistScore = ArtistSimilarity(request.Artists, artists, request.AllowTypos);
+                    if (artistScore < .92 || !titleExact || albumScore != 1 || !durationClose) return null;
+                }
             }
             return new Match
             {
@@ -236,8 +275,8 @@ namespace MusicBeePlugin
                 SoundtrackSource = soundtrackSource,
                 ExactTitleAndArtist = titleExact && artistScore == 1 && artists.Length > 0,
                 Identity = title + "\0" + string.Join(";", artists.Distinct().OrderBy(a => a, StringComparer.Ordinal)) +
-                    "\0" + editions,
-                Notes = string.Join("/", new[] { requestNotes, candidateNotes, soundtrackNote ? "soundtrack attribution" : "" }.Where(n => n.Length > 0).Distinct()),
+                    "\0" + editions + (aliasUsed ? "\0alias-artist-id:" + song.artists[0].id.ToString(CultureInfo.InvariantCulture) : ""),
+                Notes = string.Join("/", new[] { requestNotes, candidateNotes, soundtrackNote ? "soundtrack attribution" : "", aliasUsed ? "verified artist alias" : "" }.Where(n => n.Length > 0).Distinct()),
                 Score = 60 * titleScore + 30 * artistScore + 5 * albumScore + 5 * durationScore,
                 ExactIdentityAndAlbum = titleExact && artistScore == 1 && albumScore == 1,
                 Strong = titleExact && artistScore == 1 && albumScore == 1 &&

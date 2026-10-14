@@ -1,0 +1,119 @@
+{
+  "recorded": "2026-10-13",
+  "source": "NetEase public search and artist metadata; local MP3 tags; no audio or lyrics",
+  "title": "奇縁ロマンス",
+  "artist": "ナナヲアカリ",
+  "album": "奇縁ロマンス",
+  "duration_ms": 221736,
+  "track": "1",
+  "correct_id": 2032748562,
+  "search": {
+    "code": 200,
+    "result": {
+      "songCount": 24,
+      "songs": [
+        {
+          "id": 2032748562,
+          "name": "奇縁ロマンス",
+          "duration": 221686,
+          "artists": [
+            {
+              "id": 28083218,
+              "name": "七音阿卡莉"
+            }
+          ],
+          "album": {
+            "id": 162346352,
+            "name": "奇縁ロマンス"
+          }
+        },
+        {
+          "id": 2041999276,
+          "name": "奇縁ロマンス",
+          "duration": 221686,
+          "artists": [
+            {
+              "id": 28083218,
+              "name": "七音阿卡莉"
+            }
+          ],
+          "album": {
+            "id": 164310042,
+            "name": "奇縁ロマンス (Special Edition)"
+          }
+        },
+        {
+          "id": 2041995625,
+          "name": "奇縁ロマンス (笹川真生 Remix)",
+          "duration": 173429,
+          "artists": [
+            {
+              "id": 28083218,
+              "name": "七音阿卡莉"
+            }
+          ],
+          "album": {
+            "id": 164310042,
+            "name": "奇縁ロマンス (Special Edition)"
+          }
+        },
+        {
+          "id": 2041999278,
+          "name": "奇縁ロマンス (TV size ver.)",
+          "duration": 92415,
+          "artists": [
+            {
+              "id": 28083218,
+              "name": "七音阿卡莉"
+            }
+          ],
+          "album": {
+            "id": 164310042,
+            "name": "奇縁ロマンス (Special Edition)"
+          }
+        },
+        {
+          "id": 2041995626,
+          "name": "奇縁ロマンス (Instrumental)",
+          "duration": 224304,
+          "artists": [
+            {
+              "id": 28083218,
+              "name": "七音阿卡莉"
+            }
+          ],
+          "album": {
+            "id": 164310042,
+            "name": "奇縁ロマンス (Special Edition)"
+          }
+        },
+        {
+          "id": 2733034623,
+          "name": "奇縁ロマンス",
+          "duration": 223910,
+          "artists": [
+            {
+              "id": 28083218,
+              "name": "七音阿卡莉"
+            }
+          ],
+          "album": {
+            "id": 280429818,
+            "name": "フライングベスト2"
+          }
+        }
+      ]
+    }
+  },
+  "details": {
+    "code": 200,
+    "artist": {
+      "id": 28083218,
+      "name": "七音阿卡莉",
+      "alias": [
+        "NANAOAKARI",
+        "ナナヲアカリ"
+      ]
+    }
+  }
+}

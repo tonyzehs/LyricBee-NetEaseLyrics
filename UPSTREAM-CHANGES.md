@@ -38,6 +38,14 @@ Plain HTTP fallback is enabled by default and can be disabled in settings. It se
 
 Optional language metadata uses HTTPS only, with a two-second request limit inside the lookup budget. Its refusal does not change lyric transport fallback. Known labels use a bounded six-hour per-ID cache. Unknown or multilingual labels retain translation behavior; missing metadata permits conservative kana/Hangul inference. Lyrics-only overrides may request a language label even without pronunciation.
 
+### Verified artist aliases (1.9.7 testing)
+
+When ordinary matching finds no eligible song, candidates with an exact title and album and a known duration within two seconds may verify the primary artist through NetEase's `/api/artist/{id}` metadata. Only exact normalized names from that artist record can supply the missing identity. A secondary composer/guest alias cannot identify the singer, and additional local artist credits still need direct support. Candidate grouping retains the original service artist credits.
+
+Artist metadata is HTTPS only and shares the nine-request search cap and search deadline, with at most two two-second requests per lookup. More than two plausible primary artist IDs are left unmatched. Refusals, redirects, malformed replies and mismatched artist IDs cannot authorize a match; existing secure-refusal/HTTP fallback rules remain in force. Original lyric download time is reserved separately.
+
+The process-wide memory cache keeps at most 256 artist IDs, each with at most 33 bounded names (display name plus aliases). Successful records expire after 24 hours; failures/empty records cool down for five minutes. Injected test transports use independent caches. No catalogue names are bundled and no cache is written to disk. Alias resolution currently requires the full title and album to agree; it does not combine alias verification with otherwise uncorroborated soundtrack or track-prefix removal.
+
 ### Settings, rollback and display
 
 Original lyrics are always included. Fresh settings use translation on, pronunciation off, separate lines and Follow default for every language. Unsaved changes, including interface switches, remain a draft until Save. Settings rows grow for wrapped text and large fonts; a small host can scroll.

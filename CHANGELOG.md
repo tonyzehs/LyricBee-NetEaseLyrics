@@ -1,3 +1,11 @@
+# 1.9.7-test.1 — verified artist aliases (local testing build)
+
+- Match localized NetEase artist names against verified aliases from the same artist ID when the title and album agree exactly and durations differ by at most two seconds. Keep the primary singer and additional artist-credit checks.
+- Fix automatic lookup of **奇縁ロマンス** tagged **ナナヲアカリ** when NetEase lists **七音阿卡莉**. Add recorded search/artist metadata to offline regression tests and the English/Chinese README examples.
+- Cache up to 256 artist records in memory for 24 hours; failed/empty records have a five-minute cooldown. Limit alias retrieval to two HTTPS requests of at most two seconds each, within the existing nine-request search cap and search deadline. Ordinary matches and Custom10 overrides make no alias requests.
+- Include structured alias lookup/cache/match events in diagnostic reports without artist names, tags, paths or response bodies. No aliases are bundled and no new runtime dependencies are added.
+- Product version: `1.9.7-test.1`; assembly version: `1.9.7.0`; file version: `1.9.7.1`. Local testing only; publication requires approval.
+
 # 1.9.6
 
 - Add **Check for LyricBee updates** in settings, with inline results and a separate **View update** button. Checks are manual; the plugin does not download or install updates.

@@ -86,6 +86,28 @@ namespace MusicBeePlugin
             return result == null ? (SongLanguage?)null : LanguagePreferences.ParseServiceLanguage(result.data);
         }
 
+        internal static string[] RequestArtistAliases(long id, LookupSession session)
+        {
+            if (id <= 0) return null;
+            if (session.AliasCache.TryGet(id, out var cached))
+            {
+                session.Diagnostic(DiagnosticKind.ArtistAliasCacheHit, RequestInterface.ArtistHttps);
+                return cached;
+            }
+            if (!session.TryReserveArtistRequest()) return null;
+            session.Diagnostic(DiagnosticKind.ArtistAliasLookup, RequestInterface.ArtistHttps);
+            var result = session.Request<ArtistDetailsResponse>("artist/aliases", HttpMethod.Get,
+                "https://music.163.com/api/artist/" + id.ToString(System.Globalization.CultureInfo.InvariantCulture), null,
+                r => r != null && r.code == 200 && r.artist != null && r.artist.id == id &&
+                    !string.IsNullOrWhiteSpace(r.artist.name) && r.artist.name.Length <= 256,
+                RequestInterface.ArtistHttps, search: true, maximumTimeout: TimeSpan.FromSeconds(2));
+            var names = result == null ? new string[0] : new[] { result.artist.name }
+                .Concat((result.artist.alias ?? new string[0]).Take(32))
+                .Where(n => !string.IsNullOrWhiteSpace(n) && n.Length <= 256).Distinct(StringComparer.Ordinal).ToArray();
+            session.AliasCache.Store(id, names);
+            return names;
+        }
+
         private static bool ValidLyrics(LyricResult result)
         {
             // An explicit instrumental response is a valid absence. A bare code=200 is not.
@@ -118,7 +140,7 @@ namespace MusicBeePlugin
         }
     }
 
-    internal enum RequestInterface { Other, NewApi, LegacyHttps, LegacyHttp, LanguageHttps }
+    internal enum RequestInterface { Other, NewApi, LegacyHttps, LegacyHttp, LanguageHttps, ArtistHttps }
     internal enum RequestOutcome { None, Success, TransportFailure, Rejected, InvalidResponse }
 
     // A synchronous MusicBee callback gets one client and one deadline, including all fallbacks.
@@ -127,7 +149,10 @@ namespace MusicBeePlugin
     {
         internal const int MaxSearchRequests = 9;
         internal const int MaxLyricRequests = 9;
+        internal const int MaxArtistRequests = 2;
         private int _searchRequests, _lyricRequests;
+        private int _artistRequests;
+        internal ArtistAliasCache AliasCache { get; set; }
         private bool _languageRequested;
         private bool _secureRefusal;
         private readonly Dictionary<RequestInterface, RequestOutcome> _outcomes = new Dictionary<RequestInterface, RequestOutcome>();
@@ -155,6 +180,8 @@ namespace MusicBeePlugin
             Func<CancellationToken> requestCancellation = null)
         {
             _trace = trace;
+            // Injected/offline transports must never poison the process-wide production cache.
+            AliasCache = handler == null ? ArtistAliasCache.Shared : new ArtistAliasCache();
             _requestCancellation = requestCancellation;
             _requestTimeout = requestTimeout ?? TimeSpan.FromSeconds(8);
             _lookupTimeout = lookupTimeout ?? TimeSpan.FromSeconds(30);
@@ -188,6 +215,12 @@ namespace MusicBeePlugin
             if (_languageRequested || _lyricRequests >= MaxLyricRequests || _deadline.IsCancellationRequested) return false;
             _languageRequested = true;
             return true;
+        }
+
+        internal bool TryReserveArtistRequest()
+        {
+            if (_artistRequests >= MaxArtistRequests || !CanSearch || !CanRequest(RequestInterface.ArtistHttps)) return false;
+            _artistRequests++; return true;
         }
 
         private int AttemptsRemaining(RequestInterface api)

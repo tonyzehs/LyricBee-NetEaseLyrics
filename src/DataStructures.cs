@@ -50,6 +50,18 @@ namespace MusicBeePlugin
         public LyricInner romalrc;
     }
 
+    internal class ArtistDetailsResponse : ApiResponse
+    {
+        public ArtistDetails artist;
+    }
+
+    internal class ArtistDetails
+    {
+        public long id;
+        public string name;
+        public string[] alias;
+    }
+
     internal class LanguageResponse : ApiResponse
     {
         public Newtonsoft.Json.Linq.JObject data;

@@ -90,12 +90,13 @@ Missing tags, translated titles or unresolved editions can still prevent a confi
 
 ### Real-song examples
 
-These cases show the earlier lookup failures and the corrected results. Both automatic lookups were verified in MusicBee with the existing file tags and no Custom10 override.
+These cases show the earlier lookup failures and the corrected results. The first two automatic lookups were verified in MusicBee with existing tags and no Custom10 override. The artist-alias case is covered by the local 1.9.7 test build; MusicBee testing is pending.
 
 | Recording | Earlier lookup behavior | Corrected result |
 | --- | --- | --- |
 | **[By Your Side](https://music.163.com/song?id=400875204)** — 澤田かおり / 服部隆之, from the *Mobile Suit Gundam The Origin* soundtrack | Paired the Japanese recording with unrelated Cantonese lyrics. | Retrieves the intended recording, **ID 400875204**. Recognizes the singer alongside the composer credit, checks title/artist/album/duration, and rejects unrelated songs. |
 | **[Ma Meilleure Ennemie](https://music.163.com/song?id=3374505659)** — Stromae / Pomme, from the *Arcane Season 2* soundtrack | Returned no lyrics even though the correct recording was available. NetEase appends **(from the series Arcane League of Legends)** to the title, while the local title omits it. | Retrieves the intended recording, **ID 3374505659**. Accepts the soundtrack attribution only when the artist credits, album, duration and named work corroborate the match. |
+| **[奇縁ロマンス](https://music.163.com/song?id=2032748562)** — ナナヲアカリ / 七音阿卡莉 | Found the right listings but rejected them because the Japanese artist tag differed from NetEase's Chinese display name. | The 1.9.7 test build verifies the Japanese name against NetEase's artist aliases and selects **ID 2032748562**, keeping the original tags. Title, album and duration must also agree. |
 
 Re-fetch affected tracks to replace lyrics MusicBee already stored.
 
