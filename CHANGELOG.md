@@ -1,3 +1,10 @@
+# 1.9.8-test.4 — credit-only responses and soundtrack listings
+
+- Continue looking for lyrics when a listing supplies only credits, including NetEase JSON credits and credits with malformed timestamps.
+- Allow an additional soundtrack listing when it shares the exact title, attribution and album name, a close duration and an artist ID with an already qualified listing. Check additional entries directly against the original qualified listings; retain version, work and ambiguity checks.
+- Keep Custom10 final, preserve genuine short and untimed lyrics, and retain the existing retry limits. No new metadata requests or changes to timed-versus-untimed preference.
+- Product version: `1.9.8-test.4`; assembly version: `1.9.8.0`; file version: `1.9.8.4`. Local test build; unpublished.
+
 # 1.9.8-test.3 — saved download ID formats (local testing build)
 
 - Accept saved NetEase song IDs stored as either JSON integers or quoted decimal digits. Some real FLAC downloads use the quoted form; test.2 skipped their saved IDs and searched instead.

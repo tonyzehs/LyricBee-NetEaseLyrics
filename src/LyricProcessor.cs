@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace MusicBeePlugin
 {
-    internal static class LyricProcessor
+    internal static partial class LyricProcessor
     {
         internal const int AlignmentToleranceMs = 50;
         private static readonly Regex LeadingTimes = new Regex(
@@ -31,7 +31,7 @@ namespace MusicBeePlugin
         internal static bool HasLyricText(string text) => !string.IsNullOrWhiteSpace(text) &&
             NormalizeLines(text).Split('\n').Select(line => LeadingTimes.Replace(line.Trim(), "")).Any(IsText);
         private static bool IsText(string line) => !IsHeader(line) && Regex.IsMatch(line, @"[\p{L}\p{N}]");
-        private static bool IsHeader(string line) => MetadataLine.IsMatch(line.Trim()) || SectionLine.IsMatch(line.Trim()) || CreditLine.IsMatch(line.Trim());
+        private static bool IsHeader(string line) => MetadataLine.IsMatch(line.Trim()) || SectionLine.IsMatch(line.Trim()) || IsCreditHeader(line);
         public static string InjectTranslation(string original, string translation) => MergeTranslation(original, translation, false);
         public static string InjectTranslationTwoLines(string original, string translation) => MergeTranslation(original, translation, true);
 

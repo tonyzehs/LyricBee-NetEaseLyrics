@@ -40,7 +40,7 @@ internal static partial class Program
     {
         if (args.Contains("--lookup-tests"))
         {
-            LookupOrderTests(); SavedIdTests(); ShowCreditedTests();
+            LookupOrderTests(); SavedIdTests(); ShowCreditedTests(); CreditOnlyAndAlbumPeerTests();
             Console.WriteLine("RESULT: " + _passed + " passed, " + _failed + " failed"); return _failed == 0 ? 0 : 1;
         }
         if (args.Contains("--lookup-replay")) { Console.WriteLine(LookupReplay()); return 0; }
@@ -745,7 +745,7 @@ internal static partial class Program
 
     private static void MatchingTests()
     {
-        MatchingAuditTests(); LookupOrderTests(); SavedIdTests(); ShowCreditedTests();
+        MatchingAuditTests(); LookupOrderTests(); SavedIdTests(); ShowCreditedTests(); CreditOnlyAndAlbumPeerTests();
         SoundtrackTests();
         LocalizedSoundtrackTests();
         Test("Captured By Your Side search results are rejected rather than choosing another song", () =>

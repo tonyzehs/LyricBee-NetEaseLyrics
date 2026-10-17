@@ -71,7 +71,7 @@ namespace MusicBeePlugin
             return match;
         }
 
-        private static Match ShowCredited(SearchResultSong song, TrackIdentity request)
+        private static CandidateFacts ShowCreditShape(SearchResultSong song, TrackIdentity request)
         {
             // Cheap title/length checks precede the attribution and work-name checks.
             if (song == null || song.id <= 0 || string.IsNullOrWhiteSpace(song.name) || song.name.Length > 512 ||
@@ -84,21 +84,22 @@ namespace MusicBeePlugin
                 SoundtrackSuffix.IsMatch(request.RawTitle) || facts.Artists.Length == 0) return null;
             var localArtists = request.Artists.Select(Canonical).ToArray();
             if (facts.Artists.Any(a => localArtists.Contains(a))) return null;
-            // Empty/malformed credits must not disappear while checking that EVERY artist names a work.
+            // Empty/malformed credits must not disappear from either admission path.
             if ((song.artists ?? new SearchResultArtist[0]).Any(a => string.IsNullOrWhiteSpace(a?.name))) return null;
+            return facts;
+        }
+
+        private static Match ShowCredited(SearchResultSong song, TrackIdentity request)
+        {
+            var facts = ShowCreditShape(song, request);
+            if (facts == null) return null;
             if (!facts.Artists.All(a => WorkNameLongEnough(a) &&
                 (facts.Attribution.Contains(a) || facts.Album.Contains(a) || request.Album.Contains(a)))) return null;
             var alias = new[] { song.album?.alias, song.album?.tns, song.album?.transNames }
                 .SelectMany(names => (names ?? new string[0]).Take(16)).Take(32)
                 .Any(name => name != null && name.Length <= 512 && Canonical(name) == request.Album);
             if (!alias && !facts.Artists.Any(a => request.Album.Contains(a))) return null;
-            return new Match {
-                Song = song, SoundtrackSource = facts.Source, Notes = "", ExactTitleAndArtist = true,
-                Identity = request.Title + "\0work:" + facts.Source,
-                AlbumScore = Similarity(request.Album, facts.Album),
-                DurationDifference = Math.Abs((double)request.Duration.Value - song.duration) / 1000,
-                Score = 95 + 5 * Similarity(request.Album, facts.Album)
-            };
+            return ShowCreditMatch(song, request, facts);
         }
 
         private static bool WorkNameLongEnough(string name) => LatinLetters.Matches(name).Count >= 4 || CjkLetters.Matches(name).Count >= 2;

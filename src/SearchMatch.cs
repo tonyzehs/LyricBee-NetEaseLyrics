@@ -125,6 +125,12 @@ namespace MusicBeePlugin
                 session.Diagnostic(DiagnosticKind.ShowCreditedSoundtrackMatch);
                 session.Report("Matching: matched a soundtrack credited to the show");
             }
+            var albumPeers = matches.Where(m => m.Notes == "same-album soundtrack").ToArray();
+            if (albumPeers.Length > 0)
+            {
+                session.Diagnostic(DiagnosticKind.SoundtrackAlbumPeer, songId: albumPeers[0].Song.id, count: albumPeers.Length);
+                session.Report("Matching: included another listing from the same soundtrack album");
+            }
             session.Diagnostic(DiagnosticKind.MatchingSelected, songId: matches[0].Song.id, count: matches.Length);
             if (matches.Length > 1) session.Diagnostic(DiagnosticKind.CompatibleGroup, count: matches.Length);
             if (matches[0].Notes.Contains("remaster")) session.Diagnostic(DiagnosticKind.RemasterNote);
@@ -148,7 +154,7 @@ namespace MusicBeePlugin
             if (matches.Length > 1)
                 session.Report("Matching: grouped " + matches.Length + " compatible listings; selected song ID " +
                     matches[0].Song.id + " by album similarity, then duration, then ID");
-            var annotationNotes = matches[0].Notes.Split('/').Where(n => n.Length > 0 && n != "verified artist alias").ToArray();
+            var annotationNotes = matches[0].Notes.Split('/').Where(n => n.Length > 0 && n != "verified artist alias" && n != "same-album soundtrack").ToArray();
             if (annotationNotes.Length > 0)
                 session.Report("Matching: treated recognized " + string.Join("/", annotationNotes) + " annotation as a note");
             // No extra searches or lyric comparisons are made to group catalogue entries.
@@ -197,6 +203,8 @@ namespace MusicBeePlugin
                 supported = candidates.Select(song => EvaluateTier(song, request, alternate, aliases, tier))
                     .Where(match => match != null).ToArray();
                 if (supported.Length == 0) continue;
+                if (tier == MatchingTier.ShowCreditedSoundtrack)
+                    supported = IncludeSoundtrackAlbumPeers(candidates, request, supported);
                 if (tier >= MatchingTier.TranslatedSoundtrack &&
                     (supported.Select(m => m.SoundtrackSource).Distinct(StringComparer.Ordinal).Count() > 1 ||
                     (tier == MatchingTier.ShowCreditedSoundtrack && supported.Any(a => supported.Any(b => !Equivalent(a, b))))))

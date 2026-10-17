@@ -112,9 +112,9 @@ namespace MusicBeePlugin
 
         private static bool ValidLyrics(LyricResult result)
         {
-            // An explicit instrumental response is a valid absence. A bare code=200 is not.
+            // Explicit instrumental/credit-only results are valid absences, not transport failures. A bare code=200 is not.
             return result != null && result.code == 200 &&
-                (IsInstrumental(result) || LyricProcessor.HasLyricText(result.lrc?.lyric));
+                (IsInstrumental(result) || LyricProcessor.HasLyricText(result.lrc?.lyric) || LyricProcessor.IsCreditOnlyText(result.lrc?.lyric));
         }
 
         internal static bool IsInstrumental(LyricResult result) => result?.nolyric == true ||
