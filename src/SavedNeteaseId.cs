@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MusicBeePlugin
 {
@@ -27,7 +28,7 @@ namespace MusicBeePlugin
             if (comment.Length > MaximumCommentLength) return SavedIdStatus.Unreadable;
             try
             {
-                var encrypted = Convert.FromBase64String(comment.Substring(Prefix.Length));
+                var encrypted = Convert.FromBase64String(Regex.Replace(comment.Substring(Prefix.Length), @"[\s\x00]+$", ""));
                 if (encrypted.Length == 0 || encrypted.Length % 16 != 0) return SavedIdStatus.Unreadable;
                 string plain;
                 using (var aes = Aes.Create())

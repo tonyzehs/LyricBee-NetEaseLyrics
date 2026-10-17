@@ -62,14 +62,15 @@ namespace MusicBeePlugin
                 var found = NeteaseApi.Search(query, session).ToArray();
                 songs.AddRange(found);
                 // A code=200 payload can still contain unrelated songs. Try the other search interface.
-                if (!found.Any(song => Evaluate(song, request, aliases) != null))
+                if (!found.Any(song => Evaluate(song, request, aliases) != null) &&
+                    !(alternate != null && found.Any(song => CanAcceptTrackPrefixEarly(Evaluate(song, alternate), alternate))))
                     songs.AddRange(NeteaseApi.SearchLegacy(query, session));
                 var best = Choose(songs, request, out var ambiguous, aliases: aliases);
                 if (ambiguous) return ReportAmbiguity(session, songs.Count);
                 if (best.Length == 0)
                 {
                     ResolveArtistAliases(songs, request, session, aliases);
-                    best = Choose(songs, request, out ambiguous, aliases: aliases);
+                    best = Choose(songs, request, out ambiguous, alternate, aliases, allowTrackPrefix: true);
                     if (ambiguous) return ReportAmbiguity(session, songs.Count);
                 }
                 if (best.Length > 0 && best[0].Strong) return ReportSelection(best, session);
@@ -188,8 +189,12 @@ namespace MusicBeePlugin
             return queries.Select(q => Regex.Replace(q, @"\s+", " ").Trim()).Where(q => q.Length > 0).Distinct(StringComparer.Ordinal);
         }
 
+        // Early prefix matches require the full album evidence; the later fallback keeps its existing rules.
+        private static bool CanAcceptTrackPrefixEarly(Match match, TrackIdentity alternate) =>
+            alternate != null && alternate.Album.Length > 0 && match != null && match.Strong && match.ExactIdentityAndAlbum;
+
         private static Match[] Choose(IEnumerable<SearchResultSong> songs, TrackIdentity request, out bool ambiguous, TrackIdentity alternate = null,
-            IReadOnlyDictionary<long, string[]> aliases = null, bool allowPostSearch = false)
+            IReadOnlyDictionary<long, string[]> aliases = null, bool allowPostSearch = false, bool allowTrackPrefix = false)
         {
             ambiguous = false;
             var candidates = songs.Where(s => s != null && s.id > 0).ToArray();
@@ -198,10 +203,11 @@ namespace MusicBeePlugin
             foreach (var tier in MatchingOrder)
             {
                 if (tier == MatchingTier.ArtistAlias && aliases == null) continue;
-                if (tier == MatchingTier.TrackPrefix && (!allowPostSearch || alternate == null)) continue;
+                if (tier == MatchingTier.TrackPrefix && (alternate == null || (!allowPostSearch && !allowTrackPrefix))) continue;
                 if (tier >= MatchingTier.TranslatedSoundtrack && (!allowPostSearch || request.PrefixIdentity)) continue;
                 supported = candidates.Select(song => EvaluateTier(song, request, alternate, aliases, tier))
-                    .Where(match => match != null).ToArray();
+                    .Where(match => match != null && (tier != MatchingTier.TrackPrefix || allowPostSearch ||
+                        CanAcceptTrackPrefixEarly(match, alternate))).ToArray();
                 if (supported.Length == 0) continue;
                 if (tier == MatchingTier.ShowCreditedSoundtrack)
                     supported = IncludeSoundtrackAlbumPeers(candidates, request, supported);

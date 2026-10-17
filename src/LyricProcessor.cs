@@ -155,7 +155,7 @@ namespace MusicBeePlugin
         private static string FormatUntimedTracks(string originalLrc, string[] extraTexts, out int usableTracks)
         {
             usableTracks = 0;
-            var originalLines = NormalizeLines(originalLrc).Split('\n');
+            var originalLines = NormalizeLines(originalLrc).Split('\n').Select(CreditHeaderForDisplay).ToArray();
             var originalText = originalLines.Where(IsText).ToArray();
             if (originalText.Length == 0) return originalLrc;
             var originalVerses = SplitVerses(originalLines);
@@ -285,7 +285,7 @@ namespace MusicBeePlugin
 
         private static string FormatUntimedTranslation(string originalLrc, string translationLrc)
         {
-            var originalLines = NormalizeLines(originalLrc).Split('\n');
+            var originalLines = NormalizeLines(originalLrc).Split('\n').Select(CreditHeaderForDisplay).ToArray();
             var translatedLines = NormalizeLines(translationLrc).Split('\n').Select(line => LeadingTimes.Replace(line, ""))
                 .Where(line => !IsHeader(line)).ToArray();
             var originals = originalLines.Where(IsText).ToArray();
@@ -389,7 +389,7 @@ namespace MusicBeePlugin
                 }
                 else if (IsHeader(line))
                 {
-                    document.Headers.Add(line);
+                    document.Headers.Add(CreditHeaderForDisplay(line));
                     var offset = Regex.Match(line, @"^\[offset:\s*([+-]?[0-9]+)\s*\]$", RegexOptions.IgnoreCase);
                     if (offset.Success && int.TryParse(offset.Groups[1].Value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value)) document.Offset = value;
                     previous.Clear(); lastLoose = null;

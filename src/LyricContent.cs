@@ -12,6 +12,9 @@ namespace MusicBeePlugin
         private static readonly Regex CreditTimePrefix = new Regex(
             @"^(?:\[[0-9]+:[0-9.:+\-]+\]\s*)+", RegexOptions.CultureInvariant);
 
+        private static string CreditHeaderForDisplay(string line) =>
+            IsCreditHeader(line) ? CreditTimePrefix.Replace(line.Trim(), "") : line;
+
         internal static bool IsCreditOnlyText(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return false;

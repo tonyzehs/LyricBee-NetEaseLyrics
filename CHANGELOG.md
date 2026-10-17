@@ -1,3 +1,11 @@
+# 1.9.8-test.5 — formatting and lookup follow-ups
+
+- Remove broken timestamp prefixes from credit headers when combining lyrics with translation or pronunciation. Keep JSON credits separate from timed lines and retain translation pairing for untimed lyrics with credits.
+- Restore quicker matching for titles with a tagged track-number prefix when the full artists and album agree and the length is within two seconds. A literal numbered title in the same results still takes priority; a strong prefix match can now finish before later queries.
+- Accept trailing whitespace and NUL padding after a saved NetEase comment block. Keep the existing prefix, size, title and duration checks.
+- Clarify when Spin The Wheel's matching listing supplies Chinese translation in both READMEs.
+- Product version: `1.9.8-test.5`; assembly version: `1.9.8.0`; file version: `1.9.8.5`. Local test build; unpublished.
+
 # 1.9.8-test.4 — credit-only responses and soundtrack listings
 
 - Continue looking for lyrics when a listing supplies only credits, including NetEase JSON credits and credits with malformed timestamps.

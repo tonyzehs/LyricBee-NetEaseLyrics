@@ -86,7 +86,7 @@ LyricBee 会核对标题、艺人、专辑和歌曲时长，寻找正确录音�
 | [Ma Meilleure Ennemie](https://music.163.com/song?id=3374505659) — Stromae、Pomme，出自《Arcane》第二季 | 网易云在标题后加上 `(from the series Arcane League of Legends)`，导致无法匹配本地的简短标题。 | 艺人、专辑和时长一致时，可以用本地标题找到这首歌。 |
 | [奇縁ロマンス](https://music.163.com/song?id=2032748562) — ナナヲアカリ，网易云显示为七音阿卡莉 | 日文与中文艺人名被当成了不同歌手。 | 根据网易云的艺人别名，将本地日文标签与中文名称对应起来。 |
 | [Blood Sweat & Tears](https://music.163.com/song?id=3374505661) — Sheryl Lee Ralph<br>[Fantastic](https://music.163.com/song?id=3374504658) — King Princess<br>均出自《双城之战》第二季 | 文件使用中文原声带专辑名，网易云则使用英文名，还在歌曲标题后附加了剧名。 | 保留原有专辑标签，即可找到这两首歌的原声带录音及中文翻译。 |
-| [Spin The Wheel](https://music.163.com/song?id=2684031162) — Mick Wingert，出自《双城之战》第二季 | 文件的艺人标签是 Mick Wingert，网易云却将歌曲归在剧集或游戏名下，专辑名的语言也不同。 | 找到《双城之战》的原声带录音及中文翻译。 |
+| [Spin The Wheel](https://music.163.com/song?id=2684031162) — Mick Wingert，出自《双城之战》第二季 | 文件的艺人标签是 Mick Wingert，网易云却将歌曲归在剧集或游戏名下，专辑名的语言也不同。 | 找到《双城之战》的原声带录音。文件使用中文专辑名时，还能获取中文翻译；使用英文专辑名时，匹配到的条目只有英文歌词。 |
 
 前三项已在 MusicBee 中实测，其余歌曲已通过网易云实际查询验证。
 

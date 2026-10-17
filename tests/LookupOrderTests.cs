@@ -16,15 +16,15 @@ internal static partial class Program
             using (var reader = new StreamReader(stream))
                 True(Newtonsoft.Json.Linq.JToken.DeepEquals(Newtonsoft.Json.Linq.JToken.Parse(reader.ReadToEnd()), Newtonsoft.Json.Linq.JToken.Parse(LookupReplay())));
         });
-        Test("Track prefix waits for later ordinary query results", () =>
+        Test("A strong track prefix returns before a later query can supply a literal numbered title", () =>
         {
             var calls = 0;
             var handler = new Fixture((_, __) => Json(SearchJson(new[] {
                 calls++ < 2 ? Song(1, "Song", "Singer", "Album", 200000) : Song(2, "01 Song", "Singer", "Album", 200000)
             })));
             using (var session = Session(handler))
-                Equal(2L, SearchMatch.SearchCandidates("01 Song", "Singer", "Album", 200000, session, trackNumber: "1").Single());
-            Equal(3, handler.Calls.Count);
+                Equal(1L, SearchMatch.SearchCandidates("01 Song", "Singer", "Album", 200000, session, trackNumber: "1").Single());
+            Equal(1, handler.Calls.Count);
         });
         Test("Ordinary ambiguity stops before alias requests or later searches", () =>
         {
