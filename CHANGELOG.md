@@ -1,3 +1,12 @@
+# 1.9.8
+
+- Use the song ID saved in NetEase downloads to find lyrics after the service changes a song's artist or album credits. Check the saved title and length before using the ID; Custom10 remains the final manual choice.
+- Improve soundtrack searches, including Blood Sweat & Tears, Fantastic and Spin The Wheel from Arcane Season 2. Chinese translation availability depends on the matched listing; the Spin The Wheel example explains the difference between English and Chinese album tags.
+- Skip listings that supply only credits and continue to a compatible listing. Recognise NetEase JSON credits and malformed credit timestamps, and keep translations paired with the sung lines.
+- Restore quicker matching for strongly supported track-number prefixes and accept trailing whitespace/NUL padding in saved download comments. A literal numbered title in the same results wins; later-query priority is traded for earlier completion.
+- Refresh the English and Chinese README, add the project logo and more real-song examples, and align troubleshooting with the MusicBee add-on page.
+- Product version: `1.9.8`; assembly/file version: `1.9.8.0`.
+
 # 1.9.8-test.5 — formatting and lookup follow-ups
 
 - Remove broken timestamp prefixes from credit headers when combining lyrics with translation or pronunciation. Keep JSON credits separate from timed lines and retain translation pairing for untimed lyrics with credits.

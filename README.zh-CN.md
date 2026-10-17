@@ -145,8 +145,10 @@ MusicBee 会保留已下载或写入音乐文件的歌词。重新获取后才�
 
 ## 常见问题
 
-- 找不到歌词时，检查 **标签 (2)** 中的提供者优先级，再试一次搜索。也可以在 **Custom10** 中填入正确的网易云歌曲链接。
-- 配错歌曲时，将 **Custom10** 设为正确的歌曲链接或 `netease=ID`，清除旧歌词后重新获取。
+### 歌词配错或找不到歌词？
+
+将网易云歌曲链接（或 `netease=ID`）填入文件的 **Custom10** 标签，再重新搜索。**如果网易云中有这首歌，但仍然无法获取歌词**，请在论坛帖子中反馈，或[提交 GitHub Issue](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/issues)。
+
 - 还在显示旧歌词时，在 MusicBee 中清除已保存的文本，再重新获取。
 - 反馈问题时，请附上网易云歌曲链接，以及 MusicBee 和 LyricBee 的版本。复现问题后，打开插件设置 → **高级… → 复制诊断报告**，将报告粘贴到反馈中。报告只复制到剪贴板，由你决定是否发送；其中的歌曲 ID 可能透露听歌记录，歌词、标签、文件路径和账号信息不会包含在内。
 
@@ -184,6 +186,7 @@ MusicBee 会保留已下载或写入音乐文件的歌词。重新获取后才�
 | [1.9.5](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.5) | 1.9.5-test.1–test.4、1.9.5 | 自动修复设置、改进匹配与时间对齐，并在高级设置中提供诊断报告 |
 | [1.9.6](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.6) | 1.9.6-test.1–test.4、1.9.6 | 手动检查更新、改进诊断报告和自动调整的设置布局 |
 | [1.9.7](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.7) | 1.9.7-test.1–test.2、1.9.7 | 对应不同语言的艺人名 |
+| [1.9.8](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.8) | 1.9.8-test.1–test.5、1.9.8 | 读取网易云下载文件中的歌曲 ID，改进原声带匹配和歌曲署名处理 |
 
 </details>
 

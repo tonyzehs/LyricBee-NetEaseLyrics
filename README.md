@@ -145,8 +145,10 @@ MusicBee keeps lyrics it has downloaded or written into music files. Re-fetching
 
 ## Troubleshooting
 
-- If lyrics are missing, check the provider priority under **Tags (2)**, then try searching again. You can also put the correct NetEase song link in **Custom10**.
-- If the wrong song appears, set **Custom10** to the correct song link or `netease=ID`, then clear and re-fetch the lyrics.
+### Wrong song or no lyrics?
+
+Put the NetEase song link (or `netease=ID`) in the **Custom10** tag of the file and search again. **If the song is in the NetEase database and it still fails,** post in the forum thread or [open a GitHub issue](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/issues).
+
 - If old lyrics keep showing, clear the saved text in MusicBee and fetch it again.
 - To report a problem, include the NetEase song link and your MusicBee and LyricBee versions. Reproduce the problem, then open the plugin settings → **Advanced… → Copy diagnostic report**. Paste the report into your issue. It is copied to your clipboard, not uploaded automatically. It contains song IDs that may reveal your listening history; lyrics, tags, file paths and account details are left out.
 
@@ -184,6 +186,7 @@ The [release history](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/release
 | [1.9.5](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.5) | 1.9.5-test.1–test.4, 1.9.5 | Automatic settings repair, matching and timing fixes, and diagnostic reports under Advanced |
 | [1.9.6](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.6) | 1.9.6-test.1–test.4, 1.9.6 | Manual update checking, improved diagnostic reports and automatic settings layout |
 | [1.9.7](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.7) | 1.9.7-test.1–test.2, 1.9.7 | Artist names in different languages |
+| [1.9.8](https://github.com/tonyzehs/LyricBee-NetEaseLyrics/releases/tag/v1.9.8) | 1.9.8-test.1–test.5, 1.9.8 | Saved NetEase song IDs, soundtrack matching and credit handling |
 
 </details>
 
